@@ -8,7 +8,6 @@ namespace Web.Core.Interfaces
     public interface IReportingRepository
     {
         Task<List<DailySummaryRecord>> GetDailySummaryAsync(DateTime? startDate, DateTime? endDate);
-        Task<List<LinePerformanceRecord>> GetLinePerformanceAsync(DateTime? date);
         Task<List<PendingBoxRecord>> GetPendingBoxesAsync(int maxAgeMinutes);
         Task<List<ShiftReportRecord>> GetShiftReportAsync(DateTime? date);
         Task<List<BarcodeHistoryRecord>> SearchBarcodeAsync(string barcode, int daysBack);

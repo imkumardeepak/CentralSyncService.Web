@@ -25,11 +25,6 @@ namespace Web.Services
             return await _repository.GetDailySummaryAsync(startDate, endDate).ConfigureAwait(false);
         }
 
-        public async Task<List<LinePerformanceRecord>> GetLinePerformanceAsync(DateTime? date)
-        {
-            return await _repository.GetLinePerformanceAsync(date).ConfigureAwait(false);
-        }
-
         public async Task<List<PendingBoxRecord>> GetPendingBoxesAsync(int maxAgeMinutes)
         {
             return await _repository.GetPendingBoxesAsync(maxAgeMinutes).ConfigureAwait(false);

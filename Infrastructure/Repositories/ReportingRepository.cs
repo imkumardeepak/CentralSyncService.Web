@@ -61,44 +61,6 @@ namespace Web.Infrastructure.Repositories
             return result;
         }
 
-        public async Task<List<LinePerformanceRecord>> GetLinePerformanceAsync(DateTime? date)
-        {
-            var result = new List<LinePerformanceRecord>();
-
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                await connection.OpenAsync().ConfigureAwait(false);
-
-                using (var command = new SqlCommand("sp_GetLinePerformance", connection))
-                {
-                    command.CommandType = CommandType.StoredProcedure;
-                    command.Parameters.AddWithValue("@Date", (object?)date ?? DBNull.Value);
-
-                    using (var reader = await command.ExecuteReaderAsync().ConfigureAwait(false))
-                    {
-                        while (await reader.ReadAsync().ConfigureAwait(false))
-                        {
-                            var record = new LinePerformanceRecord
-                            {
-                                LineCode = reader.IsDBNull(reader.GetOrdinal("LineCode")) ? string.Empty : reader.GetString(reader.GetOrdinal("LineCode")),
-                                TotalBoxes = reader.GetInt32(reader.GetOrdinal("TotalBoxes")),
-                                Matched = reader.GetInt32(reader.GetOrdinal("Matched")),
-                                Issues = reader.GetInt32(reader.GetOrdinal("Issues")),
-                                MatchRatePercent = reader.IsDBNull(reader.GetOrdinal("MatchRatePercent")) ? 0 : reader.GetDecimal(reader.GetOrdinal("MatchRatePercent")),
-                                AvgTransitSeconds = reader.IsDBNull(reader.GetOrdinal("AvgTransitSeconds")) ? (int?)null : reader.GetInt32(reader.GetOrdinal("AvgTransitSeconds")),
-                                FirstScan = reader.IsDBNull(reader.GetOrdinal("FirstScan")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("FirstScan")),
-                                LastScan = reader.IsDBNull(reader.GetOrdinal("LastScan")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("LastScan"))
-                            };
-
-                            result.Add(record);
-                        }
-                    }
-                }
-            }
-
-            return result;
-        }
-
         public async Task<List<PendingBoxRecord>> GetPendingBoxesAsync(int maxAgeMinutes)
         {
             var result = new List<PendingBoxRecord>();

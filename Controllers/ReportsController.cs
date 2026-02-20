@@ -49,15 +49,6 @@ namespace Web.Controllers
             return View(records);
         }
 
-        // Line performance using sp_GetLinePerformance
-        public async Task<IActionResult> LinePerformance(DateTime? date)
-        {
-            var targetDate = date ?? DateTime.Today;
-            var records = await _reportingService.GetLinePerformanceAsync(targetDate).ConfigureAwait(false);
-            ViewBag.Date = targetDate;
-            return View(records);
-        }
-
         // Pending boxes using sp_GetPendingBoxes
         public async Task<IActionResult> PendingBoxes(int maxAgeMinutes = 60)
         {
