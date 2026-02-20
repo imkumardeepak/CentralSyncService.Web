@@ -1,0 +1,541 @@
+@model Web.Core.Entities.PlantConfiguration
+@{
+    ViewData["Title"] = "Add New Plant";
+}
+
+<div class="bg-neutral-100 min-h-full py-6">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Breadcrumb -->
+        <nav class="mb-6" aria-label="Breadcrumb">
+            <ol class="flex items-center space-x-2 text-sm">
+                <li>
+                    <a href="@Url.Action("Index")" class="text-neutral-500 hover:text-brand-600 transition-colors">
+                        Plant Configuration
+                    </a>
+                </li>
+                <li class="text-neutral-300">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                </li>
+                <li class="text-neutral-900 font-medium">Add New Plant</li>
+            </ol>
+        </nav>
+
+        <!-- Form Card -->
+        <div class="bg-white rounded-xl shadow-card overflow-hidden animate-fade-in">
+            <!-- Header -->
+            <div class="px-6 py-5 border-b border-neutral-200 bg-gradient-to-r from-brand-50 to-white">
+                <div class="flex items-center gap-4">
+                    <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-brand-100 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold text-neutral-900">Add New Plant Configuration</h2>
+                        <p class="text-sm text-neutral-500 mt-0.5">Configure a FROM or TO plant for box tracking synchronization</p>
+                    </div>
+                </div>
+            </div>
+
+            <form asp-action="Create" method="post" class="p-6" id="plantForm" novalidate>
+                @Html.AntiForgeryToken()
+                
+                <!-- Validation Summary -->
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                        <div class="flex">
+                            <svg class="h-5 w-5 text-red-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <div>
+                                <h3 class="text-sm font-medium text-red-800">Please fix the following errors:</h3>
+                                <div asp-validation-summary="All" class="mt-2 text-sm text-red-700"></div>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <!-- Basic Information Section -->
+                <div class="mb-8">
+                    <div class="flex items-center gap-2 mb-5">
+                        <div class="w-8 h-8 rounded-lg bg-neutral-100 flex items-center justify-center text-neutral-600 font-semibold text-sm">1</div>
+                        <h3 class="text-lg font-semibold text-neutral-900">Basic Information</h3>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label asp-for="PlantCode" class="block text-sm font-medium text-neutral-700 mb-1.5">
+                                Plant Code <span class="text-red-500">*</span>
+                            </label>
+                            <input asp-for="PlantCode" name="PlantCode"
+                                   class="w-full px-4 py-2.5 text-sm border border-neutral-300 rounded-lg 
+                                          focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200
+                                          hover:border-neutral-400" 
+                                   placeholder="e.g., FROM-HDR-01">
+                            <span asp-validation-for="PlantCode" class="text-red-600 text-xs mt-1 block"></span>
+                        </div>
+
+                        <div>
+                            <label asp-for="PlantType" class="block text-sm font-medium text-neutral-700 mb-1.5">
+                                Plant Type <span class="text-red-500">*</span>
+                            </label>
+                            <select asp-for="PlantType" name="PlantType"
+                                    class="w-full px-4 py-2.5 text-sm border border-neutral-300 rounded-lg 
+                                           focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200
+                                           hover:border-neutral-400">
+                                <option value="">Select Type</option>
+                                <option value="FROM">FROM Plant (Source)</option>
+                                <option value="TO">TO Plant (Destination)</option>
+                            </select>
+                            <span asp-validation-for="PlantType" class="text-red-600 text-xs mt-1 block"></span>
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label asp-for="PlantName" class="block text-sm font-medium text-neutral-700 mb-1.5">
+                                Plant Name <span class="text-red-500">*</span>
+                            </label>
+                            <input asp-for="PlantName" name="PlantName"
+                                   class="w-full px-4 py-2.5 text-sm border border-neutral-300 rounded-lg 
+                                          focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200
+                                          hover:border-neutral-400" 
+                                   placeholder="e.g., Haldiram FROM Plant - Delhi">
+                            <span asp-validation-for="PlantName" class="text-red-600 text-xs mt-1 block"></span>
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label asp-for="Description" class="block text-sm font-medium text-neutral-700 mb-1.5">Description</label>
+                            <textarea asp-for="Description" name="Description" rows="3" 
+                                      class="w-full px-4 py-2.5 text-sm border border-neutral-300 rounded-lg 
+                                             focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200
+                                             hover:border-neutral-400 resize-none" 
+                                      placeholder="Brief description of this plant configuration..."></textarea>
+                            <span asp-validation-for="Description" class="text-red-600 text-xs mt-1 block"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Database Connection Section -->
+                <div class="mb-8">
+                    <div class="flex items-center gap-2 mb-5">
+                        <div class="w-8 h-8 rounded-lg bg-neutral-100 flex items-center justify-center text-neutral-600 font-semibold text-sm">2</div>
+                        <h3 class="text-lg font-semibold text-neutral-900">Database Connection</h3>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label asp-for="ServerIP" class="block text-sm font-medium text-neutral-700 mb-1.5">
+                                Server IP / Hostname <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <svg class="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/>
+                                    </svg>
+                                </div>
+                                <input asp-for="ServerIP" name="ServerIP" type="text" id="ServerIP"
+                                       class="w-full pl-10 pr-4 py-2.5 text-sm border border-neutral-300 rounded-lg 
+                                              focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200
+                                              hover:border-neutral-400" 
+                                       placeholder="e.g., 192.168.10.50">
+                            </div>
+                            <span asp-validation-for="ServerIP" class="text-red-600 text-xs mt-1 block"></span>
+                        </div>
+
+                        <div>
+                            <label asp-for="Port" class="block text-sm font-medium text-neutral-700 mb-1.5">Port</label>
+                            <input asp-for="Port" name="Port" type="number" id="Port"
+                                   class="w-full px-4 py-2.5 text-sm border border-neutral-300 rounded-lg 
+                                          focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200
+                                          hover:border-neutral-400">
+                            <p class="text-xs text-neutral-500 mt-1">Default SQL Server port is 1433</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-neutral-700 mb-1.5">
+                                Database Name <span class="text-red-500">*</span>
+                            </label>
+                            <select id="databaseNameSelect"
+                                    class="w-full px-4 py-2.5 text-sm border border-neutral-300 rounded-lg 
+                                           focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200
+                                           hover:border-neutral-400 bg-neutral-50" 
+                                    disabled>
+                                <option value="">-- First connect to server --</option>
+                            </select>
+                            <!-- CRITICAL: This hidden field MUST have the name attribute for model binding -->
+                            <input type="hidden" name="DatabaseName" id="databaseNameHidden" value="@(Model?.DatabaseName ?? "")" />
+                            <p id="dbSelectMessage" class="text-xs text-neutral-500 mt-1">Click "Connect & Fetch Databases" to see available databases</p>
+                            <span asp-validation-for="DatabaseName" class="text-red-600 text-xs mt-1 block"></span>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-neutral-700 mb-1.5">Authentication Type</label>
+                            <select id="authType" 
+                                    class="w-full px-4 py-2.5 text-sm border border-neutral-300 rounded-lg 
+                                           focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200
+                                           hover:border-neutral-400">
+                                <option value="sql">SQL Server Authentication</option>
+                                <option value="windows">Windows Authentication</option>
+                            </select>
+                        </div>
+
+                        <div id="sqlAuthFields" class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-5 p-4 bg-neutral-50 rounded-lg border border-neutral-200">
+                            <div>
+                                <label asp-for="Username" class="block text-sm font-medium text-neutral-700 mb-1.5">Username</label>
+                                <input asp-for="Username" name="Username" id="UsernameInput"
+                                       class="w-full px-4 py-2.5 text-sm border border-neutral-300 rounded-lg bg-white
+                                              focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200
+                                              hover:border-neutral-400" 
+                                       placeholder="e.g., sa">
+                                <span asp-validation-for="Username" class="text-red-600 text-xs mt-1 block"></span>
+                            </div>
+
+                            <div>
+                                <label asp-for="Password" class="block text-sm font-medium text-neutral-700 mb-1.5">Password</label>
+                                <div class="relative">
+                                    <input asp-for="Password" name="Password" type="password" id="PasswordInput"
+                                           class="w-full px-4 py-2.5 pr-10 text-sm border border-neutral-300 rounded-lg bg-white
+                                                  focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200
+                                                  hover:border-neutral-400">
+                                    <button type="button" onclick="togglePassword()" 
+                                            class="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-600">
+                                        <svg id="eyeIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <span asp-validation-for="Password" class="text-red-600 text-xs mt-1 block"></span>
+                            </div>
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <div class="flex items-center gap-4">
+                                <button type="button" onclick="connectAndFetchDatabases()" id="connectBtn"
+                                        class="inline-flex items-center px-5 py-2.5 bg-brand-600 text-white text-sm font-medium rounded-lg
+                                               hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2
+                                               transition-all duration-200 shadow-sm">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/>
+                                    </svg>
+                                    <span id="connectBtnText">Connect & Fetch Databases</span>
+                                </button>
+                                <button type="button" onclick="testConnectionOnly()" id="testOnlyBtn"
+                                        class="inline-flex items-center px-4 py-2.5 bg-white text-neutral-700 text-sm font-medium rounded-lg
+                                               border border-neutral-300 hover:bg-neutral-50 hover:border-neutral-400
+                                               focus:outline-none focus:ring-2 focus:ring-neutral-500 focus:ring-offset-2
+                                               transition-all duration-200">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    Test Only
+                                </button>
+                            </div>
+                            <div id="connectionStatus" class="mt-3 text-sm min-h-[24px]"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Location & Contact Section -->
+                <div class="mb-8">
+                    <div class="flex items-center gap-2 mb-5">
+                        <div class="w-8 h-8 rounded-lg bg-neutral-100 flex items-center justify-center text-neutral-600 font-semibold text-sm">3</div>
+                        <h3 class="text-lg font-semibold text-neutral-900">Location & Contact</h3>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label asp-for="Location" class="block text-sm font-medium text-neutral-700 mb-1.5">Location</label>
+                            <input asp-for="Location" name="Location"
+                                   class="w-full px-4 py-2.5 text-sm border border-neutral-300 rounded-lg 
+                                          focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200
+                                          hover:border-neutral-400" 
+                                   placeholder="e.g., Delhi, India">
+                        </div>
+
+                        <div>
+                            <label asp-for="ContactPerson" class="block text-sm font-medium text-neutral-700 mb-1.5">Contact Person</label>
+                            <input asp-for="ContactPerson" name="ContactPerson"
+                                   class="w-full px-4 py-2.5 text-sm border border-neutral-300 rounded-lg 
+                                          focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200
+                                          hover:border-neutral-400" 
+                                   placeholder="e.g., Rajesh Kumar">
+                        </div>
+
+                        <div>
+                            <label asp-for="ContactPhone" class="block text-sm font-medium text-neutral-700 mb-1.5">Contact Phone</label>
+                            <input asp-for="ContactPhone" name="ContactPhone" type="tel"
+                                   class="w-full px-4 py-2.5 text-sm border border-neutral-300 rounded-lg 
+                                          focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200
+                                          hover:border-neutral-400" 
+                                   placeholder="e.g., +91-9876543210">
+                        </div>
+
+                        <div class="flex items-center">
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="IsActive" value="true" class="sr-only peer" checked>
+                                <input type="hidden" name="IsActive" value="false" />
+                                <div class="w-11 h-6 bg-neutral-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand-100 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-600"></div>
+                                <span class="ml-3 text-sm font-medium text-neutral-700">
+                                    Active (Include in synchronization)
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="flex items-center justify-end gap-3 pt-6 border-t border-neutral-200">
+                    <a href="@Url.Action("Index")" 
+                       class="inline-flex items-center px-5 py-2.5 bg-white text-neutral-700 text-sm font-medium rounded-lg
+                              border border-neutral-300 shadow-sm
+                              hover:bg-neutral-50 hover:border-neutral-400
+                              focus:outline-none focus:ring-2 focus:ring-neutral-500 focus:ring-offset-2
+                              transition-all duration-200">
+                        Cancel
+                    </a>
+                    <button type="submit" id="submitBtn"
+                            class="inline-flex items-center px-5 py-2.5 bg-brand-600 text-white text-sm font-medium rounded-lg shadow-sm
+                                   hover:bg-brand-700 hover:-translate-y-0.5 hover:shadow-md
+                                   focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2
+                                   transition-all duration-200">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Create Plant
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        // Toggle password visibility
+        function togglePassword() {
+            const input = document.getElementById('PasswordInput');
+            const icon = document.getElementById('eyeIcon');
+            if (!input || !icon) return;
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>';
+            } else {
+                input.type = 'password';
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>';
+            }
+        }
+        
+        // Toggle SQL Auth fields based on auth type
+        const authTypeSelect = document.getElementById('authType');
+        if (authTypeSelect) {
+            authTypeSelect.addEventListener('change', function() {
+                const sqlFields = document.getElementById('sqlAuthFields');
+                const usernameField = document.getElementById('UsernameInput');
+                const passwordField = document.getElementById('PasswordInput');
+                
+                if (this.value === 'windows') {
+                    if (sqlFields) sqlFields.style.display = 'none';
+                    if (usernameField) usernameField.value = '';
+                    if (passwordField) passwordField.value = '';
+                } else {
+                    if (sqlFields) sqlFields.style.display = 'grid';
+                }
+            });
+        }
+
+        // Get connection data from form
+        function getConnectionData() {
+            const serverIP = document.getElementById('ServerIP');
+            const port = document.getElementById('Port');
+            const username = document.getElementById('UsernameInput');
+            const password = document.getElementById('PasswordInput');
+            const authType = document.getElementById('authType');
+            
+            if (!serverIP) {
+                console.error('ServerIP field not found');
+                return null;
+            }
+            
+            // If Windows auth, don't send credentials
+            const isWindowsAuth = authType && authType.value === 'windows';
+            
+            return {
+                serverIP: serverIP.value,
+                port: parseInt(port && port.value ? port.value : 1433) || 1433,
+                databaseName: "master",
+                username: isWindowsAuth ? '' : (username && username.value ? username.value : ''),
+                password: isWindowsAuth ? '' : (password && password.value ? password.value : '')
+            };
+        }
+
+        // Show status message
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('connectionStatus');
+            const icon = type === 'success' ? '✓' : type === 'error' ? '✗' : '⏳';
+            const colorClass = type === 'success' ? 'text-emerald-600' : type === 'error' ? 'text-red-600' : 'text-blue-600';
+            statusDiv.innerHTML = `<span class="${colorClass}">${icon} ${message}</span>`;
+        }
+
+        // Enable database dropdown with options
+        function enableDatabaseDropdown(databases) {
+            const select = document.getElementById('databaseNameSelect');
+            const hidden = document.getElementById('databaseNameHidden');
+            const message = document.getElementById('dbSelectMessage');
+            
+            // Clear existing options
+            select.innerHTML = '<option value="">-- Select Database --</option>';
+            
+            // Add database options
+            databases.forEach(db => {
+                const option = document.createElement('option');
+                option.value = db;
+                option.textContent = db;
+                select.appendChild(option);
+            });
+            
+            // Enable the dropdown
+            select.disabled = false;
+            select.classList.remove('bg-neutral-50');
+            select.classList.add('bg-white');
+            
+            // Update message
+            message.textContent = `Found ${databases.length} database(s). Select one from the list.`;
+            message.classList.remove('text-neutral-500');
+            message.classList.add('text-emerald-600');
+            
+            // Add change event to update hidden field
+            select.addEventListener('change', function() {
+                hidden.value = this.value;
+                console.log('Database selected:', this.value);
+            });
+        }
+
+        // Connect and fetch databases
+        async function connectAndFetchDatabases() {
+            const btn = document.getElementById('connectBtn');
+            const btnText = document.getElementById('connectBtnText');
+            
+            const data = getConnectionData();
+            
+            if (!data) {
+                showStatus('Error: Could not read form data. Please refresh the page.', 'error');
+                return;
+            }
+            
+            if (!data.serverIP) {
+                showStatus('Please enter Server IP / Hostname', 'error');
+                return;
+            }
+
+            // Show loading state
+            btn.disabled = true;
+            btn.classList.add('opacity-75');
+            btnText.innerHTML = 'Connecting...';
+            showStatus('Connecting to SQL Server...', 'loading');
+
+            try {
+                // Step 1: Test connection to master database
+                const testResponse = await fetch('@Url.Action("TestConnection", "PlantConfiguration")', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const testResult = await testResponse.json();
+                
+                if (!testResult.success) {
+                    showStatus('Connection failed: ' + testResult.message, 'error');
+                    return;
+                }
+                
+                showStatus('Connection successful! Fetching databases...', 'loading');
+                
+                // Step 2: Fetch databases
+                const dbResponse = await fetch('@Url.Action("GetDatabases", "PlantConfiguration")', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const dbResult = await dbResponse.json();
+                
+                if (dbResult.success) {
+                    enableDatabaseDropdown(dbResult.databases);
+                    showStatus(`✓ Connected! Found ${dbResult.databases.length} database(s). Please select one.`, 'success');
+                } else {
+                    showStatus('Failed to fetch databases: ' + dbResult.message, 'error');
+                }
+            } catch (error) {
+                showStatus('Error: ' + error.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('opacity-75');
+                btnText.innerHTML = 'Connect & Fetch Databases';
+            }
+        }
+
+        // Test connection only (without fetching databases)
+        async function testConnectionOnly() {
+            const data = getConnectionData();
+            
+            if (!data) {
+                showStatus('Error: Could not read form data. Please refresh the page.', 'error');
+                return;
+            }
+            
+            if (!data.serverIP) {
+                showStatus('Please enter Server IP / Hostname', 'error');
+                return;
+            }
+
+            showStatus('Testing connection...', 'loading');
+
+            try {
+                const response = await fetch('@Url.Action("TestConnection", "PlantConfiguration")', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showStatus('✓ Connection successful! Click "Connect & Fetch Databases" to load database list.', 'success');
+                } else {
+                    showStatus('✗ Connection failed: ' + result.message, 'error');
+                }
+            } catch (error) {
+                showStatus('✗ Error: ' + error.message, 'error');
+            }
+        }
+
+        // Form validation before submit
+        document.getElementById('plantForm').addEventListener('submit', function(e) {
+            const dbHidden = document.getElementById('databaseNameHidden');
+            
+            if (!dbHidden.value) {
+                e.preventDefault();
+                showStatus('Please connect to server and select a database first!', 'error');
+                return false;
+            }
+            
+            if (window.LoadingManager) {
+                window.LoadingManager.show('Creating Plant...', 'Saving plant configuration to database');
+            }
+        });
+    </script>
+}

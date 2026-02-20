@@ -1,0 +1,201 @@
+@model List<Web.Core.DTOs.DailySummaryRecord>
+@{
+    ViewData["Title"] = "Daily Summary Report";
+    var startDate = Context.Request.Query["startDate"].FirstOrDefault() ?? DateTime.Now.AddDays(-30).ToString("yyyy-MM-dd");
+    var endDate = Context.Request.Query["endDate"].FirstOrDefault() ?? DateTime.Now.ToString("yyyy-MM-dd");
+}
+
+<div class="bg-neutral-100 min-h-full">
+    <!-- Page Header -->
+    <div class="border-b border-neutral-200 bg-white/80 backdrop-blur-sm sticky top-16 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div class="min-w-0 flex-1">
+                    <a href="@Url.Action("Dashboard")" 
+                       class="group inline-flex items-center text-sm text-neutral-500 hover:text-brand-600 mb-2 transition-colors duration-200">
+                        <svg class="mr-1.5 h-4 w-4 transition-transform duration-200 group-hover:-translate-x-0.5" 
+                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                        </svg>
+                        Back to Dashboard
+                    </a>
+                    <h1 class="text-2xl font-bold text-neutral-900 tracking-tight">Daily Summary Report</h1>
+                    <p class="mt-1 text-sm text-neutral-500">Track daily performance metrics over time</p>
+                </div>
+                
+                <div class="flex items-center gap-3 flex-shrink-0">
+                    <button type="button" onclick="exportToCSV()" 
+                            class="inline-flex items-center px-3 py-2 text-sm font-medium text-neutral-600 bg-white border border-neutral-300 rounded-lg hover:bg-neutral-50 hover:border-neutral-400 transition-all duration-200">
+                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                        Export CSV
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        <!-- Date Filter -->
+        <div class="bg-white rounded-xl shadow-card border border-neutral-200 p-5">
+            <form method="get" class="flex flex-col sm:flex-row gap-4 items-end">
+                <div class="flex-1 w-full">
+                    <label class="block text-sm font-medium text-neutral-700 mb-1">Start Date</label>
+                    <input type="date" name="startDate" value="@startDate" 
+                           class="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm"/>
+                </div>
+                <div class="flex-1 w-full">
+                    <label class="block text-sm font-medium text-neutral-700 mb-1">End Date</label>
+                    <input type="date" name="endDate" value="@endDate" 
+                           class="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm"/>
+                </div>
+                <div class="flex gap-2">
+                    <button type="submit" 
+                            class="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors">
+                        Apply Filter
+                    </button>
+                    <a href="@Url.Action("DailySummary")" 
+                       class="px-4 py-2 bg-neutral-100 text-neutral-700 text-sm font-medium rounded-lg hover:bg-neutral-200 transition-colors">
+                        Reset
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        @if (Model != null && Model.Any())
+        {
+            <!-- Summary Cards -->
+            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div class="bg-white rounded-xl shadow-card border border-neutral-200 p-5">
+                    <p class="text-xs font-medium text-neutral-500 uppercase tracking-wide">Total Days</p>
+                    <p class="mt-2 text-2xl font-bold text-neutral-900">@Model.Count</p>
+                </div>
+                <div class="bg-white rounded-xl shadow-card border border-neutral-200 p-5">
+                    <p class="text-xs font-medium text-neutral-500 uppercase tracking-wide">Total Boxes</p>
+                    <p class="mt-2 text-2xl font-bold text-neutral-900">@Model.Sum(m => m.TotalBoxes).ToString("N0")</p>
+                </div>
+                <div class="bg-white rounded-xl shadow-card border border-neutral-200 p-5">
+                    <p class="text-xs font-medium text-neutral-500 uppercase tracking-wide">Avg Match Rate</p>
+                    <p class="mt-2 text-2xl font-bold text-emerald-600">@Model.Average(m => m.MatchRatePercent).ToString("F1")%</p>
+                </div>
+                <div class="bg-white rounded-xl shadow-card border border-neutral-200 p-5">
+                    <p class="text-xs font-medium text-neutral-500 uppercase tracking-wide">Total Issues</p>
+                    <p class="mt-2 text-2xl font-bold text-red-600">@Model.Sum(m => m.MissingAtTo + m.MissingAtFrom + m.BothFailed).ToString("N0")</p>
+                </div>
+            </div>
+
+            <!-- Data Table -->
+            <div class="bg-white rounded-xl shadow-card border border-neutral-200 overflow-hidden">
+                <div class="px-6 py-4 border-b border-neutral-200 bg-neutral-50/50">
+                    <h2 class="text-lg font-semibold text-neutral-900">Daily Breakdown</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-neutral-200" id="dataTable">
+                        <thead class="bg-neutral-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Date</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Total</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Matched</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Missing @@TO</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Missing @@FROM</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Both Fail</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Match %</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Avg Transit</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">FROM NO READ</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">TO NO READ</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-neutral-200">
+                            @foreach (var record in Model)
+                            {
+                                <tr class="hover:bg-brand-50/50 transition-colors duration-150">
+                                    <td class="px-4 py-3 text-sm font-medium text-neutral-900">@record.ReportDate.ToString("yyyy-MM-dd")</td>
+                                    <td class="px-4 py-3 text-sm text-neutral-700">@record.TotalBoxes.ToString("N0")</td>
+                                    <td class="px-4 py-3 text-sm text-emerald-600 font-semibold">@record.Matched.ToString("N0")</td>
+                                    <td class="px-4 py-3 text-sm text-red-600">@record.MissingAtTo.ToString("N0")</td>
+                                    <td class="px-4 py-3 text-sm text-red-600">@record.MissingAtFrom.ToString("N0")</td>
+                                    <td class="px-4 py-3 text-sm text-red-600">@record.BothFailed.ToString("N0")</td>
+                                    <td class="px-4 py-3 text-sm">
+                                        @await Html.PartialAsync("_Badge", new { 
+                                            Variant = record.MatchRatePercent >= 95 ? "success" : record.MatchRatePercent >= 85 ? "warning" : "danger", 
+                                            Text = $"{record.MatchRatePercent:F1}%",
+                                            Size = "sm"
+                                        })
+                                    </td>
+                                    <td class="px-4 py-3 text-sm text-neutral-700">
+                                        @if (record.AvgTransitSeconds.HasValue)
+                                        {
+                                            var mins = record.AvgTransitSeconds.Value / 60;
+                                            var secs = record.AvgTransitSeconds.Value % 60;
+                                            <span>@mins min @secs sec</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-neutral-400">—</span>
+                                        }
+                                    </td>
+                                    <td class="px-4 py-3 text-sm text-neutral-700">@record.FromNoReadCount</td>
+                                    <td class="px-4 py-3 text-sm text-neutral-700">@record.ToNoReadCount</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+        else
+        {
+            @await Html.PartialAsync("_EmptyState", new {
+                Icon = "calendar",
+                Title = "No data available",
+                Message = $"No records found for the selected date range ({startDate} to {endDate}). Try adjusting your filters."
+            })
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Show loading on form submission
+        document.querySelector('form').addEventListener('submit', function() {
+            if (window.LoadingManager) {
+                window.LoadingManager.show('Loading Report...', 'Fetching data for selected date range');
+            }
+        });
+        
+        function exportToCSV() {
+            const table = document.getElementById('dataTable');
+            if (!table) return;
+            
+            if (window.LoadingManager) {
+                window.LoadingManager.show('Exporting...', 'Preparing CSV file for download');
+            }
+            
+            let csv = [];
+            const rows = table.querySelectorAll('tr');
+            
+            for (let i = 0; i < rows.length; i++) {
+                let row = [], cols = rows[i].querySelectorAll('td, th');
+                for (let j = 0; j < cols.length; j++) 
+                    row.push(cols[j].innerText);
+                csv.push(row.join(','));
+            }
+            
+            const csvContent = 'data:text/csv;charset=utf-8,' + csv.join('\n');
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement('a');
+            link.setAttribute('href', encodedUri);
+            link.setAttribute('download', 'daily_summary_report.csv');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            setTimeout(function() {
+                if (window.LoadingManager) {
+                    window.LoadingManager.hide();
+                }
+            }, 1000);
+        }
+    </script>
+}

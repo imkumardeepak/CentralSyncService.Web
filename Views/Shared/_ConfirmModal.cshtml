@@ -1,0 +1,199 @@
+@*
+    Confirmation Modal Component
+    This partial should be included once in _Layout.cshtml
+    
+    JavaScript API:
+    - showConfirmModal(title, message, onConfirm, variant)
+    - closeConfirmModal()
+    
+    Example:
+    showConfirmModal(
+        'Delete Plant?', 
+        'This will permanently remove the plant configuration.', 
+        () => document.getElementById('deleteForm').submit(),
+        'danger'
+    );
+*@
+
+<!-- Modal Container -->
+<div id="confirmModal" 
+     class="fixed inset-0 z-[100] hidden"
+     aria-labelledby="confirm-modal-title" 
+     role="dialog" 
+     aria-modal="true">
+    
+    <!-- Backdrop with blur -->
+    <div id="confirmModalBackdrop"
+         class="fixed inset-0 bg-neutral-900/60 backdrop-blur-sm transition-opacity duration-300 opacity-0"></div>
+    
+    <!-- Modal Panel Container -->
+    <div class="fixed inset-0 z-10 overflow-y-auto">
+        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            
+            <!-- Modal Panel -->
+            <div id="confirmModalPanel"
+                 class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-2xl 
+                        transition-all duration-300 sm:my-8 sm:w-full sm:max-w-lg
+                        opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
+                
+                <!-- Close button -->
+                <button type="button" 
+                        onclick="closeConfirmModal()"
+                        class="absolute top-4 right-4 p-1 rounded-lg text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 transition-colors focus:outline-none focus:ring-2 focus:ring-neutral-500">
+                    <span class="sr-only">Close</span>
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+                
+                <!-- Header with Icon -->
+                <div id="confirmModalHeader" class="px-6 pt-6 pb-4">
+                    <div class="flex items-start gap-4">
+                        <div id="confirmModalIcon" class="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                            <!-- Icon inserted by JS based on variant -->
+                            <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                            </svg>
+                        </div>
+                        <div class="flex-1 pt-0.5">
+                            <h3 id="confirm-modal-title" class="text-lg font-semibold text-neutral-900">
+                                Confirm Action
+                            </h3>
+                            <p id="confirmModalMessage" class="mt-2 text-sm text-neutral-600">
+                                Are you sure you want to proceed? This action cannot be undone.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Footer with Actions -->
+                <div class="bg-neutral-50 px-6 py-4 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+                    <button type="button" 
+                            onclick="closeConfirmModal()"
+                            class="w-full sm:w-auto inline-flex justify-center items-center px-4 py-2.5 
+                                   bg-white text-neutral-700 text-sm font-medium rounded-lg 
+                                   border border-neutral-300 shadow-sm
+                                   hover:bg-neutral-50 hover:border-neutral-400
+                                   focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2
+                                   transition-all duration-200">
+                        Cancel
+                    </button>
+                    <button type="button" 
+                            id="confirmModalConfirmBtn"
+                            class="w-full sm:w-auto inline-flex justify-center items-center px-4 py-2.5 
+                                   bg-red-600 text-white text-sm font-medium rounded-lg shadow-sm
+                                   hover:bg-red-700
+                                   focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2
+                                   transition-all duration-200">
+                        Confirm
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Modal state
+    let confirmModalCallback = null;
+    
+    function showConfirmModal(title, message, onConfirm, variant = 'danger') {
+        const modal = document.getElementById('confirmModal');
+        const backdrop = document.getElementById('confirmModalBackdrop');
+        const panel = document.getElementById('confirmModalPanel');
+        const titleEl = document.getElementById('confirm-modal-title');
+        const messageEl = document.getElementById('confirmModalMessage');
+        const confirmBtn = document.getElementById('confirmModalConfirmBtn');
+        const iconContainer = document.getElementById('confirmModalIcon');
+        
+        // Set content
+        titleEl.textContent = title;
+        messageEl.textContent = message;
+        confirmModalCallback = onConfirm;
+        
+        // Set variant styling
+        const variants = {
+            danger: {
+                iconBg: 'bg-red-100',
+                iconColor: 'text-red-600',
+                btnBg: 'bg-red-600 hover:bg-red-700 focus:ring-red-500',
+                icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>'
+            },
+            warning: {
+                iconBg: 'bg-amber-100',
+                iconColor: 'text-amber-600',
+                btnBg: 'bg-amber-600 hover:bg-amber-700 focus:ring-amber-500',
+                icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>'
+            },
+            info: {
+                iconBg: 'bg-blue-100',
+                iconColor: 'text-blue-600',
+                btnBg: 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500',
+                icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>'
+            }
+        };
+        
+        const v = variants[variant] || variants.danger;
+        
+        // Update icon container
+        iconContainer.className = `flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full ${v.iconBg}`;
+        iconContainer.innerHTML = `<svg class="h-6 w-6 ${v.iconColor}" fill="none" stroke="currentColor" viewBox="0 0 24 24">${v.icon}</svg>`;
+        
+        // Update confirm button
+        confirmBtn.className = `w-full sm:w-auto inline-flex justify-center items-center px-4 py-2.5 text-white text-sm font-medium rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 ${v.btnBg}`;
+        
+        // Set confirm action
+        confirmBtn.onclick = () => {
+            if (confirmModalCallback) {
+                confirmModalCallback();
+            }
+            closeConfirmModal();
+        };
+        
+        // Show modal
+        modal.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+        
+        // Animate in
+        requestAnimationFrame(() => {
+            backdrop.classList.remove('opacity-0');
+            panel.classList.remove('opacity-0', 'translate-y-4', 'sm:scale-95');
+            panel.classList.add('opacity-100', 'translate-y-0', 'sm:scale-100');
+        });
+        
+        // Focus the confirm button
+        confirmBtn.focus();
+    }
+    
+    function closeConfirmModal() {
+        const modal = document.getElementById('confirmModal');
+        const backdrop = document.getElementById('confirmModalBackdrop');
+        const panel = document.getElementById('confirmModalPanel');
+        
+        // Animate out
+        backdrop.classList.add('opacity-0');
+        panel.classList.add('opacity-0', 'translate-y-4', 'sm:scale-95');
+        panel.classList.remove('opacity-100', 'translate-y-0', 'sm:scale-100');
+        
+        // Hide after animation
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+            confirmModalCallback = null;
+        }, 200);
+    }
+    
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('confirmModal');
+            if (!modal.classList.contains('hidden')) {
+                closeConfirmModal();
+            }
+        }
+    });
+    
+    // Close on backdrop click
+    document.getElementById('confirmModalBackdrop')?.addEventListener('click', closeConfirmModal);
+</script>

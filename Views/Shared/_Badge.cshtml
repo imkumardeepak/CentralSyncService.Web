@@ -1,0 +1,74 @@
+@*
+    Status Badge Component
+    Usage: @await Html.PartialAsync("_Badge", new { 
+        Variant = "success", // success, warning, danger, info, neutral
+        Text = "Active",
+        ShowDot = true,
+        Pulse = false,
+        Size = "sm" // xs, sm, md
+    })
+*@
+@{
+    // Safely extract properties from the model
+    var modelType = ViewData.Model?.GetType();
+    var variant = "neutral";
+    var text = "";
+    var showDot = false;
+    var pulse = false;
+    var size = "sm";
+    
+    if (ViewData.Model != null)
+    {
+        try
+        {
+            var v = modelType?.GetProperty("Variant")?.GetValue(ViewData.Model);
+            if (v != null) variant = v.ToString();
+            
+            var t = modelType?.GetProperty("Text")?.GetValue(ViewData.Model);
+            if (t != null) text = t.ToString();
+            
+            var sd = modelType?.GetProperty("ShowDot")?.GetValue(ViewData.Model);
+            if (sd != null) showDot = Convert.ToBoolean(sd);
+            
+            var p = modelType?.GetProperty("Pulse")?.GetValue(ViewData.Model);
+            if (p != null) pulse = Convert.ToBoolean(p);
+            
+            var s = modelType?.GetProperty("Size")?.GetValue(ViewData.Model);
+            if (s != null) size = s.ToString();
+        }
+        catch { }
+    }
+    
+    // Base classes for the badge
+    var sizeClasses = size switch {
+        "xs" => "px-1.5 py-0.5 text-[10px]",
+        "md" => "px-3 py-1 text-sm",
+        _ => "px-2.5 py-0.5 text-xs" // sm (default)
+    };
+    
+    // Color classes based on variant
+    var colorClasses = variant switch {
+        "success" => "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20",
+        "warning" => "bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20",
+        "danger" => "bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20",
+        "info" => "bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-600/20",
+        _ => "bg-neutral-100 text-neutral-600 ring-1 ring-inset ring-neutral-500/20"
+    };
+    
+    // Dot color classes
+    var dotColorClasses = variant switch {
+        "success" => "bg-emerald-500",
+        "warning" => "bg-amber-500",
+        "danger" => "bg-red-500",
+        "info" => "bg-blue-500",
+        _ => "bg-neutral-500"
+    };
+}
+
+<span class="inline-flex items-center @sizeClasses rounded-full font-medium @colorClasses whitespace-nowrap">
+    @if (showDot)
+    {
+        <span class="w-1.5 h-1.5 rounded-full mr-1.5 @dotColorClasses @(pulse ? "animate-pulse" : "")"></span>
+    }
+    @text
+</span>

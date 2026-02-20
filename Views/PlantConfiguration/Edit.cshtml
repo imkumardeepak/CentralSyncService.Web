@@ -1,0 +1,450 @@
+@model Web.Core.Entities.PlantConfiguration
+@{
+    ViewData["Title"] = "Edit Plant";
+    var hasUsername = !string.IsNullOrEmpty(Model.Username);
+}
+
+<div class="bg-neutral-100 min-h-full py-6">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Breadcrumb -->
+        <nav class="mb-6" aria-label="Breadcrumb">
+            <ol class="flex items-center space-x-2 text-sm">
+                <li>
+                    <a href="@Url.Action("Index")" class="text-neutral-500 hover:text-brand-600 transition-colors">
+                        Plant Configuration
+                    </a>
+                </li>
+                <li class="text-neutral-300">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                </li>
+                <li class="text-neutral-900 font-medium">Edit: @Model.PlantName</li>
+            </ol>
+        </nav>
+
+        <!-- Form Card -->
+        <div class="bg-white rounded-xl shadow-card overflow-hidden animate-fade-in">
+            <!-- Header -->
+            <div class="px-6 py-5 border-b border-neutral-200 bg-gradient-to-r from-amber-50 to-white">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div class="flex-shrink-0 w-12 h-12 rounded-xl @(Model.PlantType == "FROM" ? "bg-amber-100" : "bg-purple-100") flex items-center justify-center">
+                            <span class="font-bold text-sm @(Model.PlantType == "FROM" ? "text-amber-700" : "text-purple-700")">@Model.PlantType</span>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold text-neutral-900">Edit Plant Configuration</h2>
+                            <p class="text-sm text-neutral-500 mt-0.5">@Model.PlantCode</p>
+                        </div>
+                    </div>
+                    @await Html.PartialAsync("_Badge", new { 
+                        Variant = Model.IsActive ? "success" : "danger", 
+                        Text = Model.IsActive ? "Active" : "Inactive",
+                        ShowDot = true
+                    })
+                </div>
+            </div>
+
+<form asp-action="Edit" method="post" class="p-6" id="plantForm" novalidate>
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" value="@Model.Id" />
+                <input type="hidden" name="CreatedDate" value="@Model.CreatedDate.ToString("yyyy-MM-ddTHH:mm:ss")" />
+                <input type="hidden" name="CreatedBy" value="@Model.CreatedBy" />
+                
+                <!-- Validation Summary -->
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                        <div class="flex">
+                            <svg class="h-5 w-5 text-red-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <div>
+                                <h3 class="text-sm font-medium text-red-800">Please fix the following errors:</h3>
+                                <div asp-validation-summary="All" class="mt-2 text-sm text-red-700"></div>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <!-- Basic Information Section -->
+                <div class="mb-8">
+                    <div class="flex items-center gap-2 mb-5">
+                        <div class="w-8 h-8 rounded-lg bg-neutral-100 flex items-center justify-center text-neutral-600 font-semibold text-sm">1</div>
+                        <h3 class="text-lg font-semibold text-neutral-900">Basic Information</h3>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label asp-for="PlantCode" class="block text-sm font-medium text-neutral-700 mb-1.5">
+                                Plant Code <span class="text-red-500">*</span>
+                            </label>
+                            <input asp-for="PlantCode" 
+                                   class="w-full px-4 py-2.5 text-sm border border-neutral-300 rounded-lg 
+                                          focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200
+                                          hover:border-neutral-400" 
+                                   placeholder="e.g., FROM-HDR-01">
+                            <span asp-validation-for="PlantCode" class="text-red-600 text-xs mt-1 block"></span>
+                        </div>
+
+                        <div>
+                            <label asp-for="PlantType" class="block text-sm font-medium text-neutral-700 mb-1.5">
+                                Plant Type <span class="text-red-500">*</span>
+                            </label>
+                            <select asp-for="PlantType" 
+                                    class="w-full px-4 py-2.5 text-sm border border-neutral-300 rounded-lg 
+                                           focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200
+                                           hover:border-neutral-400">
+                                <option value="">Select Type</option>
+                                <option value="FROM" selected="@(Model.PlantType == "FROM")">FROM Plant (Source)</option>
+                                <option value="TO" selected="@(Model.PlantType == "TO")">TO Plant (Destination)</option>
+                            </select>
+                            <span asp-validation-for="PlantType" class="text-red-600 text-xs mt-1 block"></span>
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label asp-for="PlantName" class="block text-sm font-medium text-neutral-700 mb-1.5">
+                                Plant Name <span class="text-red-500">*</span>
+                            </label>
+                            <input asp-for="PlantName" 
+                                   class="w-full px-4 py-2.5 text-sm border border-neutral-300 rounded-lg 
+                                          focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200
+                                          hover:border-neutral-400" 
+                                   placeholder="e.g., Haldiram FROM Plant - Delhi">
+                            <span asp-validation-for="PlantName" class="text-red-600 text-xs mt-1 block"></span>
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label asp-for="Description" class="block text-sm font-medium text-neutral-700 mb-1.5">Description</label>
+                            <textarea asp-for="Description" rows="3" 
+                                      class="w-full px-4 py-2.5 text-sm border border-neutral-300 rounded-lg 
+                                             focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200
+                                             hover:border-neutral-400 resize-none" 
+                                      placeholder="Brief description of this plant configuration..."></textarea>
+                            <span asp-validation-for="Description" class="text-red-600 text-xs mt-1 block"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Database Connection Section -->
+                <div class="mb-8">
+                    <div class="flex items-center gap-2 mb-5">
+                        <div class="w-8 h-8 rounded-lg bg-neutral-100 flex items-center justify-center text-neutral-600 font-semibold text-sm">2</div>
+                        <h3 class="text-lg font-semibold text-neutral-900">Database Connection</h3>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label asp-for="ServerIP" class="block text-sm font-medium text-neutral-700 mb-1.5">
+                                Server IP / Hostname <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <svg class="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/>
+                                    </svg>
+                                </div>
+                                <input asp-for="ServerIP" type="text" 
+                                       class="w-full pl-10 pr-4 py-2.5 text-sm border border-neutral-300 rounded-lg 
+                                              focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200
+                                              hover:border-neutral-400" 
+                                       placeholder="e.g., 192.168.10.50">
+                            </div>
+                            <span asp-validation-for="ServerIP" class="text-red-600 text-xs mt-1 block"></span>
+                        </div>
+
+                        <div>
+                            <label asp-for="Port" class="block text-sm font-medium text-neutral-700 mb-1.5">Port</label>
+                            <input asp-for="Port" type="number" 
+                                   class="w-full px-4 py-2.5 text-sm border border-neutral-300 rounded-lg 
+                                          focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200
+                                          hover:border-neutral-400">
+                            <p class="text-xs text-neutral-500 mt-1">Default SQL Server port is 1433</p>
+                        </div>
+
+                        <div>
+                            <label asp-for="DatabaseName" class="block text-sm font-medium text-neutral-700 mb-1.5">
+                                Database Name <span class="text-red-500">*</span>
+                            </label>
+                            <input asp-for="DatabaseName" 
+                                   class="w-full px-4 py-2.5 text-sm border border-neutral-300 rounded-lg 
+                                          focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200
+                                          hover:border-neutral-400" 
+                                   placeholder="e.g., PlantLineDB">
+                            <span asp-validation-for="DatabaseName" class="text-red-600 text-xs mt-1 block"></span>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-neutral-700 mb-1.5">Authentication Type</label>
+                            <select id="authType" 
+                                    class="w-full px-4 py-2.5 text-sm border border-neutral-300 rounded-lg 
+                                           focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200
+                                           hover:border-neutral-400">
+                                <option value="sql" @(hasUsername ? "selected" : "")>SQL Server Authentication</option>
+                                <option value="windows" @(!hasUsername ? "selected" : "")>Windows Authentication</option>
+                            </select>
+                        </div>
+
+                        <div id="sqlAuthFields" class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-5 p-4 bg-neutral-50 rounded-lg border border-neutral-200" style="@(!hasUsername ? "display:none" : "")">
+                            <div>
+                                <label asp-for="Username" class="block text-sm font-medium text-neutral-700 mb-1.5">Username</label>
+                                <input asp-for="Username" 
+                                       class="w-full px-4 py-2.5 text-sm border border-neutral-300 rounded-lg bg-white
+                                              focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200
+                                              hover:border-neutral-400" 
+                                       placeholder="e.g., sa">
+                                <span asp-validation-for="Username" class="text-red-600 text-xs mt-1 block"></span>
+                            </div>
+
+                            <div>
+                                <label asp-for="Password" class="block text-sm font-medium text-neutral-700 mb-1.5">
+                                    Password
+                                    <span class="text-neutral-400 font-normal">(leave blank to keep current)</span>
+                                </label>
+                                <div class="relative">
+                                    <input asp-for="Password" type="password" id="passwordInput"
+                                           class="w-full px-4 py-2.5 pr-10 text-sm border border-neutral-300 rounded-lg bg-white
+                                                  focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200
+                                                  hover:border-neutral-400"
+                                           placeholder="••••••••">
+                                    <button type="button" onclick="togglePassword()" 
+                                            class="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-600">
+                                        <svg id="eyeIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <span asp-validation-for="Password" class="text-red-600 text-xs mt-1 block"></span>
+                            </div>
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <button type="button" onclick="testConnection()" id="testConnectionBtn"
+                                    class="inline-flex items-center px-4 py-2.5 bg-neutral-800 text-white text-sm font-medium rounded-lg
+                                           hover:bg-neutral-700 focus:outline-none focus:ring-2 focus:ring-neutral-500 focus:ring-offset-2
+                                           transition-all duration-200">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                </svg>
+                                <span id="testBtnText">Test Connection</span>
+                            </button>
+                            <span id="connectionResult" class="ml-4 text-sm"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Location & Contact Section -->
+                <div class="mb-8">
+                    <div class="flex items-center gap-2 mb-5">
+                        <div class="w-8 h-8 rounded-lg bg-neutral-100 flex items-center justify-center text-neutral-600 font-semibold text-sm">3</div>
+                        <h3 class="text-lg font-semibold text-neutral-900">Location & Contact</h3>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label asp-for="Location" class="block text-sm font-medium text-neutral-700 mb-1.5">Location</label>
+                            <input asp-for="Location" 
+                                   class="w-full px-4 py-2.5 text-sm border border-neutral-300 rounded-lg 
+                                          focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200
+                                          hover:border-neutral-400" 
+                                   placeholder="e.g., Delhi, India">
+                        </div>
+
+                        <div>
+                            <label asp-for="ContactPerson" class="block text-sm font-medium text-neutral-700 mb-1.5">Contact Person</label>
+                            <input asp-for="ContactPerson" 
+                                   class="w-full px-4 py-2.5 text-sm border border-neutral-300 rounded-lg 
+                                          focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200
+                                          hover:border-neutral-400" 
+                                   placeholder="e.g., Rajesh Kumar">
+                        </div>
+
+                        <div>
+                            <label asp-for="ContactPhone" class="block text-sm font-medium text-neutral-700 mb-1.5">Contact Phone</label>
+                            <input asp-for="ContactPhone" type="tel" 
+                                   class="w-full px-4 py-2.5 text-sm border border-neutral-300 rounded-lg 
+                                          focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all duration-200
+                                          hover:border-neutral-400" 
+                                   placeholder="e.g., +91-9876543210">
+                        </div>
+
+                        <div class="flex items-center">
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input asp-for="IsActive" type="checkbox" class="sr-only peer">
+                                <div class="w-11 h-6 bg-neutral-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand-100 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-600"></div>
+                                <span class="ml-3 text-sm font-medium text-neutral-700">
+                                    Active (Include in synchronization)
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sync Status Info -->
+                @if (Model.LastSyncSuccess.HasValue || !string.IsNullOrEmpty(Model.LastSyncStatus))
+                {
+                    <div class="mb-8 p-4 bg-neutral-50 rounded-lg border border-neutral-200">
+                        <div class="flex items-center gap-2 mb-3">
+                            <svg class="w-5 h-5 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <h4 class="text-sm font-semibold text-neutral-900">Last Sync Information</h4>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <span class="text-neutral-500">Last Successful Sync:</span>
+                                <span class="ml-2 font-medium text-neutral-900">
+                                    @(Model.LastSyncSuccess?.ToString("yyyy-MM-dd HH:mm:ss") ?? "Never")
+                                </span>
+                            </div>
+                            <div>
+                                <span class="text-neutral-500">Status:</span>
+                                <span class="ml-2">
+                                    @if (!string.IsNullOrEmpty(Model.LastSyncStatus))
+                                    {
+                                        @await Html.PartialAsync("_Badge", new { 
+                                            Variant = Model.LastSyncSuccess.HasValue ? "success" : "danger", 
+                                            Text = Model.LastSyncStatus
+                                        })
+                                    }
+                                    else
+                                    {
+                                        <span class="text-neutral-400">—</span>
+                                    }
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <!-- Form Actions -->
+                <div class="flex items-center justify-between pt-6 border-t border-neutral-200">
+                    <a href="@Url.Action("Delete", new { id = Model.Id })" 
+                       class="inline-flex items-center px-4 py-2 text-red-600 text-sm font-medium 
+                              hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors">
+                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                        Delete Plant
+                    </a>
+                    
+                    <div class="flex items-center gap-3">
+                        <a href="@Url.Action("Index")" 
+                           class="inline-flex items-center px-5 py-2.5 bg-white text-neutral-700 text-sm font-medium rounded-lg
+                                  border border-neutral-300 shadow-sm
+                                  hover:bg-neutral-50 hover:border-neutral-400
+                                  focus:outline-none focus:ring-2 focus:ring-neutral-500 focus:ring-offset-2
+                                  transition-all duration-200">
+                            Cancel
+                        </a>
+                        <button type="submit" 
+                                class="inline-flex items-center px-5 py-2.5 bg-brand-600 text-white text-sm font-medium rounded-lg shadow-sm
+                                       hover:bg-brand-700 hover:-translate-y-0.5 hover:shadow-md
+                                       focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2
+                                       transition-all duration-200">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            Save Changes
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        // Toggle password visibility
+        function togglePassword() {
+            const input = document.getElementById('passwordInput');
+            const icon = document.getElementById('eyeIcon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>';
+            } else {
+                input.type = 'password';
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>';
+            }
+        }
+        
+        // Toggle SQL Auth fields based on auth type
+        document.getElementById('authType').addEventListener('change', function() {
+            const sqlFields = document.getElementById('sqlAuthFields');
+            if (this.value === 'windows') {
+                sqlFields.style.display = 'none';
+                document.querySelector('[name="Username"]').value = '';
+                document.querySelector('[name="Password"]').value = '';
+            } else {
+                sqlFields.style.display = 'grid';
+            }
+        });
+
+        // Test database connection
+        async function testConnection() {
+            const btn = document.getElementById('testConnectionBtn');
+            const btnText = document.getElementById('testBtnText');
+            const result = document.getElementById('connectionResult');
+            
+            // Show loading state
+            btn.disabled = true;
+            btn.classList.add('opacity-75');
+            btnText.innerHTML = 'Testing...';
+            result.innerHTML = '<span class="text-blue-600">⏳ Connecting to database...</span>';
+
+            const data = {
+                serverIP: document.querySelector('[name="ServerIP"]').value,
+                port: parseInt(document.querySelector('[name="Port"]').value) || 1433,
+                databaseName: document.querySelector('[name="DatabaseName"]').value,
+                username: document.querySelector('[name="Username"]').value,
+                password: document.querySelector('[name="Password"]').value
+            };
+
+            if (!data.serverIP || !data.databaseName) {
+                result.innerHTML = '<span class="text-red-600">❌ Please fill in Server IP and Database Name</span>';
+                btn.disabled = false;
+                btn.classList.remove('opacity-75');
+                btnText.innerHTML = 'Test Connection';
+                return;
+            }
+
+            try {
+                const response = await fetch('@Url.Action("TestConnection", "PlantConfiguration")', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const resultData = await response.json();
+                
+                if (resultData.success) {
+                    result.innerHTML = '<span class="inline-flex items-center text-emerald-600"><svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>' + resultData.message + '</span>';
+                    Toast.success('Connection Successful', resultData.message);
+                } else {
+                    result.innerHTML = '<span class="text-red-600">❌ ' + resultData.message + '</span>';
+                    Toast.error('Connection Failed', resultData.message);
+                }
+            } catch (error) {
+                result.innerHTML = '<span class="text-red-600">❌ Error: ' + error.message + '</span>';
+                Toast.error('Error', error.message);
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('opacity-75');
+                btnText.innerHTML = 'Test Connection';
+            }
+        }
+        
+        // Show loading on form submission
+        document.querySelector('form').addEventListener('submit', function() {
+            if (window.LoadingManager) {
+                window.LoadingManager.show('Saving Changes...', 'Updating plant configuration');
+            }
+        });
+    </script>
+}

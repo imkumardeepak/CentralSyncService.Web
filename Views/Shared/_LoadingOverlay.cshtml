@@ -1,0 +1,144 @@
+@*
+    Global Loading Overlay Component
+    Usage: Add this to _Layout.cshtml for global loading
+    Show: document.getElementById('globalLoadingOverlay').classList.remove('hidden')
+    Hide: document.getElementById('globalLoadingOverlay').classList.add('hidden')
+*@
+
+<!-- Global Loading Overlay -->
+<div id="globalLoadingOverlay" class="fixed inset-0 z-[9999] hidden" aria-hidden="true">
+    <!-- Backdrop -->
+    <div class="absolute inset-0 bg-neutral-900/50 backdrop-blur-sm transition-opacity"></div>
+    
+    <!-- Loading Content -->
+    <div class="relative flex items-center justify-center min-h-screen">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4 transform transition-all">
+            <!-- Spinner Animation -->
+            <div class="flex justify-center mb-6">
+                <div class="relative">
+                    <!-- Outer ring -->
+                    <div class="w-16 h-16 border-4 border-neutral-200 rounded-full"></div>
+                    <!-- Animated spinner -->
+                    <div class="w-16 h-16 border-4 border-brand-500 border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
+                    <!-- Inner dot -->
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <div class="w-3 h-3 bg-brand-500 rounded-full animate-pulse"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Loading Text -->
+            <div class="text-center">
+                <h3 id="loadingTitle" class="text-lg font-semibold text-neutral-900 mb-2">Loading...</h3>
+                <p id="loadingMessage" class="text-sm text-neutral-500">Please wait while we process your request</p>
+            </div>
+            
+            <!-- Progress bar (optional) -->
+            <div id="loadingProgress" class="mt-6 hidden">
+                <div class="h-2 bg-neutral-100 rounded-full overflow-hidden">
+                    <div id="loadingProgressBar" class="h-full bg-brand-500 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <p id="loadingProgressText" class="text-xs text-neutral-500 text-center mt-2">0%</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Page Transition Loading (shows on navigation) -->
+<div id="pageTransitionLoader" class="fixed inset-x-0 top-0 z-[9998] hidden">
+    <div class="h-1 bg-gradient-to-r from-transparent via-brand-500 to-transparent animate-[loading_1.5s_ease-in-out_infinite]"></div>
+</div>
+
+<style>
+    @@keyframes loading {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+</style>
+
+<script>
+    // Global Loading Manager
+    window.LoadingManager = {
+        overlay: document.getElementById('globalLoadingOverlay'),
+        title: document.getElementById('loadingTitle'),
+        message: document.getElementById('loadingMessage'),
+        progress: document.getElementById('loadingProgress'),
+        progressBar: document.getElementById('loadingProgressBar'),
+        progressText: document.getElementById('loadingProgressText'),
+        pageLoader: document.getElementById('pageTransitionLoader'),
+        
+        show: function(title, message) {
+            if (this.overlay) {
+                this.title.textContent = title || 'Loading...';
+                this.message.textContent = message || 'Please wait while we process your request';
+                this.progress.classList.add('hidden');
+                this.overlay.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+        },
+        
+        hide: function() {
+            if (this.overlay) {
+                this.overlay.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+        },
+        
+        showWithProgress: function(title, message) {
+            this.show(title, message);
+            if (this.progress) {
+                this.progress.classList.remove('hidden');
+                this.updateProgress(0);
+            }
+        },
+        
+        updateProgress: function(percent) {
+            if (this.progressBar && this.progressText) {
+                this.progressBar.style.width = percent + '%';
+                this.progressText.textContent = Math.round(percent) + '%';
+            }
+        },
+        
+        showPageLoader: function() {
+            if (this.pageLoader) {
+                this.pageLoader.classList.remove('hidden');
+            }
+        },
+        
+        hidePageLoader: function() {
+            if (this.pageLoader) {
+                this.pageLoader.classList.add('hidden');
+            }
+        }
+    };
+    
+    // Show loading on form submissions
+    document.addEventListener('submit', function(e) {
+        const form = e.target;
+        if (!form.hasAttribute('data-no-loading')) {
+            LoadingManager.show('Processing...', 'Please wait while we save your data');
+        }
+    });
+    
+    // Show loading on link clicks (optional)
+    document.addEventListener('click', function(e) {
+        const link = e.target.closest('a');
+        if (link && !link.hasAttribute('data-no-loading') && !link.hasAttribute('target')) {
+            // Don't show for hash links
+            if (link.getAttribute('href') && !link.getAttribute('href').startsWith('#')) {
+                LoadingManager.showPageLoader();
+            }
+        }
+    });
+    
+    // Hide page loader when page is fully loaded
+    window.addEventListener('load', function() {
+        LoadingManager.hidePageLoader();
+    });
+    
+    // Hide loading on page show (back button navigation)
+    window.addEventListener('pageshow', function() {
+        LoadingManager.hide();
+        LoadingManager.hidePageLoader();
+    });
+</script>

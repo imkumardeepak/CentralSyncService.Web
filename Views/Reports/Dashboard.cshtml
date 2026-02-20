@@ -1,0 +1,316 @@
+@model Web.Models.ViewModels.DashboardViewModel
+@{
+    ViewData["Title"] = "Real-Time Dashboard";
+}
+
+<div class="bg-neutral-100 min-h-full">
+    <!-- Page Header -->
+    <div class="border-b border-neutral-200 bg-white/80 backdrop-blur-sm sticky top-16 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-3">
+                        <h1 class="text-2xl font-bold text-neutral-900 tracking-tight">Real-Time Dashboard</h1>
+                        @await Html.PartialAsync("_Badge", new { 
+                            Variant = Model.IsSyncRunning ? "success" : "danger", 
+                            Text = Model.IsSyncRunning ? "Syncing" : "Stopped", 
+                            ShowDot = true,
+                            Pulse = Model.IsSyncRunning
+                        })
+                    </div>
+                    <p class="mt-1 text-sm text-neutral-500">Live monitoring of box tracking across all plants</p>
+                </div>
+                
+                <div class="flex items-center gap-3 flex-shrink-0">
+                    <button type="button" onclick="window.location.reload()" 
+                            class="inline-flex items-center px-3 py-2 text-sm font-medium text-neutral-600 bg-white border border-neutral-300 rounded-lg hover:bg-neutral-50 hover:border-neutral-400 transition-all duration-200">
+                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        <!-- Session Stats Cards -->
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <!-- Last Sync Card -->
+            <div class="bg-white rounded-xl shadow-card border border-neutral-200 p-5 hover:shadow-card-hover transition-shadow duration-200">
+                <div class="flex items-center gap-3">
+                    <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-neutral-100 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-medium text-neutral-500 uppercase tracking-wide">Last Sync</p>
+                        <p class="mt-1 text-sm font-semibold text-neutral-900 truncate">
+                            @(Model.LastSyncTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "—")
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- FROM Synced Card -->
+            <div class="bg-white rounded-xl shadow-card border border-neutral-200 p-5 hover:shadow-card-hover transition-shadow duration-200">
+                <div class="flex items-center gap-3">
+                    <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
+                        </svg>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-medium text-neutral-500 uppercase tracking-wide">FROM (session)</p>
+                        <p class="mt-1 text-lg font-bold text-neutral-900">@Model.TotalFromSynced.ToString("N0")</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- TO Synced Card -->
+            <div class="bg-white rounded-xl shadow-card border border-neutral-200 p-5 hover:shadow-card-hover transition-shadow duration-200">
+                <div class="flex items-center gap-3">
+                    <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+                        </svg>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-medium text-neutral-500 uppercase tracking-wide">TO (session)</p>
+                        <p class="mt-1 text-lg font-bold text-neutral-900">@Model.TotalToSynced.ToString("N0")</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Matched Card -->
+            <div class="bg-white rounded-xl shadow-card border border-neutral-200 p-5 hover:shadow-card-hover transition-shadow duration-200">
+                <div class="flex items-center gap-3">
+                    <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-medium text-neutral-500 uppercase tracking-wide">Matched (session)</p>
+                        <p class="mt-1 text-lg font-bold text-emerald-600">@Model.TotalMatched.ToString("N0")</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Stats (Today + Last Hour) -->
+        @if (Model.Stats != null && Model.Stats.Any())
+        {
+            <div class="grid gap-6 lg:grid-cols-2">
+                @foreach (var stat in Model.Stats)
+                {
+                    var isToday = stat.Period == "TODAY";
+                    var cardBorder = isToday ? "border-brand-200" : "border-neutral-200";
+                    
+                    <div class="bg-white rounded-xl shadow-card border @cardBorder p-6 @(isToday ? "ring-1 ring-brand-100" : "")">
+                        <div class="flex items-center justify-between mb-5">
+                            <h2 class="text-lg font-semibold text-neutral-900">
+                                @(isToday ? "📊 Today's Summary" : "⏰ Last Hour")
+                            </h2>
+                            @if (isToday)
+                            {
+                                @await Html.PartialAsync("_Badge", new { Variant = "info", Text = "Live", ShowDot = true, Pulse = true })
+                            }
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-6">
+                            <div class="p-4 bg-neutral-50 rounded-lg">
+                                <p class="text-xs text-neutral-500 uppercase tracking-wide font-medium">Total Boxes</p>
+                                <p class="mt-1 text-2xl font-bold text-neutral-900">@stat.TotalBoxes.ToString("N0")</p>
+                            </div>
+                            <div class="p-4 bg-emerald-50 rounded-lg">
+                                <p class="text-xs text-emerald-600 uppercase tracking-wide font-medium">Matched</p>
+                                <p class="mt-1 text-2xl font-bold text-emerald-600">@stat.Matched.ToString("N0")</p>
+                            </div>
+                            <div class="p-4 bg-red-50 rounded-lg">
+                                <p class="text-xs text-red-600 uppercase tracking-wide font-medium">Issues</p>
+                                <p class="mt-1 text-2xl font-bold text-red-600">@stat.Issues.ToString("N0")</p>
+                            </div>
+                            <div class="p-4 bg-amber-50 rounded-lg">
+                                <p class="text-xs text-amber-600 uppercase tracking-wide font-medium">Pending</p>
+                                <p class="mt-1 text-2xl font-bold text-amber-600">@stat.Pending.ToString("N0")</p>
+                            </div>
+                            
+                            @if (isToday && stat.AvgTransitSec.HasValue)
+                            {
+                                <div class="col-span-2 p-4 bg-blue-50 rounded-lg">
+                                    <p class="text-xs text-blue-600 uppercase tracking-wide font-medium">Avg Transit Time</p>
+                                    <p class="mt-1 text-xl font-bold text-blue-600">
+                                        @{
+                                            var mins = stat.AvgTransitSec.Value / 60;
+                                            var secs = stat.AvgTransitSec.Value % 60;
+                                        }
+                                        @mins min @secs sec
+                                    </p>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+
+        <!-- Pending Boxes Table -->
+        <div class="bg-white rounded-xl shadow-card border border-neutral-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-neutral-200 bg-neutral-50/50">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-lg font-semibold text-neutral-900">Pending Boxes</h2>
+                        <p class="text-sm text-neutral-500">Last 120 minutes</p>
+                    </div>
+                    @if (Model.PendingBoxes != null && Model.PendingBoxes.Count > 20)
+                    {
+                        <a href="@Url.Action("PendingBoxes")" 
+                           class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-brand-600 hover:text-brand-700 hover:bg-brand-50 rounded-lg transition-colors">
+                            View all @Model.PendingBoxes.Count
+                            <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </a>
+                    }
+                </div>
+            </div>
+            
+            @if (Model.PendingBoxes != null && Model.PendingBoxes.Any())
+            {
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-neutral-200">
+                        <thead class="bg-neutral-50">
+                            <tr>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Barcode</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Status</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">FROM</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">TO</th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Age</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-neutral-200">
+                            @foreach (var box in Model.PendingBoxes.Take(20))
+                            {
+                                <tr class="hover:bg-brand-50/50 transition-colors duration-150">
+                                    <td class="px-4 py-3">
+                                        <span class="text-sm font-medium text-neutral-900">@box.Barcode</span>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        @await Html.PartialAsync("_Badge", new { 
+                                            Variant = "warning", 
+                                            Text = box.MatchStatus,
+                                            Size = "xs"
+                                        })
+                                    </td>
+                                    <td class="px-4 py-3 text-sm text-neutral-600">
+                                        @(box.FromPlant ?? "—") 
+                                        <span class="text-neutral-400">[@box.FromStatus]</span>
+                                    </td>
+                                    <td class="px-4 py-3 text-sm text-neutral-600">
+                                        @(box.ToPlant ?? "—") 
+                                        <span class="text-neutral-400">[@box.ToStatus]</span>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <span class="text-sm font-medium @(box.AgeMinutes > 60 ? "text-red-600" : "text-neutral-900")">
+                                            @box.AgeMinutes min
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                @await Html.PartialAsync("_EmptyState", new {
+                    Icon = "inbox",
+                    Title = "No pending boxes",
+                    Message = "All boxes in the last 120 minutes have been matched. Great job!"
+                })
+            }
+        </div>
+
+        <!-- Quick Reports Grid -->
+        <div class="bg-white rounded-xl shadow-card border border-neutral-200 p-6">
+            <h2 class="text-lg font-semibold text-neutral-900 mb-4">Quick Reports</h2>
+            <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+                <a href="@Url.Action("DailySummary")" 
+                   class="group flex flex-col items-center p-4 bg-blue-50 hover:bg-blue-100 rounded-xl text-center transition-all duration-200 hover:-translate-y-0.5">
+                    <div class="w-10 h-10 rounded-lg bg-blue-100 group-hover:bg-blue-200 flex items-center justify-center mb-2 transition-colors">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    <span class="text-sm font-semibold text-blue-800">Daily Summary</span>
+                </a>
+                
+                <a href="@Url.Action("LinePerformance")" 
+                   class="group flex flex-col items-center p-4 bg-emerald-50 hover:bg-emerald-100 rounded-xl text-center transition-all duration-200 hover:-translate-y-0.5">
+                    <div class="w-10 h-10 rounded-lg bg-emerald-100 group-hover:bg-emerald-200 flex items-center justify-center mb-2 transition-colors">
+                        <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                    </div>
+                    <span class="text-sm font-semibold text-emerald-800">Line Performance</span>
+                </a>
+                
+                <a href="@Url.Action("ShiftReport")" 
+                   class="group flex flex-col items-center p-4 bg-purple-50 hover:bg-purple-100 rounded-xl text-center transition-all duration-200 hover:-translate-y-0.5">
+                    <div class="w-10 h-10 rounded-lg bg-purple-100 group-hover:bg-purple-200 flex items-center justify-center mb-2 transition-colors">
+                        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <span class="text-sm font-semibold text-purple-800">Shift Report</span>
+                </a>
+                
+                <a href="@Url.Action("ProblemBoxes")" 
+                   class="group flex flex-col items-center p-4 bg-red-50 hover:bg-red-100 rounded-xl text-center transition-all duration-200 hover:-translate-y-0.5">
+                    <div class="w-10 h-10 rounded-lg bg-red-100 group-hover:bg-red-200 flex items-center justify-center mb-2 transition-colors">
+                        <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                    </div>
+                    <span class="text-sm font-semibold text-red-800">Problem Boxes</span>
+                </a>
+                
+                <a href="@Url.Action("NoReadAnalysis")" 
+                   class="group flex flex-col items-center p-4 bg-amber-50 hover:bg-amber-100 rounded-xl text-center transition-all duration-200 hover:-translate-y-0.5">
+                    <div class="w-10 h-10 rounded-lg bg-amber-100 group-hover:bg-amber-200 flex items-center justify-center mb-2 transition-colors">
+                        <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                        </svg>
+                    </div>
+                    <span class="text-sm font-semibold text-amber-800">NO READ</span>
+                </a>
+                
+                <a href="@Url.Action("BarcodeSearch")" 
+                   class="group flex flex-col items-center p-4 bg-indigo-50 hover:bg-indigo-100 rounded-xl text-center transition-all duration-200 hover:-translate-y-0.5">
+                    <div class="w-10 h-10 rounded-lg bg-indigo-100 group-hover:bg-indigo-200 flex items-center justify-center mb-2 transition-colors">
+                        <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </div>
+                    <span class="text-sm font-semibold text-indigo-800">Search</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Auto-refresh every 30 seconds with loading indication
+        setInterval(function() {
+            if (window.LoadingManager) {
+                window.LoadingManager.showPageLoader();
+            }
+            window.location.reload();
+        }, 30000);
+    </script>
+}

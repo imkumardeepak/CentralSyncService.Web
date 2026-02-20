@@ -1,0 +1,98 @@
+@*
+    Empty State Component
+    Usage: @await Html.PartialAsync("_EmptyState", new { 
+        Icon = "inbox", // inbox, search, document, chart, settings
+        Title = "No items found",
+        Message = "Get started by creating your first item.",
+        ActionText = "Create Item",
+        ActionUrl = Url.Action("Create")
+    })
+*@
+@{
+    // Safely extract properties from the model
+    var modelType = ViewData.Model?.GetType();
+    var icon = "inbox";
+    var title = "No data";
+    var message = "";
+    var actionText = "";
+    var actionUrl = "";
+    
+    if (ViewData.Model != null)
+    {
+        try
+        {
+            var i = modelType?.GetProperty("Icon")?.GetValue(ViewData.Model);
+            if (i != null) icon = i.ToString();
+            
+            var t = modelType?.GetProperty("Title")?.GetValue(ViewData.Model);
+            if (t != null) title = t.ToString();
+            
+            var m = modelType?.GetProperty("Message")?.GetValue(ViewData.Model);
+            if (m != null) message = m.ToString();
+            
+            var at = modelType?.GetProperty("ActionText")?.GetValue(ViewData.Model);
+            if (at != null) actionText = at.ToString();
+            
+            var au = modelType?.GetProperty("ActionUrl")?.GetValue(ViewData.Model);
+            if (au != null) actionUrl = au.ToString();
+        }
+        catch { }
+    }
+}
+
+<div class="text-center py-12 px-6 animate-fade-in">
+    <div class="mx-auto h-16 w-16 rounded-full bg-neutral-100 flex items-center justify-center mb-4">
+        @switch (icon)
+        {
+            case "search":
+                <svg class="h-8 w-8 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                break;
+            case "document":
+                <svg class="h-8 w-8 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                break;
+            case "chart":
+                <svg class="h-8 w-8 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+                break;
+            case "settings":
+                <svg class="h-8 w-8 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                break;
+            default: // inbox
+                <svg class="h-8 w-8 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+                </svg>
+                break;
+        }
+    </div>
+    
+    <h3 class="text-base font-semibold text-neutral-900">@title</h3>
+    
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <p class="mt-2 text-sm text-neutral-500 max-w-md mx-auto">@message</p>
+    }
+    
+    @if (!string.IsNullOrEmpty(actionText) && !string.IsNullOrEmpty(actionUrl))
+    {
+        <div class="mt-6">
+            <a href="@actionUrl" 
+               class="inline-flex items-center px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg 
+                      hover:bg-brand-700 hover:-translate-y-0.5 hover:shadow-md
+                      focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2
+                      transition-all duration-200">
+                <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                @actionText
+            </a>
+        </div>
+    }
+</div>

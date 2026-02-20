@@ -1,0 +1,262 @@
+@model Web.Models.ViewModels.ProductionOrderBatchReportViewModel
+
+@{
+    ViewData["Title"] = "Production Order Batch Report";
+}
+
+<div class="container mx-auto px-4 py-6">
+    <!-- Error Message -->
+    @if (ViewBag.Error != null)
+    {
+        <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-red-800">Error Loading Report</h3>
+                    <div class="mt-2 text-sm text-red-700">
+                        <p>@ViewBag.Error</p>
+                    </div>
+                    @if (ViewBag.StackTrace != null)
+                    {
+                        <details class="mt-4">
+                            <summary class="text-xs cursor-pointer text-red-600 hover:text-red-500">Show Technical Details</summary>
+                            <pre class="mt-2 text-xs bg-red-100 p-2 rounded overflow-x-auto text-red-800">@ViewBag.StackTrace</pre>
+                        </details>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Header -->
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6">
+        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
+            <p class="text-xs font-medium text-neutral-500 uppercase">Total Orders</p>
+            <p class="text-2xl font-bold text-neutral-900">@Model.Summary.TotalOrders</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-purple-500">
+            <p class="text-xs font-medium text-neutral-500 uppercase">Order Qty</p>
+            <p class="text-2xl font-bold text-neutral-900">@Model.Summary.TotalOrderQty.ToString("N0")</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-green-500">
+            <p class="text-xs font-medium text-neutral-500 uppercase">Printed</p>
+            <p class="text-2xl font-bold text-neutral-900">@Model.Summary.TotalPrinted.ToString("N0")</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-amber-500">
+            <p class="text-xs font-medium text-neutral-500 uppercase">Total Transfer</p>
+            <p class="text-2xl font-bold text-neutral-900">@Model.Summary.TotalFromScanned.ToString("N0")</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-red-500">
+            <p class="text-xs font-medium text-neutral-500 uppercase">Pending</p>
+            <p class="text-2xl font-bold text-neutral-900">@Model.Summary.TotalPending.ToString("N0")</p>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-lg shadow p-4 mb-6">
+        <form method="get" action="@Url.Action("ProductionOrderBatchReport", "Reports")" class="flex flex-wrap gap-4 items-end">
+            <div>
+                <label class="block text-sm font-medium text-neutral-700 mb-1">Date</label>
+                <input type="date" name="date" value="@Model.Date.ToString("yyyy-MM-dd")"
+                       class="border border-neutral-300 rounded-md px-3 py-2 w-40 focus:outline-none focus:ring-2 focus:ring-brand-500" />
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-neutral-700 mb-1">Plant Code</label>
+                <input type="text" name="plantCode" value="@Model.PlantCode" placeholder="All Plants"
+                       class="border border-neutral-300 rounded-md px-3 py-2 w-32 focus:outline-none focus:ring-2 focus:ring-brand-500" />
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-neutral-700 mb-1">Batch No</label>
+                <input type="text" name="batchNo" value="@Model.BatchNo" placeholder="Search Batch"
+                       class="border border-neutral-300 rounded-md px-3 py-2 w-32 focus:outline-none focus:ring-2 focus:ring-brand-500" />
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-neutral-700 mb-1">Order No</label>
+                <input type="text" name="orderNo" value="@Model.OrderNo" placeholder="Search Order"
+                       class="border border-neutral-300 rounded-md px-3 py-2 w-32 focus:outline-none focus:ring-2 focus:ring-brand-500" />
+            </div>
+            <button type="submit" class="bg-brand-600 text-white px-4 py-2 rounded-md hover:bg-brand-700 font-medium">
+                Search
+            </button>
+            <a href="@Url.Action("ProductionOrderBatchReport", "Reports")" class="bg-neutral-200 text-neutral-700 px-4 py-2 rounded-md hover:bg-neutral-300 font-medium">
+                Clear
+            </a>
+        </form>
+    </div>
+
+    <!-- Data Table -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-neutral-200">
+                <thead class="bg-neutral-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Plant</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Batch</th>
+                        <th class="px-4 py-3 text-right text-xs font-semibold text-neutral-600 uppercase tracking-wide">Order Qty</th>
+                        <th class="px-4 py-3 text-right text-xs font-semibold text-neutral-600 uppercase tracking-wide">Printed</th>
+                        <th class="px-4 py-3 text-right text-xs font-semibold text-neutral-600 uppercase tracking-wide">Total Transfer</th>
+                        <th class="px-4 py-3 text-right text-xs font-semibold text-neutral-600 uppercase tracking-wide">Pending</th>
+                        <th class="px-4 py-3 text-center text-xs font-semibold text-neutral-600 uppercase tracking-wide">Status</th>
+                        <th class="px-4 py-3 text-right text-xs font-semibold text-neutral-600 uppercase tracking-wide">Completion %</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-neutral-200">
+                    @if (Model.Reports.Any())
+                    {
+                        @foreach (var item in Model.Reports)
+                        {
+                            <tr class="hover:bg-neutral-50">
+                                <td class="px-4 py-3 text-sm text-neutral-600">@item.PlantName</td>
+                                <td class="px-4 py-3 text-sm font-mono text-neutral-900">
+                                    <a href="#" onclick="loadOrderDetails('@item.Batch', '@item.OrderQty'); return false;" 
+                                       class="text-brand-600 hover:text-brand-800 font-semibold underline cursor-pointer">
+                                        @item.Batch
+                                    </a>
+                                </td>
+                                <td class="px-4 py-3 text-sm text-right text-neutral-900">@item.OrderQty.ToString("N0")</td>
+                                <td class="px-4 py-3 text-sm text-right text-green-600 font-medium">@item.PrintedQty.ToString("N0")</td>
+                                <td class="px-4 py-3 text-sm text-right text-amber-600 font-medium">@item.TotalTransferQty.ToString("N0")</td>
+                                <td class="px-4 py-3 text-sm text-right text-red-600 font-medium">@item.PendingToScan.ToString("N0")</td>
+                                <td class="px-4 py-3 text-center">
+                                    @if (item.Status == "COMPLETED")
+                                    {
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            Completed
+                                        </span>
+                                    }
+                                    else if (item.Status == "IN_PROGRESS")
+                                    {
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                                            In Progress
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-neutral-100 text-neutral-800">
+                                            Pending
+                                        </span>
+                                    }
+                                </td>
+                                <td class="px-4 py-3 text-right">
+                                    <div class="flex items-center justify-end gap-2">
+                                        <div class="w-16 bg-neutral-200 rounded-full h-2">
+                                            <div class="bg-brand-600 h-2 rounded-full" style="width: @Math.Min(item.CompletionPercent, 100)%"></div>
+                                        </div>
+                                        <span class="text-sm font-medium text-neutral-700">@item.CompletionPercent.ToString("N1")%</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="8" class="px-4 py-8 text-center text-neutral-500">
+                                No production orders found for the selected criteria.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Order Details -->
+<div id="orderModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeModal()"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="sm:flex sm:items-start">
+                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                            Orders for Batch: <span id="modalBatch" class="font-mono"></span>
+                        </h3>
+                        <div class="mt-4 max-h-96 overflow-y-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50 sticky top-0">
+                                    <tr>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Order No</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Material</th>
+                                        <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Order Qty</th>
+                                        <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Printed</th>
+                                        <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Pending</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="orderDetailsBody" class="bg-white divide-y divide-gray-200">
+                                </tbody>
+                                <tfoot class="bg-gray-100 sticky bottom-0">
+                                    <tr>
+                                        <td class="px-4 py-2 text-sm font-bold text-gray-900">Total</td>
+                                        <td class="px-4 py-2"></td>
+                                        <td class="px-4 py-2 text-right text-sm font-bold text-gray-900" id="totalOrderQty"></td>
+                                        <td class="px-4 py-2 text-right text-sm font-bold text-gray-900" id="totalPrinted"></td>
+                                        <td class="px-4 py-2 text-right text-sm font-bold text-gray-900" id="totalPending"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-brand-600 text-base font-medium text-white hover:bg-brand-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm" onclick="closeModal()">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function loadOrderDetails(batch, totalOrderQty) {
+    document.getElementById('modalBatch').textContent = batch;
+    document.getElementById('orderModal').classList.remove('hidden');
+    
+    var date = '@Model.Date.ToString("yyyy-MM-dd")';
+    
+    fetch('/Reports/GetOrdersByBatch?batch=' + encodeURIComponent(batch) + '&date=' + encodeURIComponent(date))
+        .then(response => response.json())
+        .then(data => {
+            var tbody = document.getElementById('orderDetailsBody');
+            tbody.innerHTML = '';
+            
+            var sumOrderQty = 0, sumPrinted = 0, sumPending = 0;
+            
+            data.forEach(function(order) {
+                var row = '<tr class="hover:bg-gray-50">' +
+                    '<td class="px-4 py-2 text-sm font-medium text-gray-900">' + order.orderNo + '</td>' +
+                    '<td class="px-4 py-2 text-sm text-gray-500">' + order.material + '</td>' +
+                    '<td class="px-4 py-2 text-sm text-right text-gray-900">' + order.orderQty.toLocaleString() + '</td>' +
+                    '<td class="px-4 py-2 text-sm text-right text-green-600 font-medium">' + order.printedQty.toLocaleString() + '</td>' +
+                    '<td class="px-4 py-2 text-sm text-right text-red-600 font-medium">' + order.pending.toLocaleString() + '</td>' +
+                    '</tr>';
+                tbody.innerHTML += row;
+                
+                sumOrderQty += order.orderQty;
+                sumPrinted += order.printedQty;
+                sumPending += order.pending;
+            });
+            
+            document.getElementById('totalOrderQty').textContent = sumOrderQty.toLocaleString();
+            document.getElementById('totalPrinted').textContent = sumPrinted.toLocaleString();
+            document.getElementById('totalPending').textContent = sumPending.toLocaleString();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to load order details');
+        });
+}
+
+function closeModal() {
+    document.getElementById('orderModal').classList.add('hidden');
+}
+</script>

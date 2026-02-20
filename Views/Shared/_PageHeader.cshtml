@@ -1,0 +1,43 @@
+@*
+    Page Header Component
+    Usage: @await Html.PartialAsync("_PageHeader", new { 
+        Title = "Page Title", 
+        Subtitle = "Page description", 
+        BackLink = Url.Action("Index"),
+        BackText = "Back"
+    })
+*@
+@{
+    // Get model properties safely
+    dynamic model = ViewData.Model ?? new { };
+    var title = (string)(model.Title ?? ViewData["Title"] ?? "Page Title");
+    var subtitle = (string)(model.Subtitle ?? "");
+    var backLink = (string)(model.BackLink ?? "");
+    var backText = (string)(model.BackText ?? "Back");
+}
+
+<div class="border-b border-neutral-200 bg-white/80 backdrop-blur-sm sticky top-16 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <!-- Left Side: Back Link + Title -->
+            <div class="min-w-0 flex-1">
+                @if (!string.IsNullOrEmpty(backLink))
+                {
+                    <a href="@backLink" 
+                       class="group inline-flex items-center text-sm text-neutral-500 hover:text-brand-600 mb-2 transition-colors duration-200">
+                        <svg class="mr-1.5 h-4 w-4 transition-transform duration-200 group-hover:-translate-x-0.5" 
+                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                        </svg>
+                        @backText
+                    </a>
+                }
+                <h1 class="text-2xl font-bold text-neutral-900 tracking-tight truncate">@title</h1>
+                @if (!string.IsNullOrEmpty(subtitle))
+                {
+                    <p class="mt-1 text-sm text-neutral-500">@subtitle</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,145 @@
+@model Web.Core.DTOs.BoxTrackingSummary
+@using Web.Core.DTOs
+@using Web.Core.Entities
+@{
+    ViewData["Title"] = "Sync Status";
+}
+
+<div class="bg-gray-100 py-8">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <a href="@Url.Action("Dashboard", "Reports")" 
+                   class="group inline-flex items-center text-sm text-gray-500 hover:text-blue-600 mb-2 transition-colors duration-200">
+                    <svg class="mr-1.5 h-4 w-4 transition-transform duration-200 group-hover:-translate-x-0.5" 
+                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    Back to Dashboard
+                </a>
+                <h1 class="text-2xl font-bold text-gray-800">Sync Service Status</h1>
+                <p class="mt-1 text-sm text-gray-600">Server-hosted sync and reporting for FROM / TO plants.</p>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium @(ViewBag.IsRunning ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800")">
+                    <span class="w-2 h-2 rounded-full mr-2 @(ViewBag.IsRunning ? "bg-green-500" : "bg-red-500")"></span>
+                    @(ViewBag.IsRunning ? "Service Running" : "Service Stopped")
+                </span>
+            </div>
+        </div>
+
+        <div class="grid gap-4 md:grid-cols-4 mb-8">
+            <div class="bg-white shadow-sm rounded-lg p-4">
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Last Sync Time</p>
+                <p class="mt-2 text-lg font-semibold text-gray-800">@(ViewBag.LastSyncTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "-")</p>
+            </div>
+            <div class="bg-white shadow-sm rounded-lg p-4">
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">FROM Synced (session)</p>
+                <p class="mt-2 text-lg font-semibold text-gray-800">@ViewBag.TotalFromSynced</p>
+            </div>
+            <div class="bg-white shadow-sm rounded-lg p-4">
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">TO Synced (session)</p>
+                <p class="mt-2 text-lg font-semibold text-gray-800">@ViewBag.TotalToSynced</p>
+            </div>
+            <div class="bg-white shadow-sm rounded-lg p-4">
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Matched (session)</p>
+                <p class="mt-2 text-lg font-semibold text-gray-800">@ViewBag.TotalMatched</p>
+            </div>
+        </div>
+
+        <div class="bg-white shadow-sm rounded-lg p-6 mb-8">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">Today's BoxTracking Summary</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Total Boxes</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Matched</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Missing (FROM + TO)</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Pending (FROM + TO)</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Match Rate %</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Avg Transit</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr>
+                            <td class="px-4 py-3 text-sm text-gray-800">@Model.TotalBoxes</td>
+                            <td class="px-4 py-3 text-sm text-gray-800">@Model.Matched</td>
+                            <td class="px-4 py-3 text-sm text-gray-800">@(Model.MissingAtFrom + Model.MissingAtTo)</td>
+                            <td class="px-4 py-3 text-sm text-gray-800">@(Model.PendingFrom + Model.PendingTo)</td>
+                            <td class="px-4 py-3 text-sm text-gray-800">@Model.MatchRatePercent.ToString("F1")%</td>
+                            <td class="px-4 py-3 text-sm text-gray-800">
+                                @if (Model.AvgTransitSeconds.HasValue)
+                                {
+                                    var mins = Model.AvgTransitSeconds.Value / 60;
+                                    var secs = Model.AvgTransitSeconds.Value % 60;
+                                    @($"{mins}m {secs}s")
+                                }
+                                else
+                                {
+                                    @:"-"
+                                }
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="bg-white shadow-sm rounded-lg p-6">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">Plant Connection Status</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Plant Name</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Type</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">IP Address</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Connected</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Last Sync Time</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Last Sync Count</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        @if (ViewBag.Plants != null)
+                        {
+                            foreach (PlantDbConfig plant in (IEnumerable<PlantDbConfig>)ViewBag.Plants)
+                            {
+                                <tr>
+                                    <td class="px-4 py-3 text-sm text-gray-800">@plant.PlantName</td>
+                                    <td class="px-4 py-3 text-sm text-gray-800">@plant.PlantType</td>
+                                    <td class="px-4 py-3 text-sm text-gray-800">@plant.IpAddress</td>
+                                    <td class="px-4 py-3 text-sm">
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium @(plant.IsConnected ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800")">
+                                            @(plant.IsConnected ? "Online" : "Offline")
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3 text-sm text-gray-800">@(plant.LastSyncTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "-")</td>
+                                    <td class="px-4 py-3 text-sm text-gray-800">@plant.LastSyncCount</td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" class="px-4 py-3 text-sm text-gray-500">No plant configuration found.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Show page loader before auto-refresh
+        setInterval(function() {
+            if (window.LoadingManager) {
+                window.LoadingManager.showPageLoader();
+            }
+            window.location.reload();
+        }, 30000); // Refresh every 30 seconds
+    </script>
+}

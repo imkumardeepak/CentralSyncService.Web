@@ -1,0 +1,53 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.log
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio Code
+.vscode/
+
+# NuGet
+*.nupkg
+packages/
+project.lock.json
+project.fragment.lock.json
+**/[Pp]ackages/*
+
+# Build results
+[Dd]ebugPublic/
+[Rr]elease/
+x64/
+x86/
+bld/
+[Bb]in/[Oo]bj/
+[Ll]og/
+
+# Rider
+.idea/
+
+# User-specific files
+*.rsuser
+*.userprefs
