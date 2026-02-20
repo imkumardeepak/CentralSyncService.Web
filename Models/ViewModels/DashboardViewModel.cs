@@ -10,7 +10,6 @@ namespace Web.Models.ViewModels
     public class DashboardViewModel
     {
         public List<DashboardStatsRecord> Stats { get; set; } = new List<DashboardStatsRecord>();
-        public List<PendingBoxRecord> PendingBoxes { get; set; } = new List<PendingBoxRecord>();
         public bool IsSyncRunning { get; set; }
         public DateTime? LastSyncTime { get; set; }
         public int TotalFromSynced { get; set; }

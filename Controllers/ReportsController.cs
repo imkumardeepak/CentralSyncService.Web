@@ -26,12 +26,10 @@ namespace Web.Controllers
         public async Task<IActionResult> Dashboard()
         {
             var stats = await _reportingService.GetDashboardStatsAsync().ConfigureAwait(false);
-            var pending = await _reportingService.GetPendingBoxesAsync(120).ConfigureAwait(false);
 
             var model = new DashboardViewModel
             {
                 Stats = stats,
-                PendingBoxes = pending,
                 IsSyncRunning = _syncService.IsRunning,
                 LastSyncTime = _syncService.LastSyncTime,
                 TotalFromSynced = _syncService.TotalFromSynced,
@@ -46,14 +44,6 @@ namespace Web.Controllers
         public async Task<IActionResult> DailySummary(DateTime? startDate, DateTime? endDate)
         {
             var records = await _reportingService.GetDailySummaryAsync(startDate, endDate).ConfigureAwait(false);
-            return View(records);
-        }
-
-        // Pending boxes using sp_GetPendingBoxes
-        public async Task<IActionResult> PendingBoxes(int maxAgeMinutes = 60)
-        {
-            var records = await _reportingService.GetPendingBoxesAsync(maxAgeMinutes).ConfigureAwait(false);
-            ViewBag.MaxAgeMinutes = maxAgeMinutes;
             return View(records);
         }
 

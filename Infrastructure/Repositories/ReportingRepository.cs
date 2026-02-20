@@ -61,48 +61,6 @@ namespace Web.Infrastructure.Repositories
             return result;
         }
 
-        public async Task<List<PendingBoxRecord>> GetPendingBoxesAsync(int maxAgeMinutes)
-        {
-            var result = new List<PendingBoxRecord>();
-
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                await connection.OpenAsync().ConfigureAwait(false);
-
-                using (var command = new SqlCommand("sp_GetPendingBoxes", connection))
-                {
-                    command.CommandType = CommandType.StoredProcedure;
-                    command.Parameters.AddWithValue("@MaxAgeMinutes", maxAgeMinutes);
-
-                    using (var reader = await command.ExecuteReaderAsync().ConfigureAwait(false))
-                    {
-                        while (await reader.ReadAsync().ConfigureAwait(false))
-                        {
-                            var record = new PendingBoxRecord
-                            {
-                                Id = reader.GetInt64(reader.GetOrdinal("Id")),
-                                Barcode = reader.GetString(reader.GetOrdinal("Barcode")),
-                                Batch = reader.IsDBNull(reader.GetOrdinal("Batch")) ? null : reader.GetString(reader.GetOrdinal("Batch")),
-                                LineCode = reader.IsDBNull(reader.GetOrdinal("LineCode")) ? null : reader.GetString(reader.GetOrdinal("LineCode")),
-                                FromPlant = reader.IsDBNull(reader.GetOrdinal("FromPlant")) ? null : reader.GetString(reader.GetOrdinal("FromPlant")),
-                                FromScanTime = reader.IsDBNull(reader.GetOrdinal("FromScanTime")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("FromScanTime")),
-                                FromStatus = reader.IsDBNull(reader.GetOrdinal("FromStatus")) ? string.Empty : reader.GetString(reader.GetOrdinal("FromStatus")),
-                                ToPlant = reader.IsDBNull(reader.GetOrdinal("ToPlant")) ? null : reader.GetString(reader.GetOrdinal("ToPlant")),
-                                ToScanTime = reader.IsDBNull(reader.GetOrdinal("ToScanTime")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("ToScanTime")),
-                                ToStatus = reader.IsDBNull(reader.GetOrdinal("ToStatus")) ? string.Empty : reader.GetString(reader.GetOrdinal("ToStatus")),
-                                MatchStatus = reader.IsDBNull(reader.GetOrdinal("MatchStatus")) ? string.Empty : reader.GetString(reader.GetOrdinal("MatchStatus")),
-                                AgeMinutes = reader.GetInt32(reader.GetOrdinal("AgeMinutes"))
-                            };
-
-                            result.Add(record);
-                        }
-                    }
-                }
-            }
-
-            return result;
-        }
-
         public async Task<List<ShiftReportRecord>> GetShiftReportAsync(DateTime? date)
         {
             var result = new List<ShiftReportRecord>();
