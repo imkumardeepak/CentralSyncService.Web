@@ -51,3 +51,4 @@ bld/
 # User-specific files
 *.rsuser
 *.userprefs
+/publish
