@@ -235,50 +235,7 @@ namespace Web.Infrastructure.Repositories
 
             return result;
         }
-
-        public async Task<List<ProblemBoxRecord>> GetProblemBoxesAsync()
-        {
-            var result = new List<ProblemBoxRecord>();
-
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                await connection.OpenAsync().ConfigureAwait(false);
-
-                const string sql = "SELECT TOP (200) Id, Barcode, Batch, LineCode, FromPlant, FromScanTime, FromStatus, ToPlant, ToScanTime, ToStatus, MatchStatus, TransitTimeSeconds, CreatedAt FROM vw_ProblemBoxes ORDER BY CreatedAt DESC";
-
-                using (var command = new SqlCommand(sql, connection))
-                {
-                    using (var reader = await command.ExecuteReaderAsync().ConfigureAwait(false))
-                    {
-                        while (await reader.ReadAsync().ConfigureAwait(false))
-                        {
-                            var record = new ProblemBoxRecord
-                            {
-                                Id = reader.GetInt64(reader.GetOrdinal("Id")),
-                                Barcode = reader.GetString(reader.GetOrdinal("Barcode")),
-                                Batch = reader.IsDBNull(reader.GetOrdinal("Batch")) ? null : reader.GetString(reader.GetOrdinal("Batch")),
-                                LineCode = reader.IsDBNull(reader.GetOrdinal("LineCode")) ? null : reader.GetString(reader.GetOrdinal("LineCode")),
-                                FromPlant = reader.IsDBNull(reader.GetOrdinal("FromPlant")) ? null : reader.GetString(reader.GetOrdinal("FromPlant")),
-                                FromScanTime = reader.IsDBNull(reader.GetOrdinal("FromScanTime")) ? null : reader.GetString(reader.GetOrdinal("FromScanTime")),
-                                FromStatus = reader.IsDBNull(reader.GetOrdinal("FromStatus")) ? string.Empty : reader.GetString(reader.GetOrdinal("FromStatus")),
-                                ToPlant = reader.IsDBNull(reader.GetOrdinal("ToPlant")) ? null : reader.GetString(reader.GetOrdinal("ToPlant")),
-                                ToScanTime = reader.IsDBNull(reader.GetOrdinal("ToScanTime")) ? null : reader.GetString(reader.GetOrdinal("ToScanTime")),
-                                ToStatus = reader.IsDBNull(reader.GetOrdinal("ToStatus")) ? string.Empty : reader.GetString(reader.GetOrdinal("ToStatus")),
-                                MatchStatus = reader.IsDBNull(reader.GetOrdinal("MatchStatus")) ? string.Empty : reader.GetString(reader.GetOrdinal("MatchStatus")),
-                                TransitTimeSeconds = reader.IsDBNull(reader.GetOrdinal("TransitTimeSeconds")) ? (int?)null : reader.GetInt32(reader.GetOrdinal("TransitTimeSeconds")),
-                                CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt"))
-                            };
-
-                            result.Add(record);
-                        }
-                    }
-                }
-            }
-
-            return result;
-        }
-
-        public async Task<List<ProductionOrderBatchReport>> GetProductionOrderBatchReportAsync(string? plantCode, string? batchNo, string? orderNo, DateTime? date)
+        public async Task<List<ProductionOrderBatchReport>> GetProductionOrderBatchReportAsync(string? plantName, string? batchNo, string? orderNo, DateTime? date)
         {
             var result = new List<ProductionOrderBatchReport>();
 
@@ -289,7 +246,7 @@ namespace Web.Infrastructure.Repositories
                 using (var command = new SqlCommand("sp_GetProductionOrderBatchReport", connection))
                 {
                     command.CommandType = CommandType.StoredProcedure;
-                    command.Parameters.AddWithValue("@PlantCode", (object?)plantCode ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@PlantName", (object?)plantName ?? DBNull.Value);
                     command.Parameters.AddWithValue("@BatchNo", (object?)batchNo ?? DBNull.Value);
                     command.Parameters.AddWithValue("@OrderNo", (object?)orderNo ?? DBNull.Value);
                     command.Parameters.AddWithValue("@Date", (object?)date ?? DBNull.Value);
@@ -340,39 +297,6 @@ namespace Web.Infrastructure.Repositories
             }
         }
 
-        public async Task<ProductionOrderBatchSummary> GetProductionOrderBatchSummaryAsync(string? plantCode, string? batchNo, string? orderNo, DateTime? date)
-        {
-            var summary = new ProductionOrderBatchSummary();
-
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                await connection.OpenAsync().ConfigureAwait(false);
-
-                using (var command = new SqlCommand("sp_GetProductionOrderBatchSummary", connection))
-                {
-                    command.CommandType = CommandType.StoredProcedure;
-                    command.Parameters.AddWithValue("@PlantCode", (object?)plantCode ?? DBNull.Value);
-                    command.Parameters.AddWithValue("@BatchNo", (object?)batchNo ?? DBNull.Value);
-                    command.Parameters.AddWithValue("@OrderNo", (object?)orderNo ?? DBNull.Value);
-                    command.Parameters.AddWithValue("@Date", (object?)date ?? DBNull.Value);
-
-                    using (var reader = await command.ExecuteReaderAsync().ConfigureAwait(false))
-                    {
-                        if (await reader.ReadAsync().ConfigureAwait(false))
-                        {
-                            summary.TotalOrders = GetInt64Safe(reader, "TotalOrders");
-                            summary.TotalOrderQty = GetInt64Safe(reader, "TotalOrderQty");
-                            summary.TotalPrinted = GetInt64Safe(reader, "TotalPrinted");
-                            summary.TotalFromScanned = GetInt64Safe(reader, "TotalFromScanned");
-                            summary.TotalPending = GetInt64Safe(reader, "TotalPending");
-                        }
-                    }
-                }
-            }
-
-            return summary;
-        }
-
         public async Task<List<OrderDetailByBatch>> GetOrdersByBatchAsync(string batch, DateTime? date)
         {
             var result = new List<OrderDetailByBatch>();
@@ -402,6 +326,111 @@ namespace Web.Infrastructure.Repositories
                                 PrintedQty = GetInt64Safe(reader, "PrintedQty")
                             };
 
+                            result.Add(record);
+                        }
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        public async Task<List<string>> GetDistinctPlantNamesAsync()
+        {
+            var plantNames = new List<string>();
+
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                await connection.OpenAsync().ConfigureAwait(false);
+
+                const string sql = "SELECT DISTINCT PlantName FROM ProductionOrder WHERE PlantName IS NOT NULL AND PlantName != '' ORDER BY PlantName";
+
+                using (var command = new SqlCommand(sql, connection))
+                {
+                    using (var reader = await command.ExecuteReaderAsync().ConfigureAwait(false))
+                    {
+                        while (await reader.ReadAsync().ConfigureAwait(false))
+                        {
+                            plantNames.Add(reader.GetString(0));
+                        }
+                    }
+                }
+            }
+
+            return plantNames;
+        }
+
+        public async Task<List<ProductionOrderMaterialReport>> GetProductionOrderMaterialReportAsync(string? plantName, string? materialCode, DateTime? date)
+        {
+            var result = new List<ProductionOrderMaterialReport>();
+
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                await connection.OpenAsync().ConfigureAwait(false);
+
+                using (var command = new SqlCommand("sp_GetProductionOrderMaterialReport", connection))
+                {
+                    command.CommandType = CommandType.StoredProcedure;
+                    command.Parameters.AddWithValue("@PlantName", (object?)plantName ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@MaterialCode", (object?)materialCode ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@Date", (object?)date ?? DBNull.Value);
+
+                    using (var reader = await command.ExecuteReaderAsync().ConfigureAwait(false))
+                    {
+                        while (await reader.ReadAsync().ConfigureAwait(false))
+                        {
+                            var record = new ProductionOrderMaterialReport
+                            {
+                                OrderNo = GetInt64Safe(reader, "OrderNo"),
+                                Batch = reader.IsDBNull(reader.GetOrdinal("Batch")) ? string.Empty : reader.GetString(reader.GetOrdinal("Batch")),
+                                MaterialCode = reader.IsDBNull(reader.GetOrdinal("MaterialCode")) ? string.Empty : reader.GetString(reader.GetOrdinal("MaterialCode")),
+                                MaterialDescription = reader.IsDBNull(reader.GetOrdinal("MaterialDescription")) ? string.Empty : reader.GetString(reader.GetOrdinal("MaterialDescription")),
+                                PlantName = reader.IsDBNull(reader.GetOrdinal("PlantName")) ? string.Empty : reader.GetString(reader.GetOrdinal("PlantName")),
+                                OrderQty = GetInt64Safe(reader, "OrderQty"),
+                                PrintedQty = GetInt64Safe(reader, "PrintedQty"),
+                                TotalTransferQty = GetInt64Safe(reader, "TotalTransferQty"),
+                                PendingToScan = GetInt64Safe(reader, "PendingToScan"),
+                                Status = reader.IsDBNull(reader.GetOrdinal("Status")) ? string.Empty : reader.GetString(reader.GetOrdinal("Status")),
+                                CompletionPercent = reader.IsDBNull(reader.GetOrdinal("CompletionPercent")) ? 0 : reader.GetDecimal(reader.GetOrdinal("CompletionPercent"))
+                            };
+
+                            result.Add(record);
+                        }
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        public async Task<List<ScanReadStatusRecord>> GetScanReadStatusAsync(DateTime? startDate, DateTime? endDate)
+        {
+            var result = new List<ScanReadStatusRecord>();
+
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                await connection.OpenAsync().ConfigureAwait(false);
+
+                using (var command = new SqlCommand("sp_GetScanReadStatusReport", connection))
+                {
+                    command.CommandType = CommandType.StoredProcedure;
+                    command.Parameters.AddWithValue("@StartDate", (object?)startDate ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@EndDate", (object?)endDate ?? DBNull.Value);
+
+                    using (var reader = await command.ExecuteReaderAsync().ConfigureAwait(false))
+                    {
+                        while (await reader.ReadAsync().ConfigureAwait(false))
+                        {
+                            var record = new ScanReadStatusRecord
+                            {
+                                ReportDate = reader.GetDateTime(reader.GetOrdinal("ReportDate")),
+                                TotalBoxes = GetInt64Safe(reader, "TotalBoxes"),
+                                BothSideRead = GetInt64Safe(reader, "BothSideRead"),
+                                FromReadToNoRead = GetInt64Safe(reader, "FromReadToNoRead"),
+                                FromNoReadToRead = GetInt64Safe(reader, "FromNoReadToRead"),
+                                BothSideNoRead = GetInt64Safe(reader, "BothSideNoRead"),
+                                IncompleteOrMissing = GetInt64Safe(reader, "IncompleteOrMissing")
+                            };
                             result.Add(record);
                         }
                     }

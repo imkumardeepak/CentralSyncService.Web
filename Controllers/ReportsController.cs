@@ -47,13 +47,6 @@ namespace Web.Controllers
             return View(records);
         }
 
-        // Problem boxes from vw_ProblemBoxes
-        public async Task<IActionResult> ProblemBoxes()
-        {
-            var records = await _reportingService.GetProblemBoxesAsync().ConfigureAwait(false);
-            return View(records);
-        }
-
         // NO READ analysis using sp_GetNoReadAnalysis
         public async Task<IActionResult> NoReadAnalysis(DateTime? date)
         {
@@ -82,20 +75,25 @@ namespace Web.Controllers
         }
 
         // Production Order Batch Report - Search by batch/order
-        public async Task<IActionResult> ProductionOrderBatchReport(string? plantCode, string? batchNo, string? orderNo, DateTime? date)
+        public async Task<IActionResult> ProductionOrderBatchReport(string? plantName, string? batchNo, string? orderNo, DateTime? date)
         {
             try
             {
                 var searchDate = date ?? DateTime.Today;
                 
-                var records = await _reportingRepository.GetProductionOrderBatchReportAsync(plantCode, batchNo, orderNo, searchDate).ConfigureAwait(false);
-                var summary = await _reportingRepository.GetProductionOrderBatchSummaryAsync(plantCode, batchNo, orderNo, searchDate).ConfigureAwait(false);
+                // Load plant names for dropdown
+                var plantNames = await _reportingRepository.GetDistinctPlantNamesAsync().ConfigureAwait(false);
+                
+                // Default to "Unit Kasana" if no plant is selected on initial load
+                var selectedPlant = plantName ?? (plantNames.Contains("Unit Kasana") ? "Unit Kasana" : null);
+                
+                var records = await _reportingRepository.GetProductionOrderBatchReportAsync(selectedPlant, batchNo, orderNo, searchDate).ConfigureAwait(false);
                 
                 var model = new ProductionOrderBatchReportViewModel
                 {
                     Reports = records,
-                    Summary = summary,
-                    PlantCode = plantCode,
+                    PlantNames = plantNames,
+                    PlantName = selectedPlant,
                     BatchNo = batchNo,
                     OrderNo = orderNo,
                     Date = searchDate
@@ -123,6 +121,67 @@ namespace Web.Controllers
             catch (Exception ex)
             {
                 return Json(new { error = ex.Message });
+            }
+        }
+
+        // Production Order Material Wise Report
+        public async Task<IActionResult> ProductionOrderMaterialReport(string? plantName, string? materialCode, DateTime? date)
+        {
+            try
+            {
+                var searchDate = date ?? DateTime.Today;
+
+                // Load plant names for dropdown
+                var plantNames = await _reportingRepository.GetDistinctPlantNamesAsync().ConfigureAwait(false);
+
+                // Default to "Unit Kasana" if no plant is selected on initial load
+                var selectedPlant = plantName ?? (plantNames.Contains("Unit Kasana") ? "Unit Kasana" : null);
+
+                var records = await _reportingRepository.GetProductionOrderMaterialReportAsync(selectedPlant, materialCode, searchDate).ConfigureAwait(false);
+
+                var model = new ProductionOrderMaterialReportViewModel
+                {
+                    Reports = records,
+                    PlantNames = plantNames,
+                    PlantName = selectedPlant,
+                    MaterialCode = materialCode,
+                    Date = searchDate
+                };
+
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Error = $"Error: {ex.Message}";
+                ViewBag.StackTrace = ex.StackTrace;
+                return View(new ProductionOrderMaterialReportViewModel());
+            }
+        }
+
+        // Scan Read Status Report
+        public async Task<IActionResult> ScanReadStatus(DateTime? startDate, DateTime? endDate)
+        {
+            try
+            {
+                var sDate = startDate ?? DateTime.Today.AddDays(-30);
+                var eDate = endDate ?? DateTime.Today;
+
+                var records = await _reportingRepository.GetScanReadStatusAsync(sDate, eDate).ConfigureAwait(false);
+
+                var model = new ScanReadStatusViewModel
+                {
+                    Reports = records,
+                    StartDate = sDate,
+                    EndDate = eDate
+                };
+
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Error = $"Error: {ex.Message}";
+                ViewBag.StackTrace = ex.StackTrace;
+                return View(new ScanReadStatusViewModel());
             }
         }
     }

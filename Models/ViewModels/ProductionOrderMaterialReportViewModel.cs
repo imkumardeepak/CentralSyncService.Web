@@ -4,13 +4,12 @@ using Web.Core.DTOs;
 
 namespace Web.Models.ViewModels
 {
-    public class ProductionOrderBatchReportViewModel
+    public class ProductionOrderMaterialReportViewModel
     {
-        public List<ProductionOrderBatchReport> Reports { get; set; } = new();
+        public List<ProductionOrderMaterialReport> Reports { get; set; } = new();
         public List<string> PlantNames { get; set; } = new();
         public string? PlantName { get; set; }
-        public string? BatchNo { get; set; }
-        public string? OrderNo { get; set; }
+        public string? MaterialCode { get; set; }
         public DateTime Date { get; set; }
     }
 }

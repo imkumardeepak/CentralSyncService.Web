@@ -18,7 +18,6 @@ GO
 -- =============================================
 
 IF OBJECT_ID('dbo.vw_HourlyBreakdown', 'V') IS NOT NULL DROP VIEW dbo.vw_HourlyBreakdown;
-IF OBJECT_ID('dbo.vw_ProblemBoxes', 'V') IS NOT NULL DROP VIEW dbo.vw_ProblemBoxes;
 IF OBJECT_ID('dbo.vw_TodaySummary', 'V') IS NOT NULL DROP VIEW dbo.vw_TodaySummary;
 IF OBJECT_ID('dbo.vw_BoxTrackingLive', 'V') IS NOT NULL DROP VIEW dbo.vw_BoxTrackingLive;
 IF OBJECT_ID('dbo.sp_GetDashboardStats', 'P') IS NOT NULL DROP PROCEDURE dbo.sp_GetDashboardStats;
@@ -34,7 +33,9 @@ IF OBJECT_ID('dbo.sp_SyncScan', 'P') IS NOT NULL DROP PROCEDURE dbo.sp_SyncScan;
 IF OBJECT_ID('dbo.sp_UpdatePlantSyncStatus', 'P') IS NOT NULL DROP PROCEDURE dbo.sp_UpdatePlantSyncStatus;
 IF OBJECT_ID('dbo.sp_GetActivePlants', 'P') IS NOT NULL DROP PROCEDURE dbo.sp_GetActivePlants;
 IF OBJECT_ID('dbo.sp_GetProductionOrderBatchReport', 'P') IS NOT NULL DROP PROCEDURE dbo.sp_GetProductionOrderBatchReport;
-IF OBJECT_ID('dbo.sp_GetProductionOrderBatchSummary', 'P') IS NOT NULL DROP PROCEDURE dbo.sp_GetProductionOrderBatchSummary;
+IF OBJECT_ID('dbo.sp_GetProductionOrderBatchSummary', 'P') IS NOT NULL DROP PROCEDURE dbo.sp_GetProductionOrderBatchSummary; -- DROPPED, no longer used
+IF OBJECT_ID('dbo.sp_GetProductionOrderMaterialReport', 'P') IS NOT NULL DROP PROCEDURE dbo.sp_GetProductionOrderMaterialReport;
+IF OBJECT_ID('dbo.sp_GetScanReadStatusReport', 'P') IS NOT NULL DROP PROCEDURE dbo.sp_GetScanReadStatusReport;
 IF OBJECT_ID('dbo.sp_GetOrdersByBatch', 'P') IS NOT NULL DROP PROCEDURE dbo.sp_GetOrdersByBatch;
 IF TYPE_ID('dbo.ScanDataTableType') IS NOT NULL DROP TYPE dbo.ScanDataTableType;
 IF OBJECT_ID('dbo.SorterScans_Sync', 'U') IS NOT NULL DROP TABLE dbo.SorterScans_Sync;
@@ -456,29 +457,6 @@ GO
 PRINT 'View vw_HourlyBreakdown created.';
 GO
 
-CREATE VIEW dbo.vw_ProblemBoxes AS
-SELECT 
-    Id,
-    Barcode,
-    Batch,
-    LineCode,
-    MaterialCode,
-    FromPlant,
-    FORMAT(FromScanTime, 'yyyy-MM-dd HH:mm:ss.fff') AS FromScanTime,
-    CASE WHEN FromFlag = 1 THEN 'READ' WHEN FromFlag = 0 THEN 'NO READ' ELSE 'N/A' END AS FromStatus,
-    ToPlant,
-    FORMAT(ToScanTime, 'yyyy-MM-dd HH:mm:ss.fff') AS ToScanTime,
-    CASE WHEN ToFlag = 1 THEN 'READ' WHEN ToFlag = 0 THEN 'NO READ' ELSE 'N/A' END AS ToStatus,
-    MatchStatus,
-    TransitTimeSeconds,
-    CreatedAt
-FROM dbo.BoxTracking
-WHERE MatchStatus NOT IN ('MATCHED')
-  AND CAST(CreatedAt AS DATE) >= DATEADD(DAY, -7, GETDATE());
-GO
-
-PRINT 'View vw_ProblemBoxes created.';
-GO
 
 -- =============================================
 -- SECTION 6: REPORTING PROCEDURES (FIXED)
@@ -754,7 +732,7 @@ GO
 
 -- Procedure: Get Production Order Batch Report
 CREATE PROCEDURE [dbo].[sp_GetProductionOrderBatchReport]
-    @PlantCode NVARCHAR(50) = NULL,
+    @PlantName NVARCHAR(100) = NULL,
     @BatchNo NVARCHAR(20) = NULL,
     @OrderNo NVARCHAR(20) = NULL,
     @Date DATE = NULL
@@ -786,7 +764,7 @@ BEGIN
     FROM ProductionOrder po
     WHERE 
         CAST(ISNULL(po.BsDate, GETDATE()) AS DATE) = @Date
-        AND (@PlantCode IS NULL OR po.PlantCode = @PlantCode)
+        AND (@PlantName IS NULL OR po.PlantName = @PlantName)
         AND (@BatchNo IS NULL OR po.Batch = @BatchNo)
         AND po.Batch IS NOT NULL 
         AND po.Batch != ''
@@ -834,11 +812,10 @@ GO
 PRINT 'Procedure sp_GetOrdersByBatch created.';
 GO
 
--- Procedure: Get Production Order Batch Summary
-CREATE PROCEDURE [dbo].[sp_GetProductionOrderBatchSummary]
-    @PlantCode NVARCHAR(50) = NULL,
-    @BatchNo NVARCHAR(20) = NULL,
-    @OrderNo NVARCHAR(20) = NULL,
+-- Procedure: Get Production Order Material Wise Report
+CREATE PROCEDURE [dbo].[sp_GetProductionOrderMaterialReport]
+    @PlantName NVARCHAR(100) = NULL,
+    @MaterialCode NVARCHAR(50) = NULL,
     @Date DATE = NULL
 AS
 BEGIN
@@ -847,30 +824,112 @@ BEGIN
     SET @Date = ISNULL(@Date, CAST(GETDATE() AS DATE));
     
     SELECT 
-        CAST(COUNT(*) AS BIGINT) AS TotalOrders,
-        CAST(SUM(ISNULL(OrderQty, 0)) AS BIGINT) AS TotalOrderQty,
-        CAST(SUM(PrintedQty) AS BIGINT) AS TotalPrinted,
-        CAST(SUM(TotalTransferQty) AS BIGINT) AS TotalFromScanned,
-        CAST(SUM(ISNULL(OrderQty, 0)) - SUM(TotalTransferQty) AS BIGINT) AS TotalPending
-    FROM (
-        SELECT 
-            OrderQty,
-            (SELECT COUNT_BIG(*) FROM BarcodePrint bp WHERE bp.NewBatchNo = po.Batch AND bp.NewPlant = po.PlantCode) AS PrintedQty,
-            (SELECT COUNT_BIG(*) FROM SorterScans_Sync ss WHERE ss.Batch = po.Batch) AS TotalTransferQty
-        FROM ProductionOrder po
-        WHERE 
-            CAST(ISNULL(po.BsDate, GETDATE()) AS DATE) = @Date
-            AND (@PlantCode IS NULL OR po.PlantCode = @PlantCode)
-            AND (@BatchNo IS NULL OR po.Batch = @BatchNo)
-            AND (@OrderNo IS NULL OR CAST(po.OrderNo AS NVARCHAR(20)) = @OrderNo)
-            AND po.Batch IS NOT NULL 
-            AND po.Batch != ''
-            AND ISNULL(po.OrderQty, 0) > 0
-    ) AS data;
+        CAST(ISNULL(po.OrderNo, 0) AS BIGINT) AS OrderNo,
+        ISNULL(po.Batch, '') AS Batch,
+        po.Material AS MaterialCode,
+        ISNULL(mm.MaterialDescription, po.MaterialDescription) AS MaterialDescription,
+        ISNULL(po.PlantName, '') AS PlantName,
+        CAST(ISNULL(po.OrderQty, 0) AS BIGINT) AS OrderQty,
+        
+        -- Printed count from BarcodePrint where NewSAPCode = Material and NewBatchNo = Batch
+        CAST((SELECT COUNT_BIG(*) FROM BarcodePrint bp 
+              WHERE bp.NewSAPCode = po.Material 
+              AND bp.NewBatchNo = po.Batch
+        ) AS BIGINT) AS PrintedQty,
+        
+        -- Total Transfer count from BoxTracking where MaterialCode matches and Batch matches
+        CAST((SELECT COUNT_BIG(*) FROM BoxTracking bt 
+              WHERE bt.MaterialCode = po.Material
+              AND bt.Batch = po.Batch
+              AND CAST(bt.CreatedAt AS DATE) = @Date
+        ) AS BIGINT) AS TotalTransferQty,
+        
+        -- Pending = OrderQty - TotalTransfer
+        CAST(ISNULL(po.OrderQty, 0) - 
+            (SELECT COUNT_BIG(*) FROM BoxTracking bt 
+             WHERE bt.MaterialCode = po.Material
+             AND bt.Batch = po.Batch
+             AND CAST(bt.CreatedAt AS DATE) = @Date
+        ) AS BIGINT) AS PendingToScan,
+        
+        CASE 
+            WHEN (SELECT COUNT_BIG(*) FROM BoxTracking bt 
+                  WHERE bt.MaterialCode = po.Material
+                  AND bt.Batch = po.Batch
+                  AND CAST(bt.CreatedAt AS DATE) = @Date
+            ) >= ISNULL(po.OrderQty, 0) THEN 'COMPLETED'
+            WHEN (SELECT COUNT_BIG(*) FROM BoxTracking bt 
+                  WHERE bt.MaterialCode = po.Material
+                  AND bt.Batch = po.Batch
+                  AND CAST(bt.CreatedAt AS DATE) = @Date
+            ) > 0 THEN 'IN_PROGRESS'
+            ELSE 'PENDING'
+        END AS Status,
+        
+        CAST(
+            CASE WHEN ISNULL(po.OrderQty, 0) > 0 
+                THEN (SELECT COUNT_BIG(*) FROM BoxTracking bt 
+                      WHERE bt.MaterialCode = po.Material
+                      AND bt.Batch = po.Batch
+                      AND CAST(bt.CreatedAt AS DATE) = @Date
+                ) * 100.0 / ISNULL(po.OrderQty, 0)
+                ELSE 0 
+            END
+        AS DECIMAL(5,2)) AS CompletionPercent
+        
+    FROM ProductionOrder po
+    LEFT JOIN MaterialMaster mm ON mm.MaterialNumber = po.Material
+    WHERE 
+        CAST(ISNULL(po.BsDate, GETDATE()) AS DATE) = @Date
+        AND (@PlantName IS NULL OR po.PlantName = @PlantName)
+        AND (@MaterialCode IS NULL OR po.Material LIKE '%' + @MaterialCode + '%')
+        AND po.Material IS NOT NULL 
+        AND po.Material != ''
+        AND ISNULL(po.OrderQty, 0) > 0
+    
+    ORDER BY po.Material, po.Batch, po.OrderNo;
 END
 GO
 
-PRINT 'Procedure sp_GetProductionOrderBatchSummary created.';
+PRINT 'Procedure sp_GetProductionOrderMaterialReport created.';
+GO
+
+-- Procedure: Get Scan Read Status Report (READ / NO READ tracking)
+CREATE PROCEDURE dbo.sp_GetScanReadStatusReport
+    @StartDate DATE = NULL,
+    @EndDate DATE = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    
+    SET @StartDate = ISNULL(@StartDate, DATEADD(DAY, -30, GETDATE()));
+    SET @EndDate = ISNULL(@EndDate, GETDATE());
+
+    SELECT 
+        CAST(CreatedAt AS DATE) AS ReportDate,
+        COUNT(*) AS TotalBoxes,
+        
+        -- Both Sides READ
+        SUM(CASE WHEN FromFlag = 1 AND ToFlag = 1 THEN 1 ELSE 0 END) AS BothSideRead,
+        
+        -- One side READ, other NO READ
+        SUM(CASE WHEN FromFlag = 1 AND ToFlag = 0 THEN 1 ELSE 0 END) AS FromReadToNoRead,
+        SUM(CASE WHEN FromFlag = 0 AND ToFlag = 1 THEN 1 ELSE 0 END) AS FromNoReadToRead,
+        
+        -- Both Sides NO READ
+        SUM(CASE WHEN FromFlag = 0 AND ToFlag = 0 THEN 1 ELSE 0 END) AS BothSideNoRead,
+        
+        -- Missing data / Not Scanned at one end (NULL flags)
+        SUM(CASE WHEN FromFlag IS NULL OR ToFlag IS NULL THEN 1 ELSE 0 END) AS IncompleteOrMissing
+        
+    FROM dbo.BoxTracking
+    WHERE CAST(CreatedAt AS DATE) BETWEEN @StartDate AND @EndDate
+    GROUP BY CAST(CreatedAt AS DATE)
+    ORDER BY ReportDate DESC;
+END
+GO
+
+PRINT 'Procedure sp_GetScanReadStatusReport created.';
 GO
 
 -- =============================================
@@ -893,7 +952,7 @@ PRINT 'Views Created:';
 PRINT '  - vw_BoxTrackingLive';
 PRINT '  - vw_TodaySummary (FIXED with PENDING statuses)';
 PRINT '  - vw_HourlyBreakdown';
-PRINT '  - vw_ProblemBoxes (with MaterialCode)';
+
 PRINT '';
 PRINT 'Procedures Created:';
 PRINT '  - sp_GetActivePlants';

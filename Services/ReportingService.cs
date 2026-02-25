@@ -44,10 +44,5 @@ namespace Web.Services
         {
             return await _repository.GetDashboardStatsAsync().ConfigureAwait(false);
         }
-
-        public async Task<List<ProblemBoxRecord>> GetProblemBoxesAsync()
-        {
-            return await _repository.GetProblemBoxesAsync().ConfigureAwait(false);
-        }
     }
 }

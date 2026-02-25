@@ -18,15 +18,6 @@ namespace Web.Core.DTOs
         public decimal CompletionPercent { get; set; }
     }
 
-    public class ProductionOrderBatchSummary
-    {
-        public long TotalOrders { get; set; }
-        public long TotalOrderQty { get; set; }
-        public long TotalPrinted { get; set; }
-        public long TotalFromScanned { get; set; }
-        public long TotalPending { get; set; }
-    }
-
     public class OrderDetailByBatch
     {
         public long OrderId { get; set; }

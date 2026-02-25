@@ -12,9 +12,10 @@ namespace Web.Core.Interfaces
         Task<List<BarcodeHistoryRecord>> SearchBarcodeAsync(string barcode, int daysBack);
         Task<List<NoReadAnalysisRecord>> GetNoReadAnalysisAsync(DateTime? date);
         Task<List<DashboardStatsRecord>> GetDashboardStatsAsync();
-        Task<List<ProblemBoxRecord>> GetProblemBoxesAsync();
-        Task<List<ProductionOrderBatchReport>> GetProductionOrderBatchReportAsync(string? plantCode, string? batchNo, string? orderNo, DateTime? date);
-        Task<ProductionOrderBatchSummary> GetProductionOrderBatchSummaryAsync(string? plantCode, string? batchNo, string? orderNo, DateTime? date);
+        Task<List<ProductionOrderBatchReport>> GetProductionOrderBatchReportAsync(string? plantName, string? batchNo, string? orderNo, DateTime? date);
         Task<List<OrderDetailByBatch>> GetOrdersByBatchAsync(string batch, DateTime? date);
+        Task<List<string>> GetDistinctPlantNamesAsync();
+        Task<List<ProductionOrderMaterialReport>> GetProductionOrderMaterialReportAsync(string? plantName, string? materialCode, DateTime? date);
+        Task<List<ScanReadStatusRecord>> GetScanReadStatusAsync(DateTime? startDate, DateTime? endDate);
     }
 }

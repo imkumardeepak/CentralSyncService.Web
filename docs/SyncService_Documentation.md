@@ -684,7 +684,6 @@ TransitTimeSeconds = DATEDIFF(SECOND, FromScanTime, ToScanTime)
 | `vw_BoxTrackingLive` | Today's box tracking data with human-readable status and transit time |
 | `vw_TodaySummary` | Today's aggregate statistics (total, matched, missing, rate %) |
 | `vw_HourlyBreakdown` | Last 7 days hourly breakdown with match rates |
-| `vw_ProblemBoxes` | Last 7 days of boxes with problems (not matched) |
 
 ### Reporting Controllers
 
@@ -694,7 +693,6 @@ The `ReportsController` exposes pages for:
 - **Barcode Search** — `sp_SearchBarcode`
 - **No Read Analysis** — `sp_GetNoReadAnalysis`
 - **Dashboard Stats** — `sp_GetDashboardStats`
-- **Problem Boxes** — `vw_ProblemBoxes`
 
 ---
 
