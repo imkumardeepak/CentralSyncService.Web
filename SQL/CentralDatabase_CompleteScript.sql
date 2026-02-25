@@ -1,16 +1,16 @@
 -- =============================================
 -- CENTRAL SERVER - BOX TRACKING DATABASE
 -- =============================================
--- This script creates the central database schema for
--- tracking boxes across FROM and TO plants, with 
--- comprehensive reporting capabilities.
+-- Complete merged script with:
+--   - MaterialCode column added to all tables
+--   - Fixed sp_GetDailySummary (includes PENDING statuses)
+--   - Production Order Batch Report procedures
 --
--- Database: Haldiram_Local_DB (Central Server)
--- Author: Box Tracking System
--- Created: 2026-02-16
+-- Database: Haldiram_Barcode_Line (Central Server)
+-- Updated: 2026-02-25
 -- =============================================
 
-USE Haldiram_Local_DB;
+USE Haldiram_Barcode_Line;
 GO
 
 -- =============================================
@@ -33,6 +33,9 @@ IF OBJECT_ID('dbo.sp_BulkSyncScans', 'P') IS NOT NULL DROP PROCEDURE dbo.sp_Bulk
 IF OBJECT_ID('dbo.sp_SyncScan', 'P') IS NOT NULL DROP PROCEDURE dbo.sp_SyncScan;
 IF OBJECT_ID('dbo.sp_UpdatePlantSyncStatus', 'P') IS NOT NULL DROP PROCEDURE dbo.sp_UpdatePlantSyncStatus;
 IF OBJECT_ID('dbo.sp_GetActivePlants', 'P') IS NOT NULL DROP PROCEDURE dbo.sp_GetActivePlants;
+IF OBJECT_ID('dbo.sp_GetProductionOrderBatchReport', 'P') IS NOT NULL DROP PROCEDURE dbo.sp_GetProductionOrderBatchReport;
+IF OBJECT_ID('dbo.sp_GetProductionOrderBatchSummary', 'P') IS NOT NULL DROP PROCEDURE dbo.sp_GetProductionOrderBatchSummary;
+IF OBJECT_ID('dbo.sp_GetOrdersByBatch', 'P') IS NOT NULL DROP PROCEDURE dbo.sp_GetOrdersByBatch;
 IF TYPE_ID('dbo.ScanDataTableType') IS NOT NULL DROP TYPE dbo.ScanDataTableType;
 IF OBJECT_ID('dbo.SorterScans_Sync', 'U') IS NOT NULL DROP TABLE dbo.SorterScans_Sync;
 IF OBJECT_ID('dbo.BoxTracking', 'U') IS NOT NULL DROP TABLE dbo.BoxTracking;
@@ -74,13 +77,14 @@ GO
 PRINT 'Table PlantConfiguration created successfully.';
 GO
 
--- Main Box Tracking Table
+-- Main Box Tracking Table (with MaterialCode)
 CREATE TABLE dbo.BoxTracking (
     Id BIGINT IDENTITY(1,1) PRIMARY KEY,
     Barcode NVARCHAR(50) NOT NULL,
     Batch NVARCHAR(20) NULL,
     LineCode NVARCHAR(5) NULL,
     PlantCode NVARCHAR(10) NULL,
+    MaterialCode NVARCHAR(20) NULL,
     FromPlant NVARCHAR(50) NULL,
     FromScanTime DATETIME2(3) NULL,
     FromFlag BIT NULL,
@@ -118,12 +122,14 @@ CREATE NONCLUSTERED INDEX IX_BoxTracking_Barcode ON dbo.BoxTracking (Barcode, Fr
 CREATE NONCLUSTERED INDEX IX_BoxTracking_MatchStatus ON dbo.BoxTracking (MatchStatus, CreatedAt DESC);
 CREATE NONCLUSTERED INDEX IX_BoxTracking_FromScanTime ON dbo.BoxTracking (FromScanTime DESC) INCLUDE (Barcode, ToScanTime, MatchStatus);
 CREATE NONCLUSTERED INDEX IX_BoxTracking_CreatedAt ON dbo.BoxTracking (CreatedAt);
+CREATE NONCLUSTERED INDEX IX_BoxTracking_Batch ON dbo.BoxTracking (Batch) WHERE Batch IS NOT NULL;
+CREATE NONCLUSTERED INDEX IX_BoxTracking_MaterialCode ON dbo.BoxTracking (MaterialCode) WHERE MaterialCode IS NOT NULL;
 GO
 
-PRINT 'Table BoxTracking created successfully.';
+PRINT 'Table BoxTracking created successfully (with MaterialCode).';
 GO
 
--- Sorter Scans Sync Table
+-- Sorter Scans Sync Table (with MaterialCode)
 CREATE TABLE dbo.SorterScans_Sync (
     Id BIGINT IDENTITY(1,1) PRIMARY KEY,
     SourceId BIGINT NOT NULL,
@@ -132,6 +138,7 @@ CREATE TABLE dbo.SorterScans_Sync (
     PlantCode NVARCHAR(10) NULL,
     LineCode NVARCHAR(5) NULL,
     Batch NVARCHAR(20) NULL,
+    MaterialCode NVARCHAR(20) NULL,
     Barcode NVARCHAR(50) NOT NULL,
     ScanDateTime DATETIME2(3) NOT NULL,
     IsRead BIT NOT NULL DEFAULT 1,
@@ -144,9 +151,10 @@ CREATE TABLE dbo.SorterScans_Sync (
 GO
 
 CREATE NONCLUSTERED INDEX IX_SorterScans_Sync_Unprocessed ON dbo.SorterScans_Sync (ProcessedAt) WHERE ProcessedAt IS NULL;
+CREATE NONCLUSTERED INDEX IX_SorterScans_Sync_Batch ON dbo.SorterScans_Sync (Batch) WHERE Batch IS NOT NULL;
 GO
 
-PRINT 'Table SorterScans_Sync created successfully.';
+PRINT 'Table SorterScans_Sync created successfully (with MaterialCode).';
 GO
 
 -- =============================================
@@ -158,13 +166,14 @@ CREATE TYPE dbo.ScanDataTableType AS TABLE (
     PlantCode NVARCHAR(10),
     LineCode NVARCHAR(5),
     Batch NVARCHAR(20),
+    MaterialCode NVARCHAR(20),
     Barcode NVARCHAR(50),
     ScanDateTime DATETIME2(3),
     IsRead BIT
 );
 GO
 
-PRINT 'Table type ScanDataTableType created successfully.';
+PRINT 'Table type ScanDataTableType created successfully (with MaterialCode).';
 GO
 
 -- =============================================
@@ -206,7 +215,7 @@ GO
 PRINT 'Procedure sp_UpdatePlantSyncStatus created.';
 GO
 
--- Procedure: Sync a single scan
+-- Procedure: Sync a single scan (with MaterialCode)
 CREATE PROCEDURE dbo.sp_SyncScan
     @SourceId BIGINT,
     @ScanType VARCHAR(10),
@@ -214,6 +223,7 @@ CREATE PROCEDURE dbo.sp_SyncScan
     @PlantCode NVARCHAR(10),
     @LineCode NVARCHAR(5),
     @Batch NVARCHAR(20),
+    @MaterialCode NVARCHAR(20) = NULL,
     @Barcode NVARCHAR(50),
     @ScanDateTime DATETIME2(3),
     @IsRead BIT,
@@ -224,22 +234,22 @@ BEGIN
     SET NOCOUNT ON;
     DECLARE @ExistingId BIGINT;
     DECLARE @MatchWindowMinutes INT = 30;
-    DECLARE @NoReadMatchWindowMinutes INT = 60; -- Wider window for NO READ matching
+    DECLARE @NoReadMatchWindowMinutes INT = 60;
     
     BEGIN TRY
         BEGIN TRANSACTION;
         
+        -- Step 1: Insert audit record into SorterScans_Sync
         INSERT INTO dbo.SorterScans_Sync 
             (SourceId, ScanType, CurrentPlant, PlantCode, LineCode, Batch, 
-             Barcode, ScanDateTime, IsRead, PCName, SyncedAt)
+             MaterialCode, Barcode, ScanDateTime, IsRead, PCName, SyncedAt)
         VALUES 
             (@SourceId, @ScanType, @CurrentPlant, @PlantCode, @LineCode, @Batch,
-             @Barcode, @ScanDateTime, @IsRead, @PCName, GETDATE());
+             @MaterialCode, @Barcode, @ScanDateTime, @IsRead, @PCName, GETDATE());
         
         DECLARE @SyncId BIGINT = SCOPE_IDENTITY();
         
-        -- FIXED: Now attempts matching for both valid scans AND NO READ scans
-        -- NO READ scans use a wider time window (60 min vs 30 min)
+        -- Step 2: Try to match with existing BoxTracking record
         DECLARE @CurrentMatchWindow INT = CASE WHEN @IsRead = 1 THEN @MatchWindowMinutes ELSE @NoReadMatchWindowMinutes END;
         
         SELECT TOP 1 @ExistingId = Id 
@@ -249,15 +259,16 @@ BEGIN
           AND ((@ScanType = 'FROM' AND FromFlag IS NULL) OR (@ScanType = 'TO' AND ToFlag IS NULL))
         ORDER BY CreatedAt DESC;
         
+        -- Step 3: INSERT new or UPDATE existing
         IF @ExistingId IS NULL
         BEGIN
             IF @ScanType = 'FROM'
             BEGIN
                 INSERT INTO dbo.BoxTracking 
-                    (Barcode, Batch, LineCode, PlantCode,
+                    (Barcode, Batch, LineCode, PlantCode, MaterialCode,
                      FromPlant, FromScanTime, FromFlag, FromRawData, FromSyncTime, FromPCName)
                 VALUES 
-                    (@Barcode, @Batch, @LineCode, @PlantCode,
+                    (@Barcode, @Batch, @LineCode, @PlantCode, @MaterialCode,
                      @CurrentPlant, @ScanDateTime, @IsRead, 
                      CASE WHEN @IsRead = 1 THEN @Barcode ELSE 'NO READ' END,
                      GETDATE(), @PCName);
@@ -265,10 +276,10 @@ BEGIN
             ELSE
             BEGIN
                 INSERT INTO dbo.BoxTracking 
-                    (Barcode, Batch, LineCode, PlantCode,
+                    (Barcode, Batch, LineCode, PlantCode, MaterialCode,
                      ToPlant, ToScanTime, ToFlag, ToRawData, ToSyncTime, ToPCName)
                 VALUES 
-                    (@Barcode, @Batch, @LineCode, @PlantCode,
+                    (@Barcode, @Batch, @LineCode, @PlantCode, @MaterialCode,
                      @CurrentPlant, @ScanDateTime, @IsRead,
                      CASE WHEN @IsRead = 1 THEN @Barcode ELSE 'NO READ' END,
                      GETDATE(), @PCName);
@@ -286,6 +297,7 @@ BEGIN
                     FromRawData = CASE WHEN @IsRead = 1 THEN @Barcode ELSE 'NO READ' END,
                     FromSyncTime = GETDATE(),
                     FromPCName = @PCName,
+                    MaterialCode = ISNULL(MaterialCode, @MaterialCode),
                     UpdatedAt = GETDATE()
                 WHERE Id = @ExistingId;
             END
@@ -298,12 +310,14 @@ BEGIN
                     ToRawData = CASE WHEN @IsRead = 1 THEN @Barcode ELSE 'NO READ' END,
                     ToSyncTime = GETDATE(),
                     ToPCName = @PCName,
+                    MaterialCode = ISNULL(MaterialCode, @MaterialCode),
                     UpdatedAt = GETDATE()
                 WHERE Id = @ExistingId;
             END
             SET @BoxTrackingId = @ExistingId;
         END
         
+        -- Step 4: Link audit record to BoxTracking
         UPDATE dbo.SorterScans_Sync 
         SET ProcessedAt = GETDATE(), BoxTrackingId = @BoxTrackingId
         WHERE Id = @SyncId;
@@ -317,10 +331,10 @@ BEGIN
 END
 GO
 
-PRINT 'Procedure sp_SyncScan created.';
+PRINT 'Procedure sp_SyncScan created (with MaterialCode).';
 GO
 
--- Procedure: Bulk Sync
+-- Procedure: Bulk Sync (with MaterialCode)
 CREATE PROCEDURE dbo.sp_BulkSyncScans
     @ScanType VARCHAR(10),
     @CurrentPlant NVARCHAR(50),
@@ -333,15 +347,16 @@ BEGIN
     SET @SyncedCount = 0;
     
     DECLARE @SourceId BIGINT, @PlantCode NVARCHAR(10), @LineCode NVARCHAR(5);
-    DECLARE @Batch NVARCHAR(20), @Barcode NVARCHAR(50), @ScanDateTime DATETIME2(3), @IsRead BIT;
+    DECLARE @Batch NVARCHAR(20), @MaterialCode NVARCHAR(20), @Barcode NVARCHAR(50);
+    DECLARE @ScanDateTime DATETIME2(3), @IsRead BIT;
     DECLARE @BoxTrackingId BIGINT;
     
     DECLARE sync_cursor CURSOR LOCAL FAST_FORWARD FOR
-        SELECT SourceId, PlantCode, LineCode, Batch, Barcode, ScanDateTime, IsRead
+        SELECT SourceId, PlantCode, LineCode, Batch, MaterialCode, Barcode, ScanDateTime, IsRead
         FROM @ScanData;
     
     OPEN sync_cursor;
-    FETCH NEXT FROM sync_cursor INTO @SourceId, @PlantCode, @LineCode, @Batch, @Barcode, @ScanDateTime, @IsRead;
+    FETCH NEXT FROM sync_cursor INTO @SourceId, @PlantCode, @LineCode, @Batch, @MaterialCode, @Barcode, @ScanDateTime, @IsRead;
     
     WHILE @@FETCH_STATUS = 0
     BEGIN
@@ -352,6 +367,7 @@ BEGIN
             @PlantCode = @PlantCode,
             @LineCode = @LineCode,
             @Batch = @Batch,
+            @MaterialCode = @MaterialCode,
             @Barcode = @Barcode,
             @ScanDateTime = @ScanDateTime,
             @IsRead = @IsRead,
@@ -359,7 +375,7 @@ BEGIN
             @BoxTrackingId = @BoxTrackingId OUTPUT;
         
         SET @SyncedCount = @SyncedCount + 1;
-        FETCH NEXT FROM sync_cursor INTO @SourceId, @PlantCode, @LineCode, @Batch, @Barcode, @ScanDateTime, @IsRead;
+        FETCH NEXT FROM sync_cursor INTO @SourceId, @PlantCode, @LineCode, @Batch, @MaterialCode, @Barcode, @ScanDateTime, @IsRead;
     END
     
     CLOSE sync_cursor;
@@ -367,7 +383,7 @@ BEGIN
 END
 GO
 
-PRINT 'Procedure sp_BulkSyncScans created.';
+PRINT 'Procedure sp_BulkSyncScans created (with MaterialCode).';
 GO
 
 -- =============================================
@@ -380,6 +396,7 @@ SELECT
     Barcode,
     Batch,
     LineCode,
+    MaterialCode,
     FromPlant,
     FromScanTime,
     CASE WHEN FromFlag = 1 THEN 'READ' WHEN FromFlag = 0 THEN 'NO READ' ELSE 'PENDING' END AS FromStatus,
@@ -406,8 +423,8 @@ SELECT
     CAST(GETDATE() AS DATE) AS ReportDate,
     COUNT(*) AS TotalBoxes,
     SUM(CASE WHEN MatchStatus = 'MATCHED' THEN 1 ELSE 0 END) AS Matched,
-    SUM(CASE WHEN MatchStatus = 'MISSING_AT_TO' THEN 1 ELSE 0 END) AS MissingAtTo,
-    SUM(CASE WHEN MatchStatus = 'MISSING_AT_FROM' THEN 1 ELSE 0 END) AS MissingAtFrom,
+    SUM(CASE WHEN MatchStatus IN ('MISSING_AT_TO', 'PENDING_TO') THEN 1 ELSE 0 END) AS MissingAtTo,
+    SUM(CASE WHEN MatchStatus IN ('MISSING_AT_FROM', 'PENDING_FROM') THEN 1 ELSE 0 END) AS MissingAtFrom,
     SUM(CASE WHEN MatchStatus = 'BOTH_FAILED' THEN 1 ELSE 0 END) AS BothFailed,
     SUM(CASE WHEN MatchStatus = 'PENDING_TO' THEN 1 ELSE 0 END) AS PendingTo,
     SUM(CASE WHEN MatchStatus = 'PENDING_FROM' THEN 1 ELSE 0 END) AS PendingFrom,
@@ -445,6 +462,7 @@ SELECT
     Barcode,
     Batch,
     LineCode,
+    MaterialCode,
     FromPlant,
     FORMAT(FromScanTime, 'yyyy-MM-dd HH:mm:ss.fff') AS FromScanTime,
     CASE WHEN FromFlag = 1 THEN 'READ' WHEN FromFlag = 0 THEN 'NO READ' ELSE 'N/A' END AS FromStatus,
@@ -463,9 +481,10 @@ PRINT 'View vw_ProblemBoxes created.';
 GO
 
 -- =============================================
--- SECTION 6: REPORTING PROCEDURES
+-- SECTION 6: REPORTING PROCEDURES (FIXED)
 -- =============================================
 
+-- FIXED: sp_GetDailySummary includes PENDING statuses
 CREATE PROCEDURE dbo.sp_GetDailySummary
     @StartDate DATE = NULL,
     @EndDate DATE = NULL
@@ -479,8 +498,13 @@ BEGIN
         CAST(CreatedAt AS DATE) AS ReportDate,
         COUNT(*) AS TotalBoxes,
         SUM(CASE WHEN MatchStatus = 'MATCHED' THEN 1 ELSE 0 END) AS Matched,
+        
+        -- FIXED: Include PENDING_TO as Missing At TO
         SUM(CASE WHEN MatchStatus IN ('MISSING_AT_TO', 'PENDING_TO') THEN 1 ELSE 0 END) AS MissingAtTo,
+        
+        -- FIXED: Include PENDING_FROM as Missing At FROM
         SUM(CASE WHEN MatchStatus IN ('MISSING_AT_FROM', 'PENDING_FROM') THEN 1 ELSE 0 END) AS MissingAtFrom,
+        
         SUM(CASE WHEN MatchStatus = 'BOTH_FAILED' THEN 1 ELSE 0 END) AS BothFailed,
         CAST(SUM(CASE WHEN MatchStatus = 'MATCHED' THEN 1.0 ELSE 0 END) / NULLIF(COUNT(*), 0) * 100 AS DECIMAL(5,2)) AS MatchRatePercent,
         AVG(TransitTimeSeconds) AS AvgTransitSeconds,
@@ -493,7 +517,7 @@ BEGIN
 END
 GO
 
-PRINT 'Procedure sp_GetDailySummary created.';
+PRINT 'Procedure sp_GetDailySummary created (FIXED with PENDING statuses).';
 GO
 
 CREATE PROCEDURE dbo.sp_GetLinePerformance
@@ -534,6 +558,7 @@ BEGIN
         Barcode,
         Batch,
         LineCode,
+        MaterialCode,
         FromPlant,
         FromScanTime,
         CASE WHEN FromFlag = 1 THEN 'READ' WHEN FromFlag = 0 THEN 'NO READ' ELSE 'PENDING' END AS FromStatus,
@@ -606,6 +631,7 @@ BEGIN
         Barcode,
         Batch,
         LineCode,
+        MaterialCode,
         FromPlant,
         FORMAT(FromScanTime, 'yyyy-MM-dd HH:mm:ss.fff') AS FromScanTime,
         CASE WHEN FromFlag = 1 THEN 'READ' WHEN FromFlag = 0 THEN 'NO READ' ELSE 'N/A' END AS FromStatus,
@@ -723,28 +749,129 @@ PRINT 'Procedure sp_GetDashboardStats created.';
 GO
 
 -- =============================================
--- SECTION 7: SAMPLE DATA (OPTIONAL)
+-- SECTION 7: PRODUCTION ORDER BATCH PROCEDURES
 -- =============================================
 
-/*
--- Uncomment to insert sample plant configuration
-INSERT INTO dbo.PlantConfiguration 
-    (PlantCode, PlantName, PlantType, ServerIP, DatabaseName, Username, Password, IsActive)
-VALUES 
-    ('FROM01', 'Delhi Plant FROM', 'FROM', '192.168.1.10', 'HaldiramSorterDB', 'sa', 'password', 1),
-    ('TO01', 'Mumbai Plant TO', 'TO', '192.168.1.20', 'HaldiramSorterDB', 'sa', 'password', 1);
+-- Procedure: Get Production Order Batch Report
+CREATE PROCEDURE [dbo].[sp_GetProductionOrderBatchReport]
+    @PlantCode NVARCHAR(50) = NULL,
+    @BatchNo NVARCHAR(20) = NULL,
+    @OrderNo NVARCHAR(20) = NULL,
+    @Date DATE = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    
+    SET @Date = ISNULL(@Date, CAST(GETDATE() AS DATE));
+    
+    SELECT 
+        po.Batch AS Batch,
+        ISNULL(po.PlantCode, '') AS PlantCode,
+        ISNULL(po.PlantName, '') AS PlantName,
+        CAST(SUM(ISNULL(po.OrderQty, 0)) AS BIGINT) AS OrderQty,
+        
+        CAST((SELECT COUNT_BIG(*) FROM BarcodePrint bp WHERE bp.NewBatchNo = po.Batch) AS BIGINT) AS PrintedQty,
+        CAST((SELECT COUNT_BIG(*) FROM SorterScans_Sync ss WHERE ss.Batch = po.Batch) AS BIGINT) AS TotalTransferQty,
+        
+        CAST(SUM(ISNULL(po.OrderQty, 0)) - (SELECT COUNT_BIG(*) FROM SorterScans_Sync WHERE Batch = po.Batch) AS BIGINT) AS PendingToScan,
+        
+        CASE 
+            WHEN (SELECT COUNT_BIG(*) FROM SorterScans_Sync WHERE Batch = po.Batch) >= SUM(ISNULL(po.OrderQty, 0)) THEN 'COMPLETED'
+            WHEN (SELECT COUNT_BIG(*) FROM SorterScans_Sync WHERE Batch = po.Batch) > 0 THEN 'IN_PROGRESS'
+            ELSE 'PENDING'
+        END AS Status,
+        
+        CAST(0.00 AS DECIMAL(5,2)) AS CompletionPercent
+        
+    FROM ProductionOrder po
+    WHERE 
+        CAST(ISNULL(po.BsDate, GETDATE()) AS DATE) = @Date
+        AND (@PlantCode IS NULL OR po.PlantCode = @PlantCode)
+        AND (@BatchNo IS NULL OR po.Batch = @BatchNo)
+        AND po.Batch IS NOT NULL 
+        AND po.Batch != ''
+        AND ISNULL(po.OrderQty, 0) > 0
+    
+    GROUP BY po.Batch, po.PlantCode, po.PlantName
+    
+    ORDER BY po.Batch DESC;
+END
+GO
 
--- Uncomment to insert sample box tracking data
-INSERT INTO dbo.BoxTracking 
-    (Barcode, Batch, LineCode, PlantCode, 
-     FromPlant, FromScanTime, FromFlag, FromRawData,
-     ToPlant, ToScanTime, ToFlag, ToRawData)
-VALUES 
-    ('HLEE24A1234567890', 'HLEE24', 'A', 'HL', 'PLANT_FROM', DATEADD(SECOND, -10, GETDATE()), 1, 'HLEE24A1234567890', 'PLANT_TO', GETDATE(), 1, 'HLEE24A1234567890'),
-    ('HLEE24B9876543210', 'HLEE24', 'B', 'HL', 'PLANT_FROM', DATEADD(SECOND, -15, GETDATE()), 1, 'HLEE24B9876543210', 'PLANT_TO', GETDATE(), 0, 'NO READ'),
-    ('HLEE24C5555555555', 'HLEE24', 'C', 'HL', 'PLANT_FROM', DATEADD(SECOND, -20, GETDATE()), 0, 'NO READ', 'PLANT_TO', GETDATE(), 1, 'HLEE24C5555555555'),
-    ('NOREAD_BOTH_12345', 'HLEE24', 'D', 'HL', 'PLANT_FROM', DATEADD(SECOND, -25, GETDATE()), 0, 'NO READ', 'PLANT_TO', GETDATE(), 0, 'NO READ');
-*/
+PRINT 'Procedure sp_GetProductionOrderBatchReport created.';
+GO
+
+-- Procedure: Get Orders by Batch
+CREATE PROCEDURE [dbo].[sp_GetOrdersByBatch]
+    @Batch NVARCHAR(20),
+    @Date DATE = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    
+    SET @Date = ISNULL(@Date, CAST(GETDATE() AS DATE));
+    
+    SELECT 
+        CAST(po.ID AS BIGINT) AS OrderId,
+        CAST(ISNULL(po.OrderNo, 0) AS BIGINT) AS OrderNo,
+        ISNULL(po.Material, '') AS Material,
+        ISNULL(po.MaterialDescription, '') AS MaterialDescription,
+        CAST(ISNULL(po.OrderQty, 0) AS BIGINT) AS OrderQty,
+        CAST(ISNULL(po.CurQTY, 0) AS BIGINT) AS PrintedQty,
+        CAST(ISNULL(po.BalQTY, 0) AS BIGINT) AS Pending
+        
+    FROM ProductionOrder po
+    WHERE 
+        CAST(ISNULL(po.BsDate, GETDATE()) AS DATE) = @Date
+        AND po.Batch = @Batch
+        AND po.Batch IS NOT NULL 
+        AND po.Batch != ''
+    
+    ORDER BY po.OrderNo DESC;
+END
+GO
+
+PRINT 'Procedure sp_GetOrdersByBatch created.';
+GO
+
+-- Procedure: Get Production Order Batch Summary
+CREATE PROCEDURE [dbo].[sp_GetProductionOrderBatchSummary]
+    @PlantCode NVARCHAR(50) = NULL,
+    @BatchNo NVARCHAR(20) = NULL,
+    @OrderNo NVARCHAR(20) = NULL,
+    @Date DATE = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    
+    SET @Date = ISNULL(@Date, CAST(GETDATE() AS DATE));
+    
+    SELECT 
+        CAST(COUNT(*) AS BIGINT) AS TotalOrders,
+        CAST(SUM(ISNULL(OrderQty, 0)) AS BIGINT) AS TotalOrderQty,
+        CAST(SUM(PrintedQty) AS BIGINT) AS TotalPrinted,
+        CAST(SUM(TotalTransferQty) AS BIGINT) AS TotalFromScanned,
+        CAST(SUM(ISNULL(OrderQty, 0)) - SUM(TotalTransferQty) AS BIGINT) AS TotalPending
+    FROM (
+        SELECT 
+            OrderQty,
+            (SELECT COUNT_BIG(*) FROM BarcodePrint bp WHERE bp.NewBatchNo = po.Batch AND bp.NewPlant = po.PlantCode) AS PrintedQty,
+            (SELECT COUNT_BIG(*) FROM SorterScans_Sync ss WHERE ss.Batch = po.Batch) AS TotalTransferQty
+        FROM ProductionOrder po
+        WHERE 
+            CAST(ISNULL(po.BsDate, GETDATE()) AS DATE) = @Date
+            AND (@PlantCode IS NULL OR po.PlantCode = @PlantCode)
+            AND (@BatchNo IS NULL OR po.Batch = @BatchNo)
+            AND (@OrderNo IS NULL OR CAST(po.OrderNo AS NVARCHAR(20)) = @OrderNo)
+            AND po.Batch IS NOT NULL 
+            AND po.Batch != ''
+            AND ISNULL(po.OrderQty, 0) > 0
+    ) AS data;
+END
+GO
+
+PRINT 'Procedure sp_GetProductionOrderBatchSummary created.';
+GO
 
 -- =============================================
 -- SECTION 8: COMPLETION
@@ -756,31 +883,34 @@ PRINT '============================================';
 PRINT '';
 PRINT 'Tables Created:';
 PRINT '  - PlantConfiguration (Plant settings)';
-PRINT '  - BoxTracking (Main tracking table)';
-PRINT '  - SorterScans_Sync (Audit table)';
+PRINT '  - BoxTracking (Main tracking table - WITH MaterialCode)';
+PRINT '  - SorterScans_Sync (Audit table - WITH MaterialCode)';
 PRINT '';
 PRINT 'Table Types Created:';
-PRINT '  - ScanDataTableType (For bulk operations)';
+PRINT '  - ScanDataTableType (For bulk operations - WITH MaterialCode)';
 PRINT '';
 PRINT 'Views Created:';
 PRINT '  - vw_BoxTrackingLive';
-PRINT '  - vw_TodaySummary';
+PRINT '  - vw_TodaySummary (FIXED with PENDING statuses)';
 PRINT '  - vw_HourlyBreakdown';
-PRINT '  - vw_ProblemBoxes';
+PRINT '  - vw_ProblemBoxes (with MaterialCode)';
 PRINT '';
 PRINT 'Procedures Created:';
 PRINT '  - sp_GetActivePlants';
 PRINT '  - sp_UpdatePlantSyncStatus';
-PRINT '  - sp_SyncScan';
-PRINT '  - sp_BulkSyncScans';
-PRINT '  - sp_GetDailySummary';
+PRINT '  - sp_SyncScan (WITH MaterialCode)';
+PRINT '  - sp_BulkSyncScans (WITH MaterialCode)';
+PRINT '  - sp_GetDailySummary (FIXED with PENDING statuses)';
 PRINT '  - sp_GetLinePerformance';
-PRINT '  - sp_GetPendingBoxes';
+PRINT '  - sp_GetPendingBoxes (with MaterialCode)';
 PRINT '  - sp_GetShiftReport';
-PRINT '  - sp_SearchBarcode';
+PRINT '  - sp_SearchBarcode (with MaterialCode)';
 PRINT '  - sp_GetNoReadAnalysis';
 PRINT '  - sp_ArchiveOldData';
 PRINT '  - sp_GetDashboardStats';
+PRINT '  - sp_GetProductionOrderBatchReport';
+PRINT '  - sp_GetOrdersByBatch';
+PRINT '  - sp_GetProductionOrderBatchSummary';
 PRINT '';
 PRINT '============================================';
 GO

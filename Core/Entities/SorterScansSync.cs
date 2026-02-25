@@ -14,6 +14,7 @@ namespace Web.Core.Entities
         public string? PlantCode { get; set; }
         public string? LineCode { get; set; }
         public string? Batch { get; set; }
+        public string? MaterialCode { get; set; }
         public string Barcode { get; set; } = string.Empty;
         public DateTime ScanDateTime { get; set; }
         public bool IsRead { get; set; }

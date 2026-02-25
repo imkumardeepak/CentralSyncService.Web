@@ -1,16 +1,6 @@
 USE [PlantLineDB]
 GO
 
-/****** Object:  Database [PlantLineDB]  ******/
-IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = N'PlantLineDB')
-BEGIN
-    CREATE DATABASE [PlantLineDB];
-END
-GO
-
-USE [PlantLineDB]
-GO
-
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -39,6 +29,7 @@ CREATE TABLE [dbo].[SorterScans](
     [PlantCode] [nvarchar](10) NULL,
     [LineCode] [nvarchar](5) NULL,
     [Batch] [nvarchar](20) NULL,
+    [MaterialCode] [nvarchar](20) NULL,
     [Barcode] [nvarchar](50) NOT NULL,
     [ScanDateTime] [datetime2](3) NOT NULL,
     [CreatedAt] [datetime2](0) NOT NULL CONSTRAINT [DF_SorterScans_CreatedAt] DEFAULT (getdate()),
@@ -147,6 +138,7 @@ BEGIN
         PlantCode,
         LineCode,
         Batch,
+        MaterialCode,
         Barcode,
         ScanDateTime
     FROM SorterScans
@@ -190,6 +182,7 @@ BEGIN
         PlantCode,
         LineCode,
         Batch,
+        MaterialCode,
         Barcode,
         ScanDateTime,
         CreatedAt,
@@ -202,20 +195,16 @@ GO
 
 -- =============================================
 -- Stored Procedure: sp_MarkAsSynced
--- Marks records as synced - COMPATIBLE VERSION
--- Works with SQL Server 2008 and later (no STRING_SPLIT dependency)
+-- Marks records as synced - SQL Server 2008+ Compatible
 -- =============================================
 CREATE PROCEDURE [dbo].[sp_MarkAsSynced]
-    @Ids NVARCHAR(MAX)  -- Comma-separated list of IDs
+    @Ids NVARCHAR(MAX)
 AS
 BEGIN
     SET NOCOUNT ON;
     
-    -- Use XML parsing for compatibility with SQL Server 2008+
-    -- This replaces STRING_SPLIT which requires SQL Server 2016+
     DECLARE @UpdatedCount INT = 0;
     
-    -- Convert comma-separated values to XML and parse
     DECLARE @XmlIds XML;
     SET @XmlIds = CAST('<ids><id>' + REPLACE(@Ids, ',', '</id><id>') + '</id></ids>' AS XML);
     
@@ -226,7 +215,7 @@ BEGIN
         SELECT T.C.value('.', 'BIGINT') AS Id
         FROM @XmlIds.nodes('/ids/id') AS T(C)
     )
-    AND IsSynced = 0;  -- Only update if not already synced
+    AND IsSynced = 0;
     
     SET @UpdatedCount = @@ROWCOUNT;
     
@@ -234,45 +223,16 @@ BEGIN
 END
 GO
 
--- =============================================
--- Alternative: sp_MarkAsSynced_Single
--- Alternative procedure that updates a single record
--- Use this if the XML parsing version has issues
--- =============================================
-/*
-CREATE PROCEDURE [dbo].[sp_MarkAsSynced_Single]
-    @Id BIGINT
-AS
-BEGIN
-    SET NOCOUNT ON;
-    
-    UPDATE SorterScans
-    SET IsSynced = 1, 
-        SyncedAt = GETDATE()
-    WHERE Id = @Id
-      AND IsSynced = 0;
-    
-    SELECT @@ROWCOUNT AS UpdatedCount;
-END
-GO
-*/
-
--- =============================================
--- Print completion message
--- =============================================
 PRINT '============================================================';
 PRINT 'PlantLineDB Database Schema Created Successfully';
 PRINT '============================================================';
 PRINT '';
 PRINT 'Objects Created:';
-PRINT '  - Table: SorterScans';
+PRINT '  - Table: SorterScans (with MaterialCode)';
 PRINT '  - Indexes: IX_SorterScans_IsSynced, IX_SorterScans_ScanDateTime';
 PRINT '  - Views: vw_TodayScanSummary, vw_HourlyScanBreakdown';
 PRINT '  - Procedures: sp_GetNoReadStats, sp_GetScansByDateRange,';
 PRINT '                sp_GetSyncStatus, sp_GetUnsyncedScans,';
-PRINT '                sp_MarkAsSynced (SQL 2008+ Compatible)';
-PRINT '';
-PRINT 'NOTE: sp_MarkAsSynced now uses XML parsing instead of STRING_SPLIT';
-PRINT '      for compatibility with SQL Server 2008 and later versions.';
+PRINT '                sp_MarkAsSynced';
 PRINT '============================================================';
 GO

@@ -9,6 +9,7 @@ namespace Web.Core.Entities
         public string? Batch { get; set; }
         public string? LineCode { get; set; }
         public string? PlantCode { get; set; }
+        public string? MaterialCode { get; set; }
         public string? FromPlant { get; set; }
         public DateTime? FromScanTime { get; set; }
         public bool? FromFlag { get; set; }

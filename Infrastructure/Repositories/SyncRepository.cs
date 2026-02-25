@@ -80,20 +80,20 @@ namespace Web.Infrastructure.Repositories
                 {
                     sql = @"
                         INSERT INTO BoxTracking 
-                            (Barcode, Batch, LineCode, PlantCode,
+                            (Barcode, Batch, LineCode, PlantCode, MaterialCode,
                              FromPlant, FromScanTime, FromFlag, FromRawData, FromSyncTime, FromPCName)
                         VALUES 
-                            (@Barcode, @Batch, @LineCode, @PlantCode,
+                            (@Barcode, @Batch, @LineCode, @PlantCode, @MaterialCode,
                              @Plant, @ScanTime, @IsRead, @RawData, GETDATE(), @PCName)";
                 }
                 else
                 {
                     sql = @"
                         INSERT INTO BoxTracking 
-                            (Barcode, Batch, LineCode, PlantCode,
+                            (Barcode, Batch, LineCode, PlantCode, MaterialCode,
                              ToPlant, ToScanTime, ToFlag, ToRawData, ToSyncTime, ToPCName)
                         VALUES 
-                            (@Barcode, @Batch, @LineCode, @PlantCode,
+                            (@Barcode, @Batch, @LineCode, @PlantCode, @MaterialCode,
                              @Plant, @ScanTime, @IsRead, @RawData, GETDATE(), @PCName)";
                 }
 
@@ -103,6 +103,7 @@ namespace Web.Infrastructure.Repositories
                         command.Parameters.AddWithValue("@Batch", (object?)record.Batch ?? DBNull.Value);
                         command.Parameters.AddWithValue("@LineCode", (object?)record.LineCode ?? DBNull.Value);
                         command.Parameters.AddWithValue("@PlantCode", (object?)record.PlantCode ?? DBNull.Value);
+                        command.Parameters.AddWithValue("@MaterialCode", (object?)record.MaterialCode ?? DBNull.Value);
                         command.Parameters.AddWithValue("@Plant", record.CurrentPlant);
                         command.Parameters.AddWithValue("@ScanTime", record.ScanDateTime);
                         command.Parameters.AddWithValue("@IsRead", record.IsRead ? 1 : 0);
@@ -130,6 +131,7 @@ namespace Web.Infrastructure.Repositories
                     command.Parameters.AddWithValue("@PlantCode", (object?)record.PlantCode ?? DBNull.Value);
                     command.Parameters.AddWithValue("@LineCode", (object?)record.LineCode ?? DBNull.Value);
                     command.Parameters.AddWithValue("@Batch", (object?)record.Batch ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@MaterialCode", (object?)record.MaterialCode ?? DBNull.Value);
                     command.Parameters.AddWithValue("@Barcode", record.Barcode);
                     command.Parameters.AddWithValue("@ScanDateTime", record.ScanDateTime);
                     command.Parameters.AddWithValue("@IsRead", record.IsRead ? 1 : 0);

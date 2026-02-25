@@ -53,6 +53,7 @@ namespace Web.Infrastructure.Repositories
                                     PlantCode = reader.IsDBNull(reader.GetOrdinal("PlantCode")) ? null : reader.GetString(reader.GetOrdinal("PlantCode")),
                                     LineCode = reader.IsDBNull(reader.GetOrdinal("LineCode")) ? null : reader.GetString(reader.GetOrdinal("LineCode")),
                                     Batch = reader.IsDBNull(reader.GetOrdinal("Batch")) ? null : reader.GetString(reader.GetOrdinal("Batch")),
+                                    MaterialCode = reader.IsDBNull(reader.GetOrdinal("MaterialCode")) ? null : reader.GetString(reader.GetOrdinal("MaterialCode")),
                                     Barcode = reader.GetString(reader.GetOrdinal("Barcode")),
                                     ScanDateTime = reader.GetDateTime(reader.GetOrdinal("ScanDateTime")),
                                     CreatedAt = reader.IsDBNull(reader.GetOrdinal("CreatedAt")) ? DateTime.Now : reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
