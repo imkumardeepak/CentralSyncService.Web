@@ -26,15 +26,14 @@ namespace Web.Controllers
         public async Task<IActionResult> Dashboard()
         {
             var stats = await _reportingService.GetDashboardStatsAsync().ConfigureAwait(false);
+            var todayStats = await _reportingService.GetTodayDashboardStatsAsync().ConfigureAwait(false);
 
             var model = new DashboardViewModel
             {
                 Stats = stats,
                 IsSyncRunning = _syncService.IsRunning,
                 LastSyncTime = _syncService.LastSyncTime,
-                TotalFromSynced = _syncService.TotalFromSynced,
-                TotalToSynced = _syncService.TotalToSynced,
-                TotalMatched = _syncService.TotalMatched
+                TodayStats = todayStats
             };
 
             return View(model);
@@ -72,41 +71,6 @@ namespace Web.Controllers
             ViewBag.Query = barcode;
             ViewBag.DaysBack = daysBack;
             return View(results);
-        }
-
-        // Production Order Batch Report - Search by batch/order
-        public async Task<IActionResult> ProductionOrderBatchReport(string? plantName, string? batchNo, string? orderNo, DateTime? date)
-        {
-            try
-            {
-                var searchDate = date ?? DateTime.Today;
-                
-                // Load plant names for dropdown
-                var plantNames = await _reportingRepository.GetDistinctPlantNamesAsync().ConfigureAwait(false);
-                
-                // Default to "Unit Kasana" if no plant is selected on initial load
-                var selectedPlant = plantName ?? (plantNames.Contains("Unit Kasana") ? "Unit Kasana" : null);
-                
-                var records = await _reportingRepository.GetProductionOrderBatchReportAsync(selectedPlant, batchNo, orderNo, searchDate).ConfigureAwait(false);
-                
-                var model = new ProductionOrderBatchReportViewModel
-                {
-                    Reports = records,
-                    PlantNames = plantNames,
-                    PlantName = selectedPlant,
-                    BatchNo = batchNo,
-                    OrderNo = orderNo,
-                    Date = searchDate
-                };
-                
-                return View(model);
-            }
-            catch (Exception ex)
-            {
-                ViewBag.Error = $"Error: {ex.Message}";
-                ViewBag.StackTrace = ex.StackTrace;
-                return View(new ProductionOrderBatchReportViewModel());
-            }
         }
 
         [HttpGet]

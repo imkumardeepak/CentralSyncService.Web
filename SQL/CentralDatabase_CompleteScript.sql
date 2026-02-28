@@ -748,14 +748,23 @@ BEGIN
         ISNULL(po.PlantName, '') AS PlantName,
         CAST(SUM(ISNULL(po.OrderQty, 0)) AS BIGINT) AS OrderQty,
         
-        CAST((SELECT COUNT_BIG(*) FROM BarcodePrint bp WHERE bp.NewBatchNo = po.Batch) AS BIGINT) AS PrintedQty,
-        CAST((SELECT COUNT_BIG(*) FROM SorterScans_Sync ss WHERE ss.Batch = po.Batch) AS BIGINT) AS TotalTransferQty,
+        -- Printed count from BarcodePrint where NewBatchNo match and optionally OrderNo
+        CAST((SELECT COUNT_BIG(*) FROM BarcodePrint bp 
+              WHERE LTRIM(RTRIM(bp.NewBatchNo)) = LTRIM(RTRIM(po.Batch))
+              AND (
+                  (po.OrderNo IS NOT NULL AND po.OrderNo > 0 AND bp.OrderNo = po.OrderNo)
+                  OR LTRIM(RTRIM(bp.NewSAPCode)) = LTRIM(RTRIM(po.Material))
+                  OR TRY_CAST(LTRIM(RTRIM(bp.NewSAPCode)) AS BIGINT) = TRY_CAST(LTRIM(RTRIM(po.Material)) AS BIGINT)
+                  OR ISNULL(po.OrderNo, 0) = 0
+              )
+        ) AS BIGINT) AS PrintedQty,
+        CAST((SELECT COUNT_BIG(*) FROM SorterScans_Sync ss WHERE LTRIM(RTRIM(ss.Batch)) = LTRIM(RTRIM(po.Batch))) AS BIGINT) AS TotalTransferQty,
         
-        CAST(SUM(ISNULL(po.OrderQty, 0)) - (SELECT COUNT_BIG(*) FROM SorterScans_Sync WHERE Batch = po.Batch) AS BIGINT) AS PendingToScan,
+        CAST(SUM(ISNULL(po.OrderQty, 0)) - (SELECT COUNT_BIG(*) FROM SorterScans_Sync WHERE LTRIM(RTRIM(Batch)) = LTRIM(RTRIM(po.Batch))) AS BIGINT) AS PendingToScan,
         
         CASE 
-            WHEN (SELECT COUNT_BIG(*) FROM SorterScans_Sync WHERE Batch = po.Batch) >= SUM(ISNULL(po.OrderQty, 0)) THEN 'COMPLETED'
-            WHEN (SELECT COUNT_BIG(*) FROM SorterScans_Sync WHERE Batch = po.Batch) > 0 THEN 'IN_PROGRESS'
+            WHEN (SELECT COUNT_BIG(*) FROM SorterScans_Sync WHERE LTRIM(RTRIM(Batch)) = LTRIM(RTRIM(po.Batch))) >= SUM(ISNULL(po.OrderQty, 0)) THEN 'COMPLETED'
+            WHEN (SELECT COUNT_BIG(*) FROM SorterScans_Sync WHERE LTRIM(RTRIM(Batch)) = LTRIM(RTRIM(po.Batch))) > 0 THEN 'IN_PROGRESS'
             ELSE 'PENDING'
         END AS Status,
         
@@ -770,7 +779,7 @@ BEGIN
         AND po.Batch != ''
         AND ISNULL(po.OrderQty, 0) > 0
     
-    GROUP BY po.Batch, po.PlantCode, po.PlantName
+    GROUP BY po.Batch, po.PlantCode, po.PlantName, po.OrderNo, po.Material
     
     ORDER BY po.Batch DESC;
 END
@@ -831,36 +840,40 @@ BEGIN
         ISNULL(po.PlantName, '') AS PlantName,
         CAST(ISNULL(po.OrderQty, 0) AS BIGINT) AS OrderQty,
         
-        -- Printed count from BarcodePrint where NewSAPCode = Material and NewBatchNo = Batch
+        -- Printed count from BarcodePrint using OrderNo or robust Material matching
         CAST((SELECT COUNT_BIG(*) FROM BarcodePrint bp 
-              WHERE bp.NewSAPCode = po.Material 
-              AND bp.NewBatchNo = po.Batch
+              WHERE LTRIM(RTRIM(bp.NewBatchNo)) = LTRIM(RTRIM(po.Batch)) 
+              AND (
+                  (po.OrderNo IS NOT NULL AND po.OrderNo > 0 AND bp.OrderNo = po.OrderNo)
+                  OR LTRIM(RTRIM(bp.NewSAPCode)) = LTRIM(RTRIM(po.Material))
+                  OR TRY_CAST(LTRIM(RTRIM(bp.NewSAPCode)) AS BIGINT) = TRY_CAST(LTRIM(RTRIM(po.Material)) AS BIGINT)
+              )
         ) AS BIGINT) AS PrintedQty,
         
         -- Total Transfer count from BoxTracking where MaterialCode matches and Batch matches
         CAST((SELECT COUNT_BIG(*) FROM BoxTracking bt 
-              WHERE bt.MaterialCode = po.Material
-              AND bt.Batch = po.Batch
+              WHERE LTRIM(RTRIM(bt.MaterialCode)) = LTRIM(RTRIM(po.Material))
+              AND LTRIM(RTRIM(bt.Batch)) = LTRIM(RTRIM(po.Batch))
               AND CAST(bt.CreatedAt AS DATE) = @Date
         ) AS BIGINT) AS TotalTransferQty,
         
         -- Pending = OrderQty - TotalTransfer
         CAST(ISNULL(po.OrderQty, 0) - 
             (SELECT COUNT_BIG(*) FROM BoxTracking bt 
-             WHERE bt.MaterialCode = po.Material
-             AND bt.Batch = po.Batch
+             WHERE LTRIM(RTRIM(bt.MaterialCode)) = LTRIM(RTRIM(po.Material))
+             AND LTRIM(RTRIM(bt.Batch)) = LTRIM(RTRIM(po.Batch))
              AND CAST(bt.CreatedAt AS DATE) = @Date
         ) AS BIGINT) AS PendingToScan,
         
         CASE 
             WHEN (SELECT COUNT_BIG(*) FROM BoxTracking bt 
-                  WHERE bt.MaterialCode = po.Material
-                  AND bt.Batch = po.Batch
+                  WHERE LTRIM(RTRIM(bt.MaterialCode)) = LTRIM(RTRIM(po.Material))
+                  AND LTRIM(RTRIM(bt.Batch)) = LTRIM(RTRIM(po.Batch))
                   AND CAST(bt.CreatedAt AS DATE) = @Date
             ) >= ISNULL(po.OrderQty, 0) THEN 'COMPLETED'
             WHEN (SELECT COUNT_BIG(*) FROM BoxTracking bt 
-                  WHERE bt.MaterialCode = po.Material
-                  AND bt.Batch = po.Batch
+                  WHERE LTRIM(RTRIM(bt.MaterialCode)) = LTRIM(RTRIM(po.Material))
+                  AND LTRIM(RTRIM(bt.Batch)) = LTRIM(RTRIM(po.Batch))
                   AND CAST(bt.CreatedAt AS DATE) = @Date
             ) > 0 THEN 'IN_PROGRESS'
             ELSE 'PENDING'
@@ -869,8 +882,8 @@ BEGIN
         CAST(
             CASE WHEN ISNULL(po.OrderQty, 0) > 0 
                 THEN (SELECT COUNT_BIG(*) FROM BoxTracking bt 
-                      WHERE bt.MaterialCode = po.Material
-                      AND bt.Batch = po.Batch
+                      WHERE LTRIM(RTRIM(bt.MaterialCode)) = LTRIM(RTRIM(po.Material))
+                      AND LTRIM(RTRIM(bt.Batch)) = LTRIM(RTRIM(po.Batch))
                       AND CAST(bt.CreatedAt AS DATE) = @Date
                 ) * 100.0 / ISNULL(po.OrderQty, 0)
                 ELSE 0 
@@ -878,7 +891,7 @@ BEGIN
         AS DECIMAL(5,2)) AS CompletionPercent
         
     FROM ProductionOrder po
-    LEFT JOIN MaterialMaster mm ON mm.MaterialNumber = po.Material
+    LEFT JOIN MaterialMasters mm ON mm.MaterialNumber = po.Material
     WHERE 
         CAST(ISNULL(po.BsDate, GETDATE()) AS DATE) = @Date
         AND (@PlantName IS NULL OR po.PlantName = @PlantName)

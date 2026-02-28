@@ -35,127 +35,66 @@
     </div>
     
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        <!-- Session Stats Cards -->
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <!-- Last Sync Card -->
-            <div class="bg-white rounded-xl shadow-card border border-neutral-200 p-5 hover:shadow-card-hover transition-shadow duration-200">
-                <div class="flex items-center gap-3">
-                    <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-neutral-100 flex items-center justify-center">
-                        <svg class="w-5 h-5 text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                    </div>
-                    <div class="min-w-0 flex-1">
-                        <p class="text-xs font-medium text-neutral-500 uppercase tracking-wide">Last Sync</p>
-                        <p class="mt-1 text-sm font-semibold text-neutral-900 truncate">
-                            @(Model.LastSyncTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "—")
-                        </p>
-                    </div>
-                </div>
-            </div>
+        <!-- Today Stats Summary -->
+        <div class="grid gap-6 lg:grid-cols-2">
             
-            <!-- FROM Synced Card -->
-            <div class="bg-white rounded-xl shadow-card border border-neutral-200 p-5 hover:shadow-card-hover transition-shadow duration-200">
-                <div class="flex items-center gap-3">
-                    <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
-                        <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
-                        </svg>
-                    </div>
-                    <div class="min-w-0 flex-1">
-                        <p class="text-xs font-medium text-neutral-500 uppercase tracking-wide">FROM (session)</p>
-                        <p class="mt-1 text-lg font-bold text-neutral-900">@Model.TotalFromSynced.ToString("N0")</p>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- TO Synced Card -->
-            <div class="bg-white rounded-xl shadow-card border border-neutral-200 p-5 hover:shadow-card-hover transition-shadow duration-200">
-                <div class="flex items-center gap-3">
-                    <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
-                        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <!-- FROM Stats Summary Card -->
+            <div class="bg-white rounded-xl shadow-card border border-neutral-200 p-6">
+                <div class="flex items-center justify-between mb-5">
+                    <h2 class="text-lg font-semibold text-neutral-900 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
                         </svg>
+                        Today Issue Summary (KASANA)
+                    </h2>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="p-4 bg-blue-50 border border-blue-100 rounded-lg">
+                        <p class="text-xs text-blue-600 uppercase tracking-wide font-medium">Total Issue Count</p>
+                        <p class="mt-1 text-3xl font-bold text-blue-700">@Model.TodayStats.TotalIssueCount.ToString("N0")</p>
                     </div>
-                    <div class="min-w-0 flex-1">
-                        <p class="text-xs font-medium text-neutral-500 uppercase tracking-wide">TO (session)</p>
-                        <p class="mt-1 text-lg font-bold text-neutral-900">@Model.TotalToSynced.ToString("N0")</p>
+                    <div class="p-4 bg-emerald-50 border border-emerald-100 rounded-lg">
+                        <p class="text-xs text-emerald-600 uppercase tracking-wide font-medium">Total Issue Read</p>
+                        <p class="mt-1 text-3xl font-bold text-emerald-700">@Model.TodayStats.TotalIssueRead.ToString("N0")</p>
+                    </div>
+                    <div class="p-4 bg-red-50 border border-red-100 rounded-lg">
+                        <p class="text-xs text-red-600 uppercase tracking-wide font-medium">Total Issue No Read</p>
+                        <p class="mt-1 text-3xl font-bold text-red-700">@Model.TodayStats.TotalIssueNoRead.ToString("N0")</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TO Stats Summary Card -->
+            <div class="bg-white rounded-xl shadow-card border border-neutral-200 p-6">
+                <div class="flex items-center justify-between mb-5">
+                    <h2 class="text-lg font-semibold text-neutral-900 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
+                        </svg>
+                        Today Receipt Summary (KOMAL)
+                    </h2>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="p-4 bg-indigo-50 border border-indigo-100 rounded-lg">
+                        <p class="text-xs text-indigo-600 uppercase tracking-wide font-medium">Total Receipt Count</p>
+                        <p class="mt-1 text-3xl font-bold text-indigo-700">@Model.TodayStats.TotalReceiptCount.ToString("N0")</p>
+                    </div>
+                    <div class="p-4 bg-emerald-50 border border-emerald-100 rounded-lg">
+                        <p class="text-xs text-emerald-600 uppercase tracking-wide font-medium">Total Receipt Read</p>
+                        <p class="mt-1 text-3xl font-bold text-emerald-700">@Model.TodayStats.TotalReceiptRead.ToString("N0")</p>
+                    </div>
+                    <div class="p-4 bg-red-50 border border-red-100 rounded-lg">
+                        <p class="text-xs text-red-600 uppercase tracking-wide font-medium">Total Receipt No Read</p>
+                        <p class="mt-1 text-3xl font-bold text-red-700">@Model.TodayStats.TotalReceiptNoRead.ToString("N0")</p>
                     </div>
                 </div>
             </div>
             
-            <!-- Matched Card -->
-            <div class="bg-white rounded-xl shadow-card border border-neutral-200 p-5 hover:shadow-card-hover transition-shadow duration-200">
-                <div class="flex items-center gap-3">
-                    <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
-                        <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                    </div>
-                    <div class="min-w-0 flex-1">
-                        <p class="text-xs font-medium text-neutral-500 uppercase tracking-wide">Matched (session)</p>
-                        <p class="mt-1 text-lg font-bold text-emerald-600">@Model.TotalMatched.ToString("N0")</p>
-                    </div>
-                </div>
-            </div>
         </div>
 
-        <!-- Dashboard Stats (Today + Last Hour) -->
-        @if (Model.Stats != null && Model.Stats.Any())
-        {
-            <div class="grid gap-6 lg:grid-cols-2">
-                @foreach (var stat in Model.Stats)
-                {
-                    var isToday = stat.Period == "TODAY";
-                    var cardBorder = isToday ? "border-brand-200" : "border-neutral-200";
-                    
-                    <div class="bg-white rounded-xl shadow-card border @cardBorder p-6 @(isToday ? "ring-1 ring-brand-100" : "")">
-                        <div class="flex items-center justify-between mb-5">
-                            <h2 class="text-lg font-semibold text-neutral-900">
-                                @(isToday ? "📊 Today's Summary" : "⏰ Last Hour")
-                            </h2>
-                            @if (isToday)
-                            {
-                                @await Html.PartialAsync("_Badge", new { Variant = "info", Text = "Live", ShowDot = true, Pulse = true })
-                            }
-                        </div>
-                        
-                        <div class="grid grid-cols-2 gap-6">
-                            <div class="p-4 bg-neutral-50 rounded-lg">
-                                <p class="text-xs text-neutral-500 uppercase tracking-wide font-medium">Total Boxes</p>
-                                <p class="mt-1 text-2xl font-bold text-neutral-900">@stat.TotalBoxes.ToString("N0")</p>
-                            </div>
-                            <div class="p-4 bg-emerald-50 rounded-lg">
-                                <p class="text-xs text-emerald-600 uppercase tracking-wide font-medium">Matched</p>
-                                <p class="mt-1 text-2xl font-bold text-emerald-600">@stat.Matched.ToString("N0")</p>
-                            </div>
-                            <div class="p-4 bg-red-50 rounded-lg">
-                                <p class="text-xs text-red-600 uppercase tracking-wide font-medium">Issues</p>
-                                <p class="mt-1 text-2xl font-bold text-red-600">@stat.Issues.ToString("N0")</p>
-                            </div>
-                            <div class="p-4 bg-amber-50 rounded-lg">
-                                <p class="text-xs text-amber-600 uppercase tracking-wide font-medium">Pending</p>
-                                <p class="mt-1 text-2xl font-bold text-amber-600">@stat.Pending.ToString("N0")</p>
-                            </div>
-                            
-                            @if (isToday && stat.AvgTransitSec.HasValue)
-                            {
-                                <div class="col-span-2 p-4 bg-blue-50 rounded-lg">
-                                    <p class="text-xs text-blue-600 uppercase tracking-wide font-medium">Avg Transit Time</p>
-                                    <p class="mt-1 text-xl font-bold text-blue-600">
-                                        @{
-                                            var mins = stat.AvgTransitSec.Value / 60;
-                                            var secs = stat.AvgTransitSec.Value % 60;
-                                        }
-                                        @mins min @secs sec
-                                    </p>
-                                </div>
-                            }
-                        </div>
-                    </div>
-                }
-            </div>
-        }
+
 
         <!-- Quick Reports Grid -->
         <div class="bg-white rounded-xl shadow-card border border-neutral-200 p-6">

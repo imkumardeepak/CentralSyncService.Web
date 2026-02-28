@@ -44,5 +44,10 @@ namespace Web.Services
         {
             return await _repository.GetDashboardStatsAsync().ConfigureAwait(false);
         }
+
+        public async Task<TodayDashboardStats> GetTodayDashboardStatsAsync()
+        {
+            return await _repository.GetTodayDashboardStatsAsync().ConfigureAwait(false);
+        }
     }
 }

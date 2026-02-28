@@ -35,37 +35,33 @@ BEGIN
         ISNULL(po.PlantName, '') AS PlantName,
         CAST(ISNULL(po.OrderQty, 0) AS BIGINT) AS OrderQty,
         
-        -- Printed count from BarcodePrint where NewSAPCode = Material and NewBatchNo = Batch
+        -- Total printed count from BarcodePrint where NewBatchNo match
         CAST((SELECT COUNT_BIG(*) FROM BarcodePrint bp 
-              WHERE bp.NewSAPCode = po.Material 
-              AND bp.NewBatchNo = po.Batch
+              WHERE bp.NewBatchNo = po.Batch 
+              AND bp.OrderNo = po.OrderNo
         ) AS BIGINT) AS PrintedQty,
         
         -- Total Transfer count from BoxTracking where MaterialCode and Batch match
         CAST((SELECT COUNT_BIG(*) FROM BoxTracking bt 
-              WHERE bt.MaterialCode = po.Material
+              WHERE bt.MaterialCode = mm.ProdInspMemo
               AND bt.Batch = po.Batch
-              AND CAST(bt.CreatedAt AS DATE) = @Date
         ) AS BIGINT) AS TotalTransferQty,
         
         -- Pending = OrderQty - TotalTransfer
         CAST(ISNULL(po.OrderQty, 0) - 
             (SELECT COUNT_BIG(*) FROM BoxTracking bt 
-             WHERE bt.MaterialCode = po.Material
+             WHERE bt.MaterialCode = mm.ProdInspMemo
              AND bt.Batch = po.Batch
-             AND CAST(bt.CreatedAt AS DATE) = @Date
         ) AS BIGINT) AS PendingToScan,
         
         CASE 
             WHEN (SELECT COUNT_BIG(*) FROM BoxTracking bt 
-                  WHERE bt.MaterialCode = po.Material
+                  WHERE bt.MaterialCode = mm.ProdInspMemo
                   AND bt.Batch = po.Batch
-                  AND CAST(bt.CreatedAt AS DATE) = @Date
             ) >= ISNULL(po.OrderQty, 0) THEN 'COMPLETED'
             WHEN (SELECT COUNT_BIG(*) FROM BoxTracking bt 
-                  WHERE bt.MaterialCode = po.Material
+                  WHERE bt.MaterialCode = mm.ProdInspMemo
                   AND bt.Batch = po.Batch
-                  AND CAST(bt.CreatedAt AS DATE) = @Date
             ) > 0 THEN 'IN_PROGRESS'
             ELSE 'PENDING'
         END AS Status,
@@ -73,16 +69,15 @@ BEGIN
         CAST(
             CASE WHEN ISNULL(po.OrderQty, 0) > 0 
                 THEN (SELECT COUNT_BIG(*) FROM BoxTracking bt 
-                      WHERE bt.MaterialCode = po.Material
+                      WHERE bt.MaterialCode = mm.ProdInspMemo
                       AND bt.Batch = po.Batch
-                      AND CAST(bt.CreatedAt AS DATE) = @Date
                 ) * 100.0 / ISNULL(po.OrderQty, 0)
                 ELSE 0 
             END
         AS DECIMAL(5,2)) AS CompletionPercent
         
     FROM ProductionOrder po
-    LEFT JOIN MaterialMaster mm ON mm.MaterialNumber = po.Material
+    LEFT JOIN MaterialMasters mm ON mm.MaterialNumber = po.Material
     WHERE 
         CAST(ISNULL(po.BsDate, GETDATE()) AS DATE) = @Date
         AND (@PlantName IS NULL OR po.PlantName = @PlantName)
@@ -98,10 +93,7 @@ GO
 PRINT 'Procedure sp_GetProductionOrderMaterialReport created successfully.';
 GO
 
--- Also update sp_GetProductionOrderBatchReport to use @PlantName
-IF OBJECT_ID('dbo.sp_GetProductionOrderBatchReport', 'P') IS NOT NULL
-    DROP PROCEDURE dbo.sp_GetProductionOrderBatchReport;
-GO
+
 
 CREATE PROCEDURE [dbo].[sp_GetProductionOrderBatchReport]
     @PlantName NVARCHAR(100) = NULL,
@@ -120,7 +112,10 @@ BEGIN
         ISNULL(po.PlantName, '') AS PlantName,
         CAST(SUM(ISNULL(po.OrderQty, 0)) AS BIGINT) AS OrderQty,
         
-        CAST((SELECT COUNT_BIG(*) FROM BarcodePrint bp WHERE bp.NewBatchNo = po.Batch) AS BIGINT) AS PrintedQty,
+        -- Total printed count from BarcodePrint where NewBatchNo match
+        CAST((SELECT COUNT_BIG(*) FROM BarcodePrint bp 
+              WHERE bp.NewBatchNo = po.Batch
+        ) AS BIGINT) AS PrintedQty,
         CAST((SELECT COUNT_BIG(*) FROM SorterScans_Sync ss WHERE ss.Batch = po.Batch) AS BIGINT) AS TotalTransferQty,
         
         CAST(SUM(ISNULL(po.OrderQty, 0)) - (SELECT COUNT_BIG(*) FROM SorterScans_Sync WHERE Batch = po.Batch) AS BIGINT) AS PendingToScan,

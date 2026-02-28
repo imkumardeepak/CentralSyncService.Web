@@ -235,40 +235,29 @@ namespace Web.Infrastructure.Repositories
 
             return result;
         }
-        public async Task<List<ProductionOrderBatchReport>> GetProductionOrderBatchReportAsync(string? plantName, string? batchNo, string? orderNo, DateTime? date)
+
+        public async Task<TodayDashboardStats> GetTodayDashboardStatsAsync()
         {
-            var result = new List<ProductionOrderBatchReport>();
+            var result = new TodayDashboardStats();
 
             using (var connection = new SqlConnection(_connectionString))
             {
                 await connection.OpenAsync().ConfigureAwait(false);
 
-                using (var command = new SqlCommand("sp_GetProductionOrderBatchReport", connection))
+                using (var command = new SqlCommand("sp_GetTodayDashboardStats", connection))
                 {
                     command.CommandType = CommandType.StoredProcedure;
-                    command.Parameters.AddWithValue("@PlantName", (object?)plantName ?? DBNull.Value);
-                    command.Parameters.AddWithValue("@BatchNo", (object?)batchNo ?? DBNull.Value);
-                    command.Parameters.AddWithValue("@OrderNo", (object?)orderNo ?? DBNull.Value);
-                    command.Parameters.AddWithValue("@Date", (object?)date ?? DBNull.Value);
 
                     using (var reader = await command.ExecuteReaderAsync().ConfigureAwait(false))
                     {
-                        while (await reader.ReadAsync().ConfigureAwait(false))
+                        if (await reader.ReadAsync().ConfigureAwait(false))
                         {
-                            var record = new ProductionOrderBatchReport
-                            {
-                                PlantCode = reader.IsDBNull(reader.GetOrdinal("PlantCode")) ? string.Empty : reader.GetString(reader.GetOrdinal("PlantCode")),
-                                PlantName = reader.IsDBNull(reader.GetOrdinal("PlantName")) ? string.Empty : reader.GetString(reader.GetOrdinal("PlantName")),
-                                Batch = reader.IsDBNull(reader.GetOrdinal("Batch")) ? string.Empty : reader.GetString(reader.GetOrdinal("Batch")),
-                                OrderQty = GetInt64Safe(reader, "OrderQty"),
-                                PrintedQty = GetInt64Safe(reader, "PrintedQty"),
-                                TotalTransferQty = GetInt64Safe(reader, "TotalTransferQty"),
-                                PendingToScan = GetInt64Safe(reader, "PendingToScan"),
-                                Status = reader.IsDBNull(reader.GetOrdinal("Status")) ? string.Empty : reader.GetString(reader.GetOrdinal("Status")),
-                                CompletionPercent = reader.IsDBNull(reader.GetOrdinal("CompletionPercent")) ? 0 : reader.GetDecimal(reader.GetOrdinal("CompletionPercent"))
-                            };
-
-                            result.Add(record);
+                            result.TotalIssueCount = reader.IsDBNull(reader.GetOrdinal("TotalIssueCount")) ? 0 : reader.GetInt32(reader.GetOrdinal("TotalIssueCount"));
+                            result.TotalIssueRead = reader.IsDBNull(reader.GetOrdinal("TotalIssueRead")) ? 0 : reader.GetInt32(reader.GetOrdinal("TotalIssueRead"));
+                            result.TotalIssueNoRead = reader.IsDBNull(reader.GetOrdinal("TotalIssueNoRead")) ? 0 : reader.GetInt32(reader.GetOrdinal("TotalIssueNoRead"));
+                            result.TotalReceiptCount = reader.IsDBNull(reader.GetOrdinal("TotalReceiptCount")) ? 0 : reader.GetInt32(reader.GetOrdinal("TotalReceiptCount"));
+                            result.TotalReceiptRead = reader.IsDBNull(reader.GetOrdinal("TotalReceiptRead")) ? 0 : reader.GetInt32(reader.GetOrdinal("TotalReceiptRead"));
+                            result.TotalReceiptNoRead = reader.IsDBNull(reader.GetOrdinal("TotalReceiptNoRead")) ? 0 : reader.GetInt32(reader.GetOrdinal("TotalReceiptNoRead"));
                         }
                     }
                 }
@@ -276,6 +265,7 @@ namespace Web.Infrastructure.Repositories
 
             return result;
         }
+
 
         private long GetInt64Safe(SqlDataReader reader, string columnName)
         {
