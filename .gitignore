@@ -47,7 +47,9 @@ bld/
 
 # Rider
 .idea/
-
+.agent/
+.ralphy
+.qoder
 # User-specific files
 *.rsuser
 *.userprefs

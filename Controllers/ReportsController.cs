@@ -148,5 +148,24 @@ namespace Web.Controllers
                 return View(new ScanReadStatusViewModel());
             }
         }
+
+        // Daily Transfer Report
+        public async Task<IActionResult> DailyTransfer(DateTime? date)
+        {
+            try
+            {
+                var searchDate = date ?? DateTime.Today;
+                var records = await _reportingRepository.GetDailyTransferReportAsync(searchDate).ConfigureAwait(false);
+                
+                ViewBag.Date = searchDate;
+                return View(records);
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Error = $"Error: {ex.Message}";
+                ViewBag.StackTrace = ex.StackTrace;
+                return View(new List<DailyTransferReportRecord>());
+            }
+        }
     }
 }

@@ -17,5 +17,7 @@ namespace Web.Core.Interfaces
         Task<List<string>> GetDistinctPlantNamesAsync();
         Task<List<ProductionOrderMaterialReport>> GetProductionOrderMaterialReportAsync(string? plantName, string? materialCode, DateTime? date);
         Task<List<ScanReadStatusRecord>> GetScanReadStatusAsync(DateTime? startDate, DateTime? endDate);
+        Task<List<DailyTransferReportDto>> GetDailyTransferReportAsync();
+        Task<List<DailyTransferReportRecord>> GetDailyTransferReportAsync(DateTime? date);
     }
 }
