@@ -59,5 +59,10 @@ namespace Web.Services
         {
             return await _repository.GetDailyTransferReportAsync(date).ConfigureAwait(false);
         }
+
+        public async Task<List<ProductWiseDailyTransferRecord>> GetProductWiseDailyTransferAsync(DateTime? date)
+        {
+            return await _repository.GetProductWiseDailyTransferAsync(date).ConfigureAwait(false);
+        }
     }
 }

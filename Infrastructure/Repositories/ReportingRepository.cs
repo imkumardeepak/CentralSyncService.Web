@@ -509,5 +509,43 @@ namespace Web.Infrastructure.Repositories
 
             return result;
         }
+
+        public async Task<List<ProductWiseDailyTransferRecord>> GetProductWiseDailyTransferAsync(DateTime? date)
+        {
+            var result = new List<ProductWiseDailyTransferRecord>();
+
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                await connection.OpenAsync().ConfigureAwait(false);
+
+                using (var command = new SqlCommand("sp_GetProductWiseDailyTransfer", connection))
+                {
+                    command.CommandType = CommandType.StoredProcedure;
+                    command.Parameters.AddWithValue("@Date", (object?)date ?? DBNull.Value);
+
+                    using (var reader = await command.ExecuteReaderAsync().ConfigureAwait(false))
+                    {
+                        while (await reader.ReadAsync().ConfigureAwait(false))
+                        {
+                            var record = new ProductWiseDailyTransferRecord
+                            {
+                                MaterialDescription = reader.IsDBNull(reader.GetOrdinal("MaterialDescription")) ? string.Empty : reader.GetString(reader.GetOrdinal("MaterialDescription")),
+                                Batch = reader.IsDBNull(reader.GetOrdinal("Batch")) ? string.Empty : reader.GetString(reader.GetOrdinal("Batch")),
+                                TotalIssue = reader.IsDBNull(reader.GetOrdinal("TotalIssue")) ? 0 : reader.GetInt32(reader.GetOrdinal("TotalIssue")),
+                                IssueRead = reader.IsDBNull(reader.GetOrdinal("IssueRead")) ? 0 : reader.GetInt32(reader.GetOrdinal("IssueRead")),
+                                IssueNoRead = reader.IsDBNull(reader.GetOrdinal("IssueNoRead")) ? 0 : reader.GetInt32(reader.GetOrdinal("IssueNoRead")),
+                                TotalReceipt = reader.IsDBNull(reader.GetOrdinal("TotalReceipt")) ? 0 : reader.GetInt32(reader.GetOrdinal("TotalReceipt")),
+                                ReceiptRead = reader.IsDBNull(reader.GetOrdinal("ReceiptRead")) ? 0 : reader.GetInt32(reader.GetOrdinal("ReceiptRead")),
+                                ReceiptNoRead = reader.IsDBNull(reader.GetOrdinal("ReceiptNoRead")) ? 0 : reader.GetInt32(reader.GetOrdinal("ReceiptNoRead"))
+                            };
+
+                            result.Add(record);
+                        }
+                    }
+                }
+            }
+
+            return result;
+        }
     }
 }

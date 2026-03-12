@@ -19,5 +19,6 @@ namespace Web.Core.Interfaces
         Task<List<ScanReadStatusRecord>> GetScanReadStatusAsync(DateTime? startDate, DateTime? endDate);
         Task<List<DailyTransferReportDto>> GetDailyTransferReportAsync();
         Task<List<DailyTransferReportRecord>> GetDailyTransferReportAsync(DateTime? date);
+        Task<List<ProductWiseDailyTransferRecord>> GetProductWiseDailyTransferAsync(DateTime? date);
     }
 }

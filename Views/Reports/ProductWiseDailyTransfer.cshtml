@@ -1,0 +1,115 @@
+@model List<Web.Core.DTOs.ProductWiseDailyTransferRecord>
+@{
+    ViewData["Title"] = "Product Wise Daily Transfer Report";
+    var selectedDate = ViewBag.Date as DateTime? ?? DateTime.Today;
+}
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Page Header -->
+    <div class="mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Product Wise Daily Transfer Report</h1>
+                <p class="mt-1 text-sm text-gray-500">View transfer statistics by Material and Batch</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <form method="get" class="flex items-center gap-2">
+                    <input type="date" name="date" value="@selectedDate.ToString("yyyy-MM-dd")" 
+                           class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
+                    <button type="submit" class="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors">
+                        <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        Search
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    @if (ViewBag.Error != null)
+    {
+        <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div class="flex items-center">
+                <svg class="w-5 h-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span class="text-red-700 font-medium">@ViewBag.Error</span>
+            </div>
+        </div>
+    }
+
+    <!-- Data Table -->
+    <div class="bg-white rounded-xl shadow-card overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Transfer Details by Product</h2>
+            <p class="text-sm text-gray-500">Date: @selectedDate.ToString("MMMM dd, yyyy")</p>
+        </div>
+
+        @if (Model.Any())
+        {
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th colspan="2" class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider bg-gray-100 border-b border-gray-200">
+                                Product Information
+                            </th>
+                            <th colspan="3" class="px-4 py-3 text-center text-xs font-bold text-blue-700 uppercase tracking-wider bg-blue-50 border-b border-blue-200">
+                                FROM Plant (Issue)
+                            </th>
+                            <th colspan="3" class="px-4 py-3 text-center text-xs font-bold text-green-700 uppercase tracking-wider bg-green-50 border-b border-green-200">
+                                TO Plant (Receipt)
+                            </th>
+                        </tr>
+                        <tr>
+                            <!-- Product Info Columns -->
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Material Description</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Batch</th>
+                            
+                            <!-- FROM Columns -->
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Total Issue</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-green-600 uppercase tracking-wider">Read</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-red-600 uppercase tracking-wider">No Read</th>
+                            
+                            <!-- TO Columns -->
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Total Receipt</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-green-600 uppercase tracking-wider">Read</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-red-600 uppercase tracking-wider">No Read</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        @foreach (var item in Model)
+                        {
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <!-- Product Info -->
+                                <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">@item.MaterialDescription</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">@item.Batch</td>
+                                
+                                <!-- FROM Plant -->
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-900 font-semibold">@item.TotalIssue</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-green-600">@item.IssueRead</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-red-600">@item.IssueNoRead</td>
+                                
+                                <!-- TO Plant -->
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-900 font-semibold">@item.TotalReceipt</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-green-600">@item.ReceiptRead</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-red-600">@item.ReceiptNoRead</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="p-8 text-center">
+                <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <h3 class="text-lg font-medium text-gray-900 mb-1">No Data Found</h3>
+                <p class="text-gray-500">No transfer records found for the selected date.</p>
+            </div>
+        }
+    </div>
+</div>
