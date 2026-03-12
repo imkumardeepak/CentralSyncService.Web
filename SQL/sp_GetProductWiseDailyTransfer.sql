@@ -18,6 +18,7 @@ BEGIN
     SET @Date = ISNULL(@Date, CAST(GETDATE() AS DATE));
     
     SELECT 
+        ISNULL(mm.MaterialNumber, 'N/A') AS MaterialCode,
         ISNULL(mm.MaterialDescription, 'Unknown Material') AS MaterialDescription,
         ISNULL(bt.Batch, 'N/A') AS Batch,
         COUNT(CASE WHEN bt.FromPlant IS NOT NULL THEN 1 END) AS TotalIssue,
@@ -34,6 +35,7 @@ BEGIN
         OR (bt.FromScanTime >= @Date AND bt.FromScanTime < DATEADD(DAY,1,@Date))
         OR (bt.ToScanTime >= @Date AND bt.ToScanTime < DATEADD(DAY,1,@Date))
     GROUP BY 
+        ISNULL(mm.MaterialNumber, 'N/A'),
         ISNULL(mm.MaterialDescription, 'Unknown Material'),
         ISNULL(bt.Batch, 'N/A')
     ORDER BY 

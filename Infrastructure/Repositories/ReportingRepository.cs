@@ -529,6 +529,7 @@ namespace Web.Infrastructure.Repositories
                         {
                             var record = new ProductWiseDailyTransferRecord
                             {
+                                MaterialCode = reader.IsDBNull(reader.GetOrdinal("MaterialCode")) ? string.Empty : reader.GetString(reader.GetOrdinal("MaterialCode")),
                                 MaterialDescription = reader.IsDBNull(reader.GetOrdinal("MaterialDescription")) ? string.Empty : reader.GetString(reader.GetOrdinal("MaterialDescription")),
                                 Batch = reader.IsDBNull(reader.GetOrdinal("Batch")) ? string.Empty : reader.GetString(reader.GetOrdinal("Batch")),
                                 TotalIssue = reader.IsDBNull(reader.GetOrdinal("TotalIssue")) ? 0 : reader.GetInt32(reader.GetOrdinal("TotalIssue")),

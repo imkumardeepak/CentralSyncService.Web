@@ -52,7 +52,7 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th colspan="2" class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider bg-gray-100 border-b border-gray-200">
+                            <th colspan="3" class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider bg-gray-100 border-b border-gray-200">
                                 Product Information
                             </th>
                             <th colspan="3" class="px-4 py-3 text-center text-xs font-bold text-blue-700 uppercase tracking-wider bg-blue-50 border-b border-blue-200">
@@ -64,6 +64,7 @@
                         </tr>
                         <tr>
                             <!-- Product Info Columns -->
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Material Code</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Material Description</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Batch</th>
                             
@@ -83,6 +84,7 @@
                         {
                             <tr class="hover:bg-gray-50 transition-colors">
                                 <!-- Product Info -->
+                                <td class="px-4 py-3 whitespace-nowrap text-sm font-mono text-gray-900">@item.MaterialCode</td>
                                 <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">@item.MaterialDescription</td>
                                 <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">@item.Batch</td>
                                 

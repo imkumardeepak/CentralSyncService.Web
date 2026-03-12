@@ -3,6 +3,7 @@ namespace Web.Core.DTOs
     public class ProductWiseDailyTransferRecord
     {
         // Material Information
+        public string MaterialCode { get; set; } = string.Empty;
         public string MaterialDescription { get; set; } = string.Empty;
         public string Batch { get; set; } = string.Empty;
         
