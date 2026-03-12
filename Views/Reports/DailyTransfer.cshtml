@@ -39,65 +39,6 @@
         </div>
     }
 
-    <!-- Summary Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div class="bg-white rounded-xl shadow-card p-6 border-l-4 border-blue-500">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-500">Total Issue (FROM)</p>
-                    <p class="text-2xl font-bold text-gray-900">@Model.Sum(r => r.IssueTotal)</p>
-                </div>
-                <div class="p-3 bg-blue-50 rounded-lg">
-                    <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16l-4-4m0 0l4-4m-4 4h18" />
-                    </svg>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-card p-6 border-l-4 border-green-500">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-500">Total Receipt (TO)</p>
-                    <p class="text-2xl font-bold text-gray-900">@Model.Sum(r => r.ReceiptTotal)</p>
-                </div>
-                <div class="p-3 bg-green-50 rounded-lg">
-                    <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7" />
-                    </svg>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-card p-6 border-l-4 border-emerald-500">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-500">Matched</p>
-                    <p class="text-2xl font-bold text-gray-900">@Model.Sum(r => r.MatchedCount)</p>
-                </div>
-                <div class="p-3 bg-emerald-50 rounded-lg">
-                    <svg class="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-card p-6 border-l-4 border-amber-500">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-500">Pending</p>
-                    <p class="text-2xl font-bold text-gray-900">@Model.Sum(r => r.PendingToCount)</p>
-                </div>
-                <div class="p-3 bg-amber-50 rounded-lg">
-                    <svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Data Table -->
     <div class="bg-white rounded-xl shadow-card overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-200">
@@ -117,9 +58,6 @@
                             <th colspan="4" class="px-4 py-3 text-center text-xs font-bold text-green-700 uppercase tracking-wider bg-green-50 border-b border-green-200">
                                 TO Plant (Receipt)
                             </th>
-                            <th colspan="2" class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider bg-gray-100 border-b border-gray-200">
-                                Status
-                            </th>
                         </tr>
                         <tr>
                             <!-- FROM Columns -->
@@ -133,10 +71,6 @@
                             <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
                             <th class="px-4 py-3 text-center text-xs font-medium text-green-600 uppercase tracking-wider">Read</th>
                             <th class="px-4 py-3 text-center text-xs font-medium text-red-600 uppercase tracking-wider">No Read</th>
-                            
-                            <!-- Status Columns -->
-                            <th class="px-4 py-3 text-center text-xs font-medium text-emerald-600 uppercase tracking-wider">Matched</th>
-                            <th class="px-4 py-3 text-center text-xs font-medium text-amber-600 uppercase tracking-wider">Pending</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
@@ -154,35 +88,9 @@
                                 <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-900 font-semibold">@item.ReceiptTotal</td>
                                 <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-green-600">@item.ReceiptRead</td>
                                 <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-red-600">@item.ReceiptNoRead</td>
-                                
-                                <!-- Status -->
-                                <td class="px-4 py-3 whitespace-nowrap text-sm text-center">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
-                                        @item.MatchedCount
-                                    </span>
-                                </td>
-                                <td class="px-4 py-3 whitespace-nowrap text-sm text-center">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-                                        @item.PendingToCount
-                                    </span>
-                                </td>
                             </tr>
                         }
                     </tbody>
-                    <tfoot class="bg-gray-50 font-semibold">
-                        <tr>
-                            <td class="px-4 py-3 text-sm text-gray-900">Total</td>
-                            <td class="px-4 py-3 text-sm text-center text-gray-900">@Model.Sum(r => r.IssueTotal)</td>
-                            <td class="px-4 py-3 text-sm text-center text-green-600">@Model.Sum(r => r.IssueRead)</td>
-                            <td class="px-4 py-3 text-sm text-center text-red-600">@Model.Sum(r => r.IssueNoRead)</td>
-                            <td class="px-4 py-3 text-sm text-gray-900">-</td>
-                            <td class="px-4 py-3 text-sm text-center text-gray-900">@Model.Sum(r => r.ReceiptTotal)</td>
-                            <td class="px-4 py-3 text-sm text-center text-green-600">@Model.Sum(r => r.ReceiptRead)</td>
-                            <td class="px-4 py-3 text-sm text-center text-red-600">@Model.Sum(r => r.ReceiptNoRead)</td>
-                            <td class="px-4 py-3 text-sm text-center text-emerald-600">@Model.Sum(r => r.MatchedCount)</td>
-                            <td class="px-4 py-3 text-sm text-center text-amber-600">@Model.Sum(r => r.PendingToCount)</td>
-                        </tr>
-                    </tfoot>
                 </table>
             </div>
         }

@@ -285,8 +285,8 @@ BEGIN
                      FromRawData, ToRawData, FromSyncTime, ToSyncTime, FromPCName, ToPCName)
                 VALUES 
                     (@Barcode, @Batch, @LineCode, @PlantCode, @MaterialCode,
-                     @CurrentPlant, @ToPlant, @ScanDateTime, NULL, @IsRead, NULL,
-                     CASE WHEN @IsRead = 1 THEN @Barcode ELSE 'NO READ' END, NULL,
+                     @CurrentPlant, @ToPlant, @ScanDateTime, NULL, @IsRead, 0,
+                     CASE WHEN @IsRead = 1 THEN @Barcode ELSE 'NO READ' END, 'NO READ',
                      GETDATE(), NULL, @PCName, NULL);
             END
             ELSE
@@ -298,8 +298,8 @@ BEGIN
                      FromRawData, ToRawData, FromSyncTime, ToSyncTime, FromPCName, ToPCName)
                 VALUES 
                     (@Barcode, @Batch, @LineCode, @PlantCode, @MaterialCode,
-                     @FromPlant, @CurrentPlant, NULL, @ScanDateTime, NULL, @IsRead,
-                     NULL, CASE WHEN @IsRead = 1 THEN @Barcode ELSE 'NO READ' END,
+                     @FromPlant, @CurrentPlant, NULL, @ScanDateTime, 0, @IsRead,
+                     'NO READ', CASE WHEN @IsRead = 1 THEN @Barcode ELSE 'NO READ' END,
                      NULL, GETDATE(), NULL, @PCName);
             END
             SET @BoxTrackingId = SCOPE_IDENTITY();
@@ -479,15 +479,31 @@ BEGIN
     DECLARE @Today DATE = CAST(GETDATE() AS DATE);
 
     SELECT 
-        -- ISUUE (FROM)
-        (SELECT COUNT(*) FROM dbo.BoxTracking WHERE CAST(FromScanTime AS DATE) = @Today) AS TotalIssueCount,
-        (SELECT COUNT(*) FROM dbo.BoxTracking WHERE CAST(FromScanTime AS DATE) = @Today AND FromFlag = 1) AS TotalIssueRead,
-        (SELECT COUNT(*) FROM dbo.BoxTracking WHERE CAST(FromScanTime AS DATE) = @Today AND FromFlag = 0) AS TotalIssueNoRead,
+        -- ISSUE (FROM) - Count records where FromPlant is set (regardless of scan time)
+        (SELECT COUNT(*) FROM dbo.BoxTracking 
+         WHERE CAST(CreatedAt AS DATE) = @Today 
+           AND FromPlant IS NOT NULL) AS TotalIssueCount,
+        (SELECT COUNT(*) FROM dbo.BoxTracking 
+         WHERE CAST(CreatedAt AS DATE) = @Today 
+           AND FromPlant IS NOT NULL 
+           AND FromFlag = 1) AS TotalIssueRead,
+        (SELECT COUNT(*) FROM dbo.BoxTracking 
+         WHERE CAST(CreatedAt AS DATE) = @Today 
+           AND FromPlant IS NOT NULL 
+           AND FromFlag = 0) AS TotalIssueNoRead,
 
-        -- RECEIPT (TO)
-        (SELECT COUNT(*) FROM dbo.BoxTracking WHERE CAST(ToScanTime AS DATE) = @Today) AS TotalReceiptCount,
-        (SELECT COUNT(*) FROM dbo.BoxTracking WHERE CAST(ToScanTime AS DATE) = @Today AND ToFlag = 1) AS TotalReceiptRead,
-        (SELECT COUNT(*) FROM dbo.BoxTracking WHERE CAST(ToScanTime AS DATE) = @Today AND ToFlag = 0) AS TotalReceiptNoRead
+        -- RECEIPT (TO) - Count records where ToPlant is set (regardless of scan time)
+        (SELECT COUNT(*) FROM dbo.BoxTracking 
+         WHERE CAST(CreatedAt AS DATE) = @Today 
+           AND ToPlant IS NOT NULL) AS TotalReceiptCount,
+        (SELECT COUNT(*) FROM dbo.BoxTracking 
+         WHERE CAST(CreatedAt AS DATE) = @Today 
+           AND ToPlant IS NOT NULL 
+           AND ToFlag = 1) AS TotalReceiptRead,
+        (SELECT COUNT(*) FROM dbo.BoxTracking 
+         WHERE CAST(CreatedAt AS DATE) = @Today 
+           AND ToPlant IS NOT NULL 
+           AND ToFlag = 0) AS TotalReceiptNoRead
 END
 GO
 
