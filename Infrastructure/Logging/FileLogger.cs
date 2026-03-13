@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -85,16 +86,33 @@ namespace Web.Infrastructure.Logging
                 
                 if (_options.EnableConsoleOutput)
                 {
-                    Console.WriteLine(logEntry.ToString());
+                    TryWriteToConsole(logEntry.ToString());
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                Console.WriteLine($"Failed to write to log file: {ex.Message}");
+                // Never allow logging failures to crash the host.
             }
             finally
             {
                 _semaphore.Release();
+            }
+        }
+
+        private static void TryWriteToConsole(string message)
+        {
+            try
+            {
+                Console.WriteLine(message);
+            }
+            catch (IOException)
+            {
+            }
+            catch (ObjectDisposedException)
+            {
+            }
+            catch (InvalidOperationException)
+            {
             }
         }
 
@@ -180,31 +198,38 @@ namespace Web.Infrastructure.Logging
                 _fileLogger = fileLogger;
             }
 
-            public IDisposable BeginScope<TState>(TState state) => null;
+            public IDisposable? BeginScope<TState>(TState state) => null;
 
             public bool IsEnabled(LogLevel logLevel) => true;
 
-            public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
+            public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
             {
-                var message = formatter(state, exception);
-                
-                switch (logLevel)
+                try
                 {
-                    case LogLevel.Debug:
-                        _fileLogger.LogDebug(message);
-                        break;
-                    case LogLevel.Information:
-                        _fileLogger.LogInformation(message);
-                        break;
-                    case LogLevel.Warning:
-                        _fileLogger.LogWarning(message);
-                        break;
-                    case LogLevel.Error:
-                        _fileLogger.LogError(message, exception);
-                        break;
-                    case LogLevel.Critical:
-                        _fileLogger.LogCritical(message, exception);
-                        break;
+                    var message = formatter(state, exception);
+
+                    switch (logLevel)
+                    {
+                        case LogLevel.Debug:
+                            _fileLogger.LogDebug(message);
+                            break;
+                        case LogLevel.Information:
+                            _fileLogger.LogInformation(message);
+                            break;
+                        case LogLevel.Warning:
+                            _fileLogger.LogWarning(message);
+                            break;
+                        case LogLevel.Error:
+                            _fileLogger.LogError(message, exception);
+                            break;
+                        case LogLevel.Critical:
+                            _fileLogger.LogCritical(message, exception);
+                            break;
+                    }
+                }
+                catch
+                {
+                    // Logging should never bring down the application.
                 }
             }
         }
@@ -230,10 +255,22 @@ namespace Web.Infrastructure.Logging
                     CleanupOldLogs();
                     await Task.Delay(TimeSpan.FromHours(1), stoppingToken).ConfigureAwait(false); // Check every hour
                 }
+                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                {
+                    break;
+                }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error during log cleanup");
-                    await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken).ConfigureAwait(false);
+
+                    try
+                    {
+                        await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken).ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                    {
+                        break;
+                    }
                 }
             }
         }
@@ -282,12 +319,8 @@ namespace Web.Infrastructure.Logging
                 var options = provider.GetRequiredService<IOptions<FileLoggerOptions>>();
                 return new FileLogger(options, "Application");
             });
+            services.AddSingleton<ILoggerProvider, FileLoggerProvider>();
             services.AddHostedService<LogCleanupService>();
-            services.AddLogging(builder =>
-            {
-                builder.AddProvider(new FileLoggerProvider(
-                    Microsoft.Extensions.Options.Options.Create(new FileLoggerOptions())));
-            });
             return services;
         }
     }
