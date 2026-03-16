@@ -58,6 +58,7 @@ builder.Services.AddFileLogging(options =>
 
 // Background hosted service that starts/stops the sync loop
 builder.Services.AddHostedService<SyncHostedService>();
+builder.Services.AddHostedService<DataCleanupHostedService>();
 
 var app = builder.Build();
 

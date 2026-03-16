@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Web.Core.Entities;
@@ -219,6 +220,62 @@ namespace Web.Infrastructure.Repositories
                       await command.ExecuteNonQueryAsync().ConfigureAwait(false);
                  }
              }
+        }
+
+        public async Task<DataCleanupResult> CleanupHistoricalDataAsync(int retentionDays, CancellationToken cancellationToken = default)
+        {
+            var safeRetentionDays = Math.Max(1, retentionDays);
+            var cutoffDate = DateTime.Today.AddDays(-safeRetentionDays);
+            var result = new DataCleanupResult
+            {
+                CutoffDate = cutoffDate
+            };
+
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+
+                using (var transaction = connection.BeginTransaction())
+                {
+                    try
+                    {
+                        const string deleteSorterScansSql = @"
+DELETE s
+FROM dbo.SorterScans_Sync s
+WHERE s.SyncedAt < @CutoffDate
+   OR EXISTS (
+        SELECT 1
+        FROM dbo.BoxTracking bt
+        WHERE bt.Id = s.BoxTrackingId
+          AND bt.CreatedAt < @CutoffDate
+   );";
+
+                        using (var deleteSorterScansCommand = new SqlCommand(deleteSorterScansSql, connection, transaction))
+                        {
+                            deleteSorterScansCommand.Parameters.Add("@CutoffDate", SqlDbType.DateTime2).Value = cutoffDate;
+                            result.SorterScansDeleted = await deleteSorterScansCommand.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                        }
+
+                        const string deleteBoxTrackingSql = @"
+DELETE FROM dbo.BoxTracking
+WHERE CreatedAt < @CutoffDate;";
+
+                        using (var deleteBoxTrackingCommand = new SqlCommand(deleteBoxTrackingSql, connection, transaction))
+                        {
+                            deleteBoxTrackingCommand.Parameters.Add("@CutoffDate", SqlDbType.DateTime2).Value = cutoffDate;
+                            result.BoxTrackingDeleted = await deleteBoxTrackingCommand.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                        }
+
+                        transaction.Commit();
+                        return result;
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
+            }
         }
 
         private string BuildConnectionString(string serverIP, int port, string databaseName, string username, string password)
