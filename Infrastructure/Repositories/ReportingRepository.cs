@@ -492,8 +492,18 @@ WHERE CAST(ScanDateTime AS DATE) = CAST(GETDATE() AS DATE);";
                 const string query = @"
 WITH BaseScans AS (
     SELECT
-        ScanType,
+        ScanType = UPPER(LTRIM(RTRIM(ISNULL(ScanType, '')))),
         PlantName = ISNULL(NULLIF(LTRIM(RTRIM(CurrentPlant)), ''), 'Unknown'),
+        LaneKey = UPPER(
+            CASE
+                WHEN CHARINDEX(' ', LTRIM(RTRIM(ISNULL(CurrentPlant, '')))) > 0
+                    THEN RIGHT(
+                        LTRIM(RTRIM(CurrentPlant)),
+                        CHARINDEX(' ', REVERSE(LTRIM(RTRIM(CurrentPlant)))) - 1
+                    )
+                ELSE ISNULL(NULLIF(LTRIM(RTRIM(CurrentPlant)), ''), 'UNKNOWN')
+            END
+        ),
         IsReadable =
             CASE
                 WHEN IsRead = 1
@@ -507,25 +517,33 @@ WITH BaseScans AS (
 ),
 FromSummary AS (
     SELECT
-        RowNum = ROW_NUMBER() OVER (ORDER BY PlantName),
+        LaneKey,
         FromPlant = PlantName,
         IssueTotal = COUNT(*),
         IssueRead = SUM(IsReadable),
         IssueNoRead = COUNT(*) - SUM(IsReadable)
     FROM BaseScans
-    WHERE UPPER(ScanType) = 'FROM'
-    GROUP BY PlantName
+    WHERE ScanType = 'FROM'
+    GROUP BY LaneKey, PlantName
 ),
 ToSummary AS (
     SELECT
-        RowNum = ROW_NUMBER() OVER (ORDER BY PlantName),
+        LaneKey,
         ToPlant = PlantName,
         ReceiptTotal = COUNT(*),
         ReceiptRead = SUM(IsReadable),
         ReceiptNoRead = COUNT(*) - SUM(IsReadable)
     FROM BaseScans
-    WHERE UPPER(ScanType) = 'TO'
-    GROUP BY PlantName
+    WHERE ScanType = 'TO'
+    GROUP BY LaneKey, PlantName
+),
+ToLaneTotals AS (
+    SELECT
+        LaneKey,
+        ReceiptTotal = COUNT(*)
+    FROM BaseScans
+    WHERE ScanType = 'TO'
+    GROUP BY LaneKey
 )
 SELECT
     FromPlant = ISNULL(f.FromPlant, ''),
@@ -538,11 +556,19 @@ SELECT
     ReceiptNoRead = ISNULL(t.ReceiptNoRead, 0),
     MatchedCount = 0,
     PendingToCount = 0,
-    Deviation = ISNULL(f.IssueTotal, 0) - ISNULL(t.ReceiptTotal, 0)
+    Deviation = ISNULL(f.IssueTotal, 0) - ISNULL(tl.ReceiptTotal, 0)
 FROM FromSummary f
 FULL OUTER JOIN ToSummary t
-    ON f.RowNum = t.RowNum
-ORDER BY COALESCE(f.RowNum, t.RowNum);";
+    ON f.LaneKey = t.LaneKey
+LEFT JOIN ToLaneTotals tl
+    ON tl.LaneKey = COALESCE(f.LaneKey, t.LaneKey)
+ORDER BY
+    CASE COALESCE(f.LaneKey, t.LaneKey)
+        WHEN 'TOP' THEN 1
+        WHEN 'BELOW' THEN 2
+        ELSE 99
+    END,
+    COALESCE(f.FromPlant, t.ToPlant);";
 
                 using (var command = new SqlCommand(query, connection))
                 {
