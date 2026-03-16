@@ -15,7 +15,6 @@ namespace Web.Services
         private readonly SyncService _syncService;
         private readonly ILogger<SyncHostedService> _logger;
         private readonly TimeSpan _restartDelay = TimeSpan.FromSeconds(10);
-        private readonly TimeSpan _initialDelay = TimeSpan.FromMinutes(3);
 
         public SyncHostedService(SyncService syncService, ILogger<SyncHostedService> logger)
         {
@@ -25,15 +24,19 @@ namespace Web.Services
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            // Wait 3 minutes before starting the sync service as requested
+            _logger.LogInformation("SyncHostedService: Host started. Attempting immediate sync service startup.");
+
             try
             {
-                await Task.Delay(_initialDelay, stoppingToken).ConfigureAwait(false);
+                if (!_syncService.IsRunning)
+                {
+                    _syncService.Start();
+                    _logger.LogInformation("SyncHostedService: Sync service started successfully.");
+                }
             }
-            catch (OperationCanceledException)
+            catch (Exception ex) when (!stoppingToken.IsCancellationRequested)
             {
-                _logger.LogInformation("SyncHostedService: Initial delay cancelled, service not starting.");
-                return;
+                _logger.LogError(ex, "SyncHostedService: Immediate startup failed. Watchdog will retry in {RestartDelay}s.", _restartDelay.TotalSeconds);
             }
 
             // Main watchdog loop - keeps sync service running
