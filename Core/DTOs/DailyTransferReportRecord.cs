@@ -19,5 +19,6 @@ namespace Web.Core.DTOs
         // Summary
         public int MatchedCount { get; set; }
         public int PendingToCount { get; set; }
+        public int Deviation { get; set; }
     }
 }

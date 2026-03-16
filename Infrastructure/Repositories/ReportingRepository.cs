@@ -448,7 +448,7 @@ namespace Web.Infrastructure.Repositories
                         {
                             var record = new DailyTransferReportDto
                             {
-                                OrderNo = reader.IsDBNull(reader.GetOrdinal("OrderNo")) ? string.Empty : reader.GetValue(reader.GetOrdinal("OrderNo")).ToString(),
+                                OrderNo = reader.IsDBNull(reader.GetOrdinal("OrderNo")) ? string.Empty : reader.GetValue(reader.GetOrdinal("OrderNo")).ToString() ?? string.Empty,
                                 Batch = reader.IsDBNull(reader.GetOrdinal("Batch")) ? string.Empty : reader.GetString(reader.GetOrdinal("Batch")),
                                 MaterialSAPCode = reader.IsDBNull(reader.GetOrdinal("MaterialSAPCode")) ? string.Empty : reader.GetString(reader.GetOrdinal("MaterialSAPCode")),
                                 MaterialName = reader.IsDBNull(reader.GetOrdinal("MaterialName")) ? string.Empty : reader.GetString(reader.GetOrdinal("MaterialName")),
@@ -478,10 +478,64 @@ namespace Web.Infrastructure.Repositories
             {
                 await connection.OpenAsync().ConfigureAwait(false);
 
-                using (var command = new SqlCommand("sp_GetDailyTransferReport", connection))
+                const string query = @"
+WITH BaseScans AS (
+    SELECT
+        ScanType,
+        PlantName = ISNULL(NULLIF(LTRIM(RTRIM(CurrentPlant)), ''), 'Unknown'),
+        IsReadable =
+            CASE
+                WHEN IsRead = 1
+                     AND UPPER(LTRIM(RTRIM(ISNULL(Barcode, '')))) <> 'NOREAD'
+                    THEN 1
+                ELSE 0
+            END
+    FROM dbo.SorterScans_Sync
+    WHERE CAST(ScanDateTime AS DATE) = @Date
+),
+FromSummary AS (
+    SELECT
+        RowNum = ROW_NUMBER() OVER (ORDER BY PlantName),
+        FromPlant = PlantName,
+        IssueTotal = COUNT(*),
+        IssueRead = SUM(IsReadable),
+        IssueNoRead = COUNT(*) - SUM(IsReadable)
+    FROM BaseScans
+    WHERE UPPER(ScanType) = 'FROM'
+    GROUP BY PlantName
+),
+ToSummary AS (
+    SELECT
+        RowNum = ROW_NUMBER() OVER (ORDER BY PlantName),
+        ToPlant = PlantName,
+        ReceiptTotal = COUNT(*),
+        ReceiptRead = SUM(IsReadable),
+        ReceiptNoRead = COUNT(*) - SUM(IsReadable)
+    FROM BaseScans
+    WHERE UPPER(ScanType) = 'TO'
+    GROUP BY PlantName
+)
+SELECT
+    FromPlant = ISNULL(f.FromPlant, ''),
+    IssueTotal = ISNULL(f.IssueTotal, 0),
+    IssueRead = ISNULL(f.IssueRead, 0),
+    IssueNoRead = ISNULL(f.IssueNoRead, 0),
+    ToPlant = ISNULL(t.ToPlant, ''),
+    ReceiptTotal = ISNULL(t.ReceiptTotal, 0),
+    ReceiptRead = ISNULL(t.ReceiptRead, 0),
+    ReceiptNoRead = ISNULL(t.ReceiptNoRead, 0),
+    MatchedCount = 0,
+    PendingToCount = 0,
+    Deviation = ISNULL(f.IssueTotal, 0) - ISNULL(t.ReceiptTotal, 0)
+FROM FromSummary f
+FULL OUTER JOIN ToSummary t
+    ON f.RowNum = t.RowNum
+ORDER BY COALESCE(f.RowNum, t.RowNum);";
+
+                using (var command = new SqlCommand(query, connection))
                 {
-                    command.CommandType = CommandType.StoredProcedure;
-                    command.Parameters.AddWithValue("@Date", (object?)date ?? DBNull.Value);
+                    command.CommandType = CommandType.Text;
+                    command.Parameters.Add("@Date", SqlDbType.Date).Value = (object?)(date?.Date) ?? DateTime.Today;
 
                     using (var reader = await command.ExecuteReaderAsync().ConfigureAwait(false))
                     {
@@ -498,7 +552,8 @@ namespace Web.Infrastructure.Repositories
                                 ReceiptRead = reader.IsDBNull(reader.GetOrdinal("ReceiptRead")) ? 0 : reader.GetInt32(reader.GetOrdinal("ReceiptRead")),
                                 ReceiptNoRead = reader.IsDBNull(reader.GetOrdinal("ReceiptNoRead")) ? 0 : reader.GetInt32(reader.GetOrdinal("ReceiptNoRead")),
                                 MatchedCount = reader.IsDBNull(reader.GetOrdinal("MatchedCount")) ? 0 : reader.GetInt32(reader.GetOrdinal("MatchedCount")),
-                                PendingToCount = reader.IsDBNull(reader.GetOrdinal("PendingToCount")) ? 0 : reader.GetInt32(reader.GetOrdinal("PendingToCount"))
+                                PendingToCount = reader.IsDBNull(reader.GetOrdinal("PendingToCount")) ? 0 : reader.GetInt32(reader.GetOrdinal("PendingToCount")),
+                                Deviation = reader.IsDBNull(reader.GetOrdinal("Deviation")) ? 0 : reader.GetInt32(reader.GetOrdinal("Deviation"))
                             };
 
                             result.Add(record);
