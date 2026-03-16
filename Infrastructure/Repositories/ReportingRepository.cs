@@ -244,9 +244,21 @@ namespace Web.Infrastructure.Repositories
             {
                 await connection.OpenAsync().ConfigureAwait(false);
 
-                using (var command = new SqlCommand("sp_GetTodayDashboardStats", connection))
+                const string query = @"
+SELECT
+    TotalIssueCount = SUM(CASE WHEN UPPER(ScanType) = 'FROM' THEN 1 ELSE 0 END),
+    TotalIssueRead = SUM(CASE WHEN UPPER(ScanType) = 'FROM' AND IsRead = 1 AND UPPER(LTRIM(RTRIM(ISNULL(Barcode, '')))) <> 'NOREAD' THEN 1 ELSE 0 END),
+    TotalIssueNoRead = SUM(CASE WHEN UPPER(ScanType) = 'FROM' AND NOT (IsRead = 1 AND UPPER(LTRIM(RTRIM(ISNULL(Barcode, '')))) <> 'NOREAD') THEN 1 ELSE 0 END),
+    TotalReceiptCount = SUM(CASE WHEN UPPER(ScanType) = 'TO' THEN 1 ELSE 0 END),
+    TotalReceiptRead = SUM(CASE WHEN UPPER(ScanType) = 'TO' AND IsRead = 1 AND UPPER(LTRIM(RTRIM(ISNULL(Barcode, '')))) <> 'NOREAD' THEN 1 ELSE 0 END),
+    TotalReceiptNoRead = SUM(CASE WHEN UPPER(ScanType) = 'TO' AND NOT (IsRead = 1 AND UPPER(LTRIM(RTRIM(ISNULL(Barcode, '')))) <> 'NOREAD') THEN 1 ELSE 0 END),
+    Deviation = SUM(CASE WHEN UPPER(ScanType) = 'FROM' THEN 1 ELSE 0 END) - SUM(CASE WHEN UPPER(ScanType) = 'TO' THEN 1 ELSE 0 END)
+FROM dbo.SorterScans_Sync
+WHERE CAST(ScanDateTime AS DATE) = CAST(GETDATE() AS DATE);";
+
+                using (var command = new SqlCommand(query, connection))
                 {
-                    command.CommandType = CommandType.StoredProcedure;
+                    command.CommandType = CommandType.Text;
 
                     using (var reader = await command.ExecuteReaderAsync().ConfigureAwait(false))
                     {
@@ -258,6 +270,7 @@ namespace Web.Infrastructure.Repositories
                             result.TotalReceiptCount = reader.IsDBNull(reader.GetOrdinal("TotalReceiptCount")) ? 0 : reader.GetInt32(reader.GetOrdinal("TotalReceiptCount"));
                             result.TotalReceiptRead = reader.IsDBNull(reader.GetOrdinal("TotalReceiptRead")) ? 0 : reader.GetInt32(reader.GetOrdinal("TotalReceiptRead"));
                             result.TotalReceiptNoRead = reader.IsDBNull(reader.GetOrdinal("TotalReceiptNoRead")) ? 0 : reader.GetInt32(reader.GetOrdinal("TotalReceiptNoRead"));
+                            result.Deviation = reader.IsDBNull(reader.GetOrdinal("Deviation")) ? 0 : reader.GetInt32(reader.GetOrdinal("Deviation"));
                         }
                     }
                 }

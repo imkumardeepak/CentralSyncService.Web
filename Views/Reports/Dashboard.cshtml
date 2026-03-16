@@ -38,7 +38,7 @@
         <!-- Today Stats Summary -->
         <div class="space-y-6">
             
-            <!-- FROM Stats Summary Card (KASANA) -->
+            <!-- FROM Stats Summary Card -->
             <div class="bg-white rounded-xl shadow-card border-l-4 border-l-blue-500 border-t border-r border-b border-neutral-200 p-6 md:p-8">
                 <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
                     <div>
@@ -46,9 +46,9 @@
                             <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
                             </svg>
-                            Today Issue Summary (KASANA)
+                            Today Issue Summary (FROM)
                         </h2>
-                        <p class="text-sm text-neutral-500 mt-1">Real-time tracking of issues from the source plant.</p>
+                        <p class="text-sm text-neutral-500 mt-1">Today's total FROM scans from the central sync table.</p>
                     </div>
                     
                     <div class="flex flex-col sm:flex-row items-center gap-4">
@@ -74,7 +74,7 @@
                 </div>
             </div>
 
-            <!-- TO Stats Summary Card (KOMAL) -->
+            <!-- TO Stats Summary Card -->
             <div class="bg-white rounded-xl shadow-card border-l-4 border-l-indigo-500 border-t border-r border-b border-neutral-200 p-6 md:p-8">
                 <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
                     <div>
@@ -82,9 +82,9 @@
                             <svg class="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
                             </svg>
-                            Today Receipt Summary (KOMAL)
+                            Today Receipt Summary (TO)
                         </h2>
-                         <p class="text-sm text-neutral-500 mt-1">Real-time tracking of receipts at the destination plant.</p>
+                         <p class="text-sm text-neutral-500 mt-1">Today's total TO scans from the central sync table.</p>
                     </div>
                     
                     <div class="flex flex-col sm:flex-row items-center gap-4">
@@ -106,6 +106,27 @@
                                 @Model.TodayStats.TotalReceiptNoRead.ToString("N0")
                             </span>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-card border-l-4 border-l-amber-500 border-t border-r border-b border-neutral-200 p-6 md:p-8">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-neutral-900 flex items-center gap-2">
+                            <svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+                            </svg>
+                            Today Deviation
+                        </h2>
+                        <p class="text-sm text-neutral-500 mt-1">Calculated as total issue minus total receipt for today.</p>
+                    </div>
+
+                    <div class="flex items-center justify-between w-full sm:w-auto gap-4 p-3 rounded-lg bg-neutral-50 shadow-sm border border-neutral-100">
+                        <span class="text-sm font-bold text-neutral-600 uppercase tracking-wider">Issue - Receipt</span>
+                        <span class="inline-flex items-center justify-center min-w-[3rem] rounded-full px-3.5 py-1 text-lg font-black @(Model.TodayStats.Deviation == 0 ? "bg-neutral-200 text-neutral-800" : Model.TodayStats.Deviation > 0 ? "bg-amber-100 text-amber-800" : "bg-blue-100 text-blue-800")">
+                            @Model.TodayStats.Deviation.ToString("N0")
+                        </span>
                     </div>
                 </div>
             </div>
