@@ -9,7 +9,5 @@ namespace Web.Core.DTOs
         public int TotalReceiptCount { get; set; }
         public int TotalReceiptRead { get; set; }
         public int TotalReceiptNoRead { get; set; }
-
-        public int Deviation { get; set; }
     }
 }
