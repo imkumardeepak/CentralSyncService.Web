@@ -18,7 +18,7 @@ BEGIN
     SET @Date = ISNULL(@Date, CAST(GETDATE() AS DATE));
     
     SELECT 
-        ISNULL(mm.MaterialNumber, s.MaterialCode) AS MaterialCode,
+        ISNULL(mm.MaterialNumber, 'N/A') AS MaterialCode,
         ISNULL(mm.MaterialDescription, 'Unknown Material') AS MaterialDescription,
         ISNULL(s.Batch, 'N/A') AS Batch,
         SUM(CASE WHEN UPPER(s.ScanType) = 'FROM' THEN 1 ELSE 0 END) AS TotalIssue,
@@ -37,13 +37,13 @@ BEGIN
         SUM(CASE WHEN UPPER(s.ScanType) = 'TO'
                   AND NOT (s.IsRead = 1 AND REPLACE(UPPER(LTRIM(RTRIM(ISNULL(s.Barcode, '')))), ' ', '') <> 'NOREAD')
              THEN 1 ELSE 0 END) AS ReceiptNoRead
-    FROM dbo.SorterScans_Sync s
-    LEFT JOIN dbo.MaterialMasters mm 
+    FROM dbo.SorterScans_Sync s WITH(NOLOCK)
+    LEFT JOIN dbo.MaterialMasters mm WITH(NOLOCK)
         ON s.MaterialCode = mm.ProdInspMemo
     WHERE 
-        CAST(s.ScanDateTime AS DATE) = @Date
+        CAST(s.ScanDateTime AS DATE) = CAST(@Date AS DATE)
     GROUP BY 
-        ISNULL(mm.MaterialNumber, s.MaterialCode),
+        ISNULL(mm.MaterialNumber,'N/A'),
         ISNULL(mm.MaterialDescription, 'Unknown Material'),
         ISNULL(s.Batch, 'N/A')
     ORDER BY 

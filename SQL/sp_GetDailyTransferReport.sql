@@ -1,11 +1,3 @@
--- =============================================
--- Daily Transfer Report
--- Shows FROM (Issue) and TO (Receipt) plant records
--- with READ and NO READ breakdown
--- =============================================
-
-USE [Haldiram_Barcode_Line]
-GO
 
 IF OBJECT_ID('dbo.sp_GetDailyTransferReport', 'P') IS NOT NULL
     DROP PROCEDURE dbo.sp_GetDailyTransferReport;

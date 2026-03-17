@@ -77,15 +77,13 @@ namespace Web.Infrastructure.Repositories
                         {
                             var record = new ShiftReportRecord
                             {
-                                ShiftName = reader.GetString(reader.GetOrdinal("ShiftName")),
-                                TotalIssue = reader.GetInt32(reader.GetOrdinal("TotalIssue")),
-                                IssueRead = reader.GetInt32(reader.GetOrdinal("IssueRead")),
-                                IssueNoRead = reader.GetInt32(reader.GetOrdinal("IssueNoRead")),
-                                TotalReceipt = reader.GetInt32(reader.GetOrdinal("TotalReceipt")),
-                                ReceiptRead = reader.GetInt32(reader.GetOrdinal("ReceiptRead")),
-                                ReceiptNoRead = reader.GetInt32(reader.GetOrdinal("ReceiptNoRead")),
-                                ShiftStart = reader.IsDBNull(reader.GetOrdinal("ShiftStart")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("ShiftStart")),
-                                ShiftEnd = reader.IsDBNull(reader.GetOrdinal("ShiftEnd")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("ShiftEnd"))
+                                SAPCode = reader.IsDBNull(reader.GetOrdinal("SAPCode")) ? string.Empty : reader.GetString(reader.GetOrdinal("SAPCode")),
+                                ProductName = reader.IsDBNull(reader.GetOrdinal("ProductName")) ? string.Empty : reader.GetString(reader.GetOrdinal("ProductName")),
+                                BatchNo = reader.IsDBNull(reader.GetOrdinal("BatchNo")) ? string.Empty : reader.GetString(reader.GetOrdinal("BatchNo")),
+                                ReportDate = reader.GetDateTime(reader.GetOrdinal("ReportDate")),
+                                Shift = reader.GetString(reader.GetOrdinal("Shift")),
+                                TotalQtyInCs = reader.GetInt32(reader.GetOrdinal("TotalQtyInCs")),
+                                TotalQtyInMT = reader.GetDecimal(reader.GetOrdinal("TotalQtyInMT"))
                             };
 
                             result.Add(record);
