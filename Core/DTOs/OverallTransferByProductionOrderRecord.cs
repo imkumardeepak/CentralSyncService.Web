@@ -9,7 +9,7 @@ namespace Web.Core.DTOs
         public string MaterialDescription { get; set; } = string.Empty;
         public string Batch { get; set; } = string.Empty;
         public int OrderQty { get; set; }
-        public decimal CurQTY { get; set; }
+        public int CurQTY { get; set; }
         public int IssueCount { get; set; }
         public int ReceiptCount { get; set; }
         public int Deviation { get; set; }
