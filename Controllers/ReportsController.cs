@@ -25,18 +25,30 @@ namespace Web.Controllers
         // Real-time dashboard: uses sp_GetDashboardStats + pending boxes
         public async Task<IActionResult> Dashboard()
         {
-            var stats = await _reportingService.GetDashboardStatsAsync().ConfigureAwait(false);
-            var todayStats = await _reportingService.GetTodayDashboardStatsAsync().ConfigureAwait(false);
-
-            var model = new DashboardViewModel
+            try
             {
-                Stats = stats,
-                IsSyncRunning = _syncService.IsRunning,
-                LastSyncTime = _syncService.LastSyncTime,
-                TodayStats = todayStats
-            };
+                var stats = await _reportingService.GetDashboardStatsAsync().ConfigureAwait(false);
+                var todayStats = await _reportingService.GetTodayDashboardStatsAsync().ConfigureAwait(false);
 
-            return View(model);
+                var model = new DashboardViewModel
+                {
+                    Stats = stats,
+                    IsSyncRunning = _syncService.IsRunning,
+                    LastSyncTime = _syncService.LastSyncTime,
+                    TodayStats = todayStats
+                };
+
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Error = $"Dashboard error: {ex.Message}";
+                return View(new DashboardViewModel
+                {
+                    IsSyncRunning = _syncService.IsRunning,
+                    LastSyncTime = _syncService.LastSyncTime
+                });
+            }
         }
 
         // Daily summary using sp_GetDailySummary
