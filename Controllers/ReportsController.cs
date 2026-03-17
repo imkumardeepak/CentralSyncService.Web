@@ -204,5 +204,24 @@ namespace Web.Controllers
                 return View(new List<ProductWiseDailyTransferRecord>());
             }
         }
+
+        // Shift Report
+        public async Task<IActionResult> ShiftReport(DateTime? date)
+        {
+            try
+            {
+                var searchDate = date ?? DateTime.Today;
+                var records = await _reportingRepository.GetShiftReportAsync(searchDate).ConfigureAwait(false);
+                
+                ViewBag.Date = searchDate;
+                return View(records);
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Error = $"Error: {ex.Message}";
+                ViewBag.StackTrace = ex.StackTrace;
+                return View(new List<ShiftReportRecord>());
+            }
+        }
     }
 }
