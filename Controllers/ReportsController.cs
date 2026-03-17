@@ -223,5 +223,24 @@ namespace Web.Controllers
                 return View(new List<ShiftReportRecord>());
             }
         }
+
+        // Overall Transfer By Production Order
+        public async Task<IActionResult> OverallTransferByProductionOrder(DateTime? date)
+        {
+            try
+            {
+                var searchDate = date ?? DateTime.Today;
+                var records = await _reportingRepository.GetOverallTransferByProductionOrderAsync(searchDate).ConfigureAwait(false);
+                
+                ViewBag.Date = searchDate;
+                return View(records);
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Error = $"Error: {ex.Message}";
+                ViewBag.StackTrace = ex.StackTrace;
+                return View(new List<OverallTransferByProductionOrderRecord>());
+            }
+        }
     }
 }

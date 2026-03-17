@@ -30,7 +30,7 @@ BEGIN
                 ELSE 'C'
             END AS ShiftName,
             1 AS QtyInCases,
-            ISNULL(mm.GrossWeight, 0) / 1000.0 AS QtyInMT
+            ISNULL(mm.NetWeight, 0) / 1000.0 AS QtyInMT
         FROM dbo.SorterScans_Sync s WITH(NOLOCK)
         LEFT JOIN dbo.MaterialMasters mm WITH(NOLOCK)
             ON s.MaterialCode = mm.ProdInspMemo

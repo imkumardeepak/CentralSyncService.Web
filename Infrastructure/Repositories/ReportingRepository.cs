@@ -632,5 +632,44 @@ ORDER BY
 
             return result;
         }
+
+        public async Task<List<OverallTransferByProductionOrderRecord>> GetOverallTransferByProductionOrderAsync(DateTime? date)
+        {
+            var result = new List<OverallTransferByProductionOrderRecord>();
+
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                await connection.OpenAsync().ConfigureAwait(false);
+
+                using (var command = new SqlCommand("sp_GetOverallTransferByProductionOrder", connection))
+                {
+                    command.CommandType = CommandType.StoredProcedure;
+                    command.Parameters.AddWithValue("@Date", (object?)date ?? DBNull.Value);
+
+                    using (var reader = await command.ExecuteReaderAsync().ConfigureAwait(false))
+                    {
+                        while (await reader.ReadAsync().ConfigureAwait(false))
+                        {
+                            var record = new OverallTransferByProductionOrderRecord
+                            {
+                                OrderNo = reader.IsDBNull(reader.GetOrdinal("OrderNo")) ? string.Empty : reader.GetString(reader.GetOrdinal("OrderNo")),
+                                MaterialNumber = reader.IsDBNull(reader.GetOrdinal("MaterialNumber")) ? string.Empty : reader.GetString(reader.GetOrdinal("MaterialNumber")),
+                                MaterialDescription = reader.IsDBNull(reader.GetOrdinal("MaterialDescription")) ? string.Empty : reader.GetString(reader.GetOrdinal("MaterialDescription")),
+                                Batch = reader.IsDBNull(reader.GetOrdinal("Batch")) ? string.Empty : reader.GetString(reader.GetOrdinal("Batch")),
+                                OrderQty = reader.IsDBNull(reader.GetOrdinal("OrderQty")) ? 0 : reader.GetInt32(reader.GetOrdinal("OrderQty")),
+                                CurQTY = reader.IsDBNull(reader.GetOrdinal("CurQTY")) ? 0 : Convert.ToDecimal(reader.GetValue(reader.GetOrdinal("CurQTY"))),
+                                IssueCount = reader.IsDBNull(reader.GetOrdinal("IssueCount")) ? 0 : reader.GetInt32(reader.GetOrdinal("IssueCount")),
+                                ReceiptCount = reader.IsDBNull(reader.GetOrdinal("ReceiptCount")) ? 0 : reader.GetInt32(reader.GetOrdinal("ReceiptCount")),
+                                Deviation = reader.IsDBNull(reader.GetOrdinal("Deviation")) ? 0 : reader.GetInt32(reader.GetOrdinal("Deviation"))
+                            };
+
+                            result.Add(record);
+                        }
+                    }
+                }
+            }
+
+            return result;
+        }
     }
 }

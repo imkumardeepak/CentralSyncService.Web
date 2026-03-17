@@ -20,5 +20,6 @@ namespace Web.Core.Interfaces
         Task<List<DailyTransferReportDto>> GetDailyTransferReportAsync();
         Task<List<DailyTransferReportRecord>> GetDailyTransferReportAsync(DateTime? date);
         Task<List<ProductWiseDailyTransferRecord>> GetProductWiseDailyTransferAsync(DateTime? date);
+        Task<List<OverallTransferByProductionOrderRecord>> GetOverallTransferByProductionOrderAsync(DateTime? date);
     }
 }
