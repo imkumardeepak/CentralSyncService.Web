@@ -33,14 +33,12 @@ builder.Services.AddSingleton<SyncService>(sp =>
     // Read configuration values from appsettings.json
     var syncIntervalSeconds = config.GetValue<int>("Sync:SyncIntervalSeconds", 30);
     var batchSize = config.GetValue<int>("Sync:BatchSize", 100);
-    var matchWindowMinutes = config.GetValue<int>("Sync:MatchWindowMinutes", 60);
     
     return new SyncService(
         scopeFactory,
         logger,
         syncIntervalSeconds * 1000, // Convert seconds to milliseconds
-        batchSize,
-        matchWindowMinutes
+        batchSize
     );
 });
 
