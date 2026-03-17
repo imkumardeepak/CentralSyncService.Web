@@ -1,4 +1,4 @@
-@model Web.Core.DTOs.BoxTrackingSummary
+@model Web.Core.DTOs.TodayDashboardStats
 @using Web.Core.DTOs
 @using Web.Core.Entities
 @{
@@ -28,7 +28,7 @@
             </div>
         </div>
 
-        <div class="grid gap-4 md:grid-cols-4 mb-8">
+        <div class="grid gap-4 md:grid-cols-3 mb-8">
             <div class="bg-white shadow-sm rounded-lg p-4">
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Last Sync Time</p>
                 <p class="mt-2 text-lg font-semibold text-gray-800">@(ViewBag.LastSyncTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "-")</p>
@@ -41,45 +41,30 @@
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">TO Synced (session)</p>
                 <p class="mt-2 text-lg font-semibold text-gray-800">@ViewBag.TotalToSynced</p>
             </div>
-            <div class="bg-white shadow-sm rounded-lg p-4">
-                <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Matched (session)</p>
-                <p class="mt-2 text-lg font-semibold text-gray-800">@ViewBag.TotalMatched</p>
-            </div>
         </div>
 
         <div class="bg-white shadow-sm rounded-lg p-6 mb-8">
-            <h2 class="text-lg font-semibold text-gray-800 mb-4">Today's BoxTracking Summary</h2>
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">Today's Scan Summary</h2>
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Total Boxes</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Matched</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Missing (FROM + TO)</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Pending (FROM + TO)</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Match Rate %</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Avg Transit</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Issue Total (FROM)</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Issue Read</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Issue No Read</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Receipt Total (TO)</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Receipt Read</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Receipt No Read</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         <tr>
-                            <td class="px-4 py-3 text-sm text-gray-800">@Model.TotalBoxes</td>
-                            <td class="px-4 py-3 text-sm text-gray-800">@Model.Matched</td>
-                            <td class="px-4 py-3 text-sm text-gray-800">@(Model.MissingAtFrom + Model.MissingAtTo)</td>
-                            <td class="px-4 py-3 text-sm text-gray-800">@(Model.PendingFrom + Model.PendingTo)</td>
-                            <td class="px-4 py-3 text-sm text-gray-800">@Model.MatchRatePercent.ToString("F1")%</td>
-                            <td class="px-4 py-3 text-sm text-gray-800">
-                                @if (Model.AvgTransitSeconds.HasValue)
-                                {
-                                    var mins = Model.AvgTransitSeconds.Value / 60;
-                                    var secs = Model.AvgTransitSeconds.Value % 60;
-                                    @($"{mins}m {secs}s")
-                                }
-                                else
-                                {
-                                    @:"-"
-                                }
-                            </td>
+                            <td class="px-4 py-3 text-sm text-gray-800">@Model.TotalIssueCount</td>
+                            <td class="px-4 py-3 text-sm text-emerald-600 font-semibold">@Model.TotalIssueRead</td>
+                            <td class="px-4 py-3 text-sm text-red-600 font-semibold">@Model.TotalIssueNoRead</td>
+                            <td class="px-4 py-3 text-sm text-gray-800">@Model.TotalReceiptCount</td>
+                            <td class="px-4 py-3 text-sm text-emerald-600 font-semibold">@Model.TotalReceiptRead</td>
+                            <td class="px-4 py-3 text-sm text-red-600 font-semibold">@Model.TotalReceiptNoRead</td>
                         </tr>
                     </tbody>
                 </table>

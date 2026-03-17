@@ -41,15 +41,12 @@ namespace Web.Infrastructure.Repositories
                             var record = new DailySummaryRecord
                             {
                                 ReportDate = reader.GetDateTime(reader.GetOrdinal("ReportDate")),
-                                TotalBoxes = reader.GetInt32(reader.GetOrdinal("TotalBoxes")),
-                                Matched = reader.GetInt32(reader.GetOrdinal("Matched")),
-                                MissingAtTo = reader.GetInt32(reader.GetOrdinal("MissingAtTo")),
-                                MissingAtFrom = reader.GetInt32(reader.GetOrdinal("MissingAtFrom")),
-                                BothFailed = reader.GetInt32(reader.GetOrdinal("BothFailed")),
-                                MatchRatePercent = reader.IsDBNull(reader.GetOrdinal("MatchRatePercent")) ? 0 : reader.GetDecimal(reader.GetOrdinal("MatchRatePercent")),
-                                AvgTransitSeconds = reader.IsDBNull(reader.GetOrdinal("AvgTransitSeconds")) ? (int?)null : reader.GetInt32(reader.GetOrdinal("AvgTransitSeconds")),
-                                FromNoReadCount = reader.IsDBNull(reader.GetOrdinal("FromNoReadCount")) ? 0 : reader.GetInt32(reader.GetOrdinal("FromNoReadCount")),
-                                ToNoReadCount = reader.IsDBNull(reader.GetOrdinal("ToNoReadCount")) ? 0 : reader.GetInt32(reader.GetOrdinal("ToNoReadCount"))
+                                TotalIssue = reader.GetInt32(reader.GetOrdinal("TotalIssue")),
+                                IssueRead = reader.GetInt32(reader.GetOrdinal("IssueRead")),
+                                IssueNoRead = reader.GetInt32(reader.GetOrdinal("IssueNoRead")),
+                                TotalReceipt = reader.GetInt32(reader.GetOrdinal("TotalReceipt")),
+                                ReceiptRead = reader.GetInt32(reader.GetOrdinal("ReceiptRead")),
+                                ReceiptNoRead = reader.GetInt32(reader.GetOrdinal("ReceiptNoRead"))
                             };
 
                             result.Add(record);
@@ -81,13 +78,12 @@ namespace Web.Infrastructure.Repositories
                             var record = new ShiftReportRecord
                             {
                                 ShiftName = reader.GetString(reader.GetOrdinal("ShiftName")),
-                                TotalBoxes = reader.GetInt32(reader.GetOrdinal("TotalBoxes")),
-                                Matched = reader.GetInt32(reader.GetOrdinal("Matched")),
-                                MissingAtTo = reader.GetInt32(reader.GetOrdinal("MissingAtTo")),
-                                MissingAtFrom = reader.GetInt32(reader.GetOrdinal("MissingAtFrom")),
-                                BothFailed = reader.GetInt32(reader.GetOrdinal("BothFailed")),
-                                MatchRatePercent = reader.IsDBNull(reader.GetOrdinal("MatchRatePercent")) ? 0 : reader.GetDecimal(reader.GetOrdinal("MatchRatePercent")),
-                                AvgTransitSeconds = reader.IsDBNull(reader.GetOrdinal("AvgTransitSeconds")) ? (int?)null : reader.GetInt32(reader.GetOrdinal("AvgTransitSeconds")),
+                                TotalIssue = reader.GetInt32(reader.GetOrdinal("TotalIssue")),
+                                IssueRead = reader.GetInt32(reader.GetOrdinal("IssueRead")),
+                                IssueNoRead = reader.GetInt32(reader.GetOrdinal("IssueNoRead")),
+                                TotalReceipt = reader.GetInt32(reader.GetOrdinal("TotalReceipt")),
+                                ReceiptRead = reader.GetInt32(reader.GetOrdinal("ReceiptRead")),
+                                ReceiptNoRead = reader.GetInt32(reader.GetOrdinal("ReceiptNoRead")),
                                 ShiftStart = reader.IsDBNull(reader.GetOrdinal("ShiftStart")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("ShiftStart")),
                                 ShiftEnd = reader.IsDBNull(reader.GetOrdinal("ShiftEnd")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("ShiftEnd"))
                             };
@@ -125,15 +121,11 @@ namespace Web.Infrastructure.Repositories
                                 Barcode = reader.GetString(reader.GetOrdinal("Barcode")),
                                 Batch = reader.IsDBNull(reader.GetOrdinal("Batch")) ? null : reader.GetString(reader.GetOrdinal("Batch")),
                                 LineCode = reader.IsDBNull(reader.GetOrdinal("LineCode")) ? null : reader.GetString(reader.GetOrdinal("LineCode")),
-                                FromPlant = reader.IsDBNull(reader.GetOrdinal("FromPlant")) ? null : reader.GetString(reader.GetOrdinal("FromPlant")),
-                                FromScanTime = reader.IsDBNull(reader.GetOrdinal("FromScanTime")) ? null : reader.GetString(reader.GetOrdinal("FromScanTime")),
-                                FromStatus = reader.IsDBNull(reader.GetOrdinal("FromStatus")) ? string.Empty : reader.GetString(reader.GetOrdinal("FromStatus")),
-                                ToPlant = reader.IsDBNull(reader.GetOrdinal("ToPlant")) ? null : reader.GetString(reader.GetOrdinal("ToPlant")),
-                                ToScanTime = reader.IsDBNull(reader.GetOrdinal("ToScanTime")) ? null : reader.GetString(reader.GetOrdinal("ToScanTime")),
-                                ToStatus = reader.IsDBNull(reader.GetOrdinal("ToStatus")) ? string.Empty : reader.GetString(reader.GetOrdinal("ToStatus")),
-                                MatchStatus = reader.IsDBNull(reader.GetOrdinal("MatchStatus")) ? string.Empty : reader.GetString(reader.GetOrdinal("MatchStatus")),
-                                TransitTimeSeconds = reader.IsDBNull(reader.GetOrdinal("TransitTimeSeconds")) ? (int?)null : reader.GetInt32(reader.GetOrdinal("TransitTimeSeconds")),
-                                CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt"))
+                                ScanType = reader.IsDBNull(reader.GetOrdinal("ScanType")) ? string.Empty : reader.GetString(reader.GetOrdinal("ScanType")),
+                                CurrentPlant = reader.IsDBNull(reader.GetOrdinal("CurrentPlant")) ? null : reader.GetString(reader.GetOrdinal("CurrentPlant")),
+                                ScanDateTime = reader.IsDBNull(reader.GetOrdinal("ScanDateTime")) ? null : reader.GetString(reader.GetOrdinal("ScanDateTime")),
+                                ReadStatus = reader.IsDBNull(reader.GetOrdinal("ReadStatus")) ? string.Empty : reader.GetString(reader.GetOrdinal("ReadStatus")),
+                                SyncedAt = reader.GetDateTime(reader.GetOrdinal("SyncedAt"))
                             };
 
                             result.Add(record);
@@ -195,23 +187,22 @@ namespace Web.Infrastructure.Repositories
 
                     using (var reader = await command.ExecuteReaderAsync().ConfigureAwait(false))
                     {
-                        // First result set: TODAY with AvgTransitSec
                         if (await reader.ReadAsync().ConfigureAwait(false))
                         {
                             var today = new DashboardStatsRecord
                             {
                                 Period = reader.GetString(reader.GetOrdinal("Period")),
                                 TotalBoxes = reader.GetInt32(reader.GetOrdinal("TotalBoxes")),
-                                Matched = reader.GetInt32(reader.GetOrdinal("Matched")),
-                                Issues = reader.GetInt32(reader.GetOrdinal("Issues")),
-                                Pending = reader.GetInt32(reader.GetOrdinal("Pending")),
-                                AvgTransitSec = reader.IsDBNull(reader.GetOrdinal("AvgTransitSec")) ? (int?)null : reader.GetInt32(reader.GetOrdinal("AvgTransitSec"))
+                                IssueTotal = reader.GetInt32(reader.GetOrdinal("IssueTotal")),
+                                IssueNoRead = reader.GetInt32(reader.GetOrdinal("IssueNoRead")),
+                                ReceiptTotal = reader.GetInt32(reader.GetOrdinal("ReceiptTotal")),
+                                ReceiptNoRead = reader.GetInt32(reader.GetOrdinal("ReceiptNoRead"))
                             };
 
                             result.Add(today);
                         }
 
-                        // Second result set: LAST_HOUR without AvgTransitSec
+                        // Second result set: LAST_HOUR
                         if (await reader.NextResultAsync().ConfigureAwait(false))
                         {
                             if (await reader.ReadAsync().ConfigureAwait(false))
@@ -220,10 +211,10 @@ namespace Web.Infrastructure.Repositories
                                 {
                                     Period = reader.GetString(reader.GetOrdinal("Period")),
                                     TotalBoxes = reader.GetInt32(reader.GetOrdinal("TotalBoxes")),
-                                    Matched = reader.GetInt32(reader.GetOrdinal("Matched")),
-                                    Issues = reader.GetInt32(reader.GetOrdinal("Issues")),
-                                    Pending = reader.GetInt32(reader.GetOrdinal("Pending")),
-                                    AvgTransitSec = null
+                                    IssueTotal = reader.GetInt32(reader.GetOrdinal("IssueTotal")),
+                                    IssueNoRead = reader.GetInt32(reader.GetOrdinal("IssueNoRead")),
+                                    ReceiptTotal = reader.GetInt32(reader.GetOrdinal("ReceiptTotal")),
+                                    ReceiptNoRead = reader.GetInt32(reader.GetOrdinal("ReceiptNoRead"))
                                 };
 
                                 result.Add(lastHour);
@@ -425,12 +416,12 @@ WHERE CAST(ScanDateTime AS DATE) = CAST(GETDATE() AS DATE);";
                             var record = new ScanReadStatusRecord
                             {
                                 ReportDate = reader.GetDateTime(reader.GetOrdinal("ReportDate")),
-                                TotalBoxes = GetInt64Safe(reader, "TotalBoxes"),
-                                BothSideRead = GetInt64Safe(reader, "BothSideRead"),
-                                FromReadToNoRead = GetInt64Safe(reader, "FromReadToNoRead"),
-                                FromNoReadToRead = GetInt64Safe(reader, "FromNoReadToRead"),
-                                BothSideNoRead = GetInt64Safe(reader, "BothSideNoRead"),
-                                IncompleteOrMissing = GetInt64Safe(reader, "IncompleteOrMissing")
+                                IssueTotal = GetInt64Safe(reader, "IssueTotal"),
+                                IssueRead = GetInt64Safe(reader, "IssueRead"),
+                                IssueNoRead = GetInt64Safe(reader, "IssueNoRead"),
+                                ReceiptTotal = GetInt64Safe(reader, "ReceiptTotal"),
+                                ReceiptRead = GetInt64Safe(reader, "ReceiptRead"),
+                                ReceiptNoRead = GetInt64Safe(reader, "ReceiptNoRead")
                             };
                             result.Add(record);
                         }

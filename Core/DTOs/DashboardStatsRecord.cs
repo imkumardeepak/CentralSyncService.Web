@@ -4,9 +4,9 @@ namespace Web.Core.DTOs
     {
         public string Period { get; set; } = string.Empty;
         public int TotalBoxes { get; set; }
-        public int Matched { get; set; }
-        public int Issues { get; set; }
-        public int Pending { get; set; }
-        public int? AvgTransitSec { get; set; }
+        public int IssueTotal { get; set; }
+        public int IssueNoRead { get; set; }
+        public int ReceiptTotal { get; set; }
+        public int ReceiptNoRead { get; set; }
     }
 }

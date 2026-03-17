@@ -20,7 +20,7 @@
                         Back to Dashboard
                     </a>
                     <h1 class="text-2xl font-bold text-neutral-900 tracking-tight">Barcode Search</h1>
-                    <p class="mt-1 text-sm text-neutral-500">Track box history across all plants</p>
+                    <p class="mt-1 text-sm text-neutral-500">Search scan history across all plants</p>
                 </div>
             </div>
         </div>
@@ -98,13 +98,11 @@
                                 <tr>
                                     <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Barcode</th>
                                     <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Line</th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Status</th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">FROM</th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">FROM Time</th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">TO</th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">TO Time</th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Transit</th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Created</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Scan Type</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Plant</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Scan Time</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Read Status</th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Synced</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-neutral-200">
@@ -115,34 +113,21 @@
                                         <td class="px-4 py-3 text-sm text-neutral-700">@(record.LineCode ?? "—")</td>
                                         <td class="px-4 py-3 text-sm">
                                             @await Html.PartialAsync("_Badge", new { 
-                                                Variant = record.MatchStatus == "MATCHED" ? "success" : "warning", 
-                                                Text = record.MatchStatus,
+                                                Variant = record.ScanType == "FROM" ? "info" : "success", 
+                                                Text = record.ScanType,
                                                 Size = "sm"
                                             })
                                         </td>
+                                        <td class="px-4 py-3 text-sm text-neutral-700">@(record.CurrentPlant ?? "—")</td>
+                                        <td class="px-4 py-3 text-sm text-neutral-600">@(record.ScanDateTime ?? "—")</td>
                                         <td class="px-4 py-3 text-sm">
-                                            <span class="text-neutral-700">@(record.FromPlant ?? "—")</span>
-                                            <span class="text-neutral-400 text-xs block">[@record.FromStatus]</span>
+                                            @await Html.PartialAsync("_Badge", new { 
+                                                Variant = record.ReadStatus == "READ" ? "success" : "danger", 
+                                                Text = record.ReadStatus,
+                                                Size = "sm"
+                                            })
                                         </td>
-                                        <td class="px-4 py-3 text-sm text-neutral-600">@(record.FromScanTime ?? "—")</td>
-                                        <td class="px-4 py-3 text-sm">
-                                            <span class="text-neutral-700">@(record.ToPlant ?? "—")</span>
-                                            <span class="text-neutral-400 text-xs block">[@record.ToStatus]</span>
-                                        </td>
-                                        <td class="px-4 py-3 text-sm text-neutral-600">@(record.ToScanTime ?? "—")</td>
-                                        <td class="px-4 py-3 text-sm text-neutral-700">
-                                            @if (record.TransitTimeSeconds.HasValue)
-                                            {
-                                                var mins = record.TransitTimeSeconds.Value / 60;
-                                                var secs = record.TransitTimeSeconds.Value % 60;
-                                                <span class="font-medium">@mins min @secs sec</span>
-                                            }
-                                            else
-                                            {
-                                                <span class="text-neutral-400">—</span>
-                                            }
-                                        </td>
-                                        <td class="px-4 py-3 text-sm text-neutral-600">@record.CreatedAt.ToString("MM-dd HH:mm")</td>
+                                        <td class="px-4 py-3 text-sm text-neutral-600">@record.SyncedAt.ToString("MM-dd HH:mm")</td>
                                     </tr>
                                 }
                             </tbody>

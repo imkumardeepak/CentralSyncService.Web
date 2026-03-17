@@ -72,16 +72,16 @@
                     <p class="mt-2 text-2xl font-bold text-neutral-900">@Model.Count</p>
                 </div>
                 <div class="bg-white rounded-xl shadow-card border border-neutral-200 p-5">
-                    <p class="text-xs font-medium text-neutral-500 uppercase tracking-wide">Total Boxes</p>
-                    <p class="mt-2 text-2xl font-bold text-neutral-900">@Model.Sum(m => m.TotalBoxes).ToString("N0")</p>
+                    <p class="text-xs font-medium text-neutral-500 uppercase tracking-wide">Total Issue (FROM)</p>
+                    <p class="mt-2 text-2xl font-bold text-blue-600">@Model.Sum(m => m.TotalIssue).ToString("N0")</p>
                 </div>
                 <div class="bg-white rounded-xl shadow-card border border-neutral-200 p-5">
-                    <p class="text-xs font-medium text-neutral-500 uppercase tracking-wide">Avg Match Rate</p>
-                    <p class="mt-2 text-2xl font-bold text-emerald-600">@Model.Average(m => m.MatchRatePercent).ToString("F1")%</p>
+                    <p class="text-xs font-medium text-neutral-500 uppercase tracking-wide">Total Receipt (TO)</p>
+                    <p class="mt-2 text-2xl font-bold text-indigo-600">@Model.Sum(m => m.TotalReceipt).ToString("N0")</p>
                 </div>
                 <div class="bg-white rounded-xl shadow-card border border-neutral-200 p-5">
-                    <p class="text-xs font-medium text-neutral-500 uppercase tracking-wide">Total Issues</p>
-                    <p class="mt-2 text-2xl font-bold text-red-600">@Model.Sum(m => m.MissingAtTo + m.MissingAtFrom + m.BothFailed).ToString("N0")</p>
+                    <p class="text-xs font-medium text-neutral-500 uppercase tracking-wide">Total NO READ</p>
+                    <p class="mt-2 text-2xl font-bold text-red-600">@Model.Sum(m => m.IssueNoRead + m.ReceiptNoRead).ToString("N0")</p>
                 </div>
             </div>
 
@@ -95,15 +95,12 @@
                         <thead class="bg-neutral-50">
                             <tr>
                                 <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Date</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Total</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Matched</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Missing @@TO</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Missing @@FROM</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Both Fail</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Match %</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">Avg Transit</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">FROM NO READ</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-600 uppercase tracking-wide">TO NO READ</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-blue-600 uppercase tracking-wide">Total Issue</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-emerald-600 uppercase tracking-wide">Issue Read</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-red-600 uppercase tracking-wide">Issue No Read</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-indigo-600 uppercase tracking-wide">Total Receipt</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-emerald-600 uppercase tracking-wide">Receipt Read</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-red-600 uppercase tracking-wide">Receipt No Read</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-neutral-200">
@@ -111,32 +108,12 @@
                             {
                                 <tr class="hover:bg-brand-50/50 transition-colors duration-150">
                                     <td class="px-4 py-3 text-sm font-medium text-neutral-900">@record.ReportDate.ToString("yyyy-MM-dd")</td>
-                                    <td class="px-4 py-3 text-sm text-neutral-700">@record.TotalBoxes.ToString("N0")</td>
-                                    <td class="px-4 py-3 text-sm text-emerald-600 font-semibold">@record.Matched.ToString("N0")</td>
-                                    <td class="px-4 py-3 text-sm text-red-600">@record.MissingAtTo.ToString("N0")</td>
-                                    <td class="px-4 py-3 text-sm text-red-600">@record.MissingAtFrom.ToString("N0")</td>
-                                    <td class="px-4 py-3 text-sm text-red-600">@record.BothFailed.ToString("N0")</td>
-                                    <td class="px-4 py-3 text-sm">
-                                        @await Html.PartialAsync("_Badge", new { 
-                                            Variant = record.MatchRatePercent >= 95 ? "success" : record.MatchRatePercent >= 85 ? "warning" : "danger", 
-                                            Text = $"{record.MatchRatePercent:F1}%",
-                                            Size = "sm"
-                                        })
-                                    </td>
-                                    <td class="px-4 py-3 text-sm text-neutral-700">
-                                        @if (record.AvgTransitSeconds.HasValue)
-                                        {
-                                            var mins = record.AvgTransitSeconds.Value / 60;
-                                            var secs = record.AvgTransitSeconds.Value % 60;
-                                            <span>@mins min @secs sec</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="text-neutral-400">—</span>
-                                        }
-                                    </td>
-                                    <td class="px-4 py-3 text-sm text-neutral-700">@record.FromNoReadCount</td>
-                                    <td class="px-4 py-3 text-sm text-neutral-700">@record.ToNoReadCount</td>
+                                    <td class="px-4 py-3 text-sm text-blue-700 font-semibold">@record.TotalIssue.ToString("N0")</td>
+                                    <td class="px-4 py-3 text-sm text-emerald-600">@record.IssueRead.ToString("N0")</td>
+                                    <td class="px-4 py-3 text-sm text-red-600">@record.IssueNoRead.ToString("N0")</td>
+                                    <td class="px-4 py-3 text-sm text-indigo-700 font-semibold">@record.TotalReceipt.ToString("N0")</td>
+                                    <td class="px-4 py-3 text-sm text-emerald-600">@record.ReceiptRead.ToString("N0")</td>
+                                    <td class="px-4 py-3 text-sm text-red-600">@record.ReceiptNoRead.ToString("N0")</td>
                                 </tr>
                             }
                         </tbody>

@@ -67,9 +67,8 @@ namespace Web.Services
                         var cleanupResult = await syncRepository.CleanupHistoricalDataAsync(_retentionDays, stoppingToken).ConfigureAwait(false);
 
                         _logger.LogInformation(
-                            "Data cleanup completed. Deleted {SorterScansDeleted} SorterScans_Sync rows and {BoxTrackingDeleted} BoxTracking rows older than {CutoffDate:yyyy-MM-dd}.",
+                            "Data cleanup completed. Deleted {SorterScansDeleted} SorterScans_Sync rows older than {CutoffDate:yyyy-MM-dd}.",
                             cleanupResult.SorterScansDeleted,
-                            cleanupResult.BoxTrackingDeleted,
                             cleanupResult.CutoffDate);
                     }
                 }

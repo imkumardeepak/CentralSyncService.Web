@@ -10,7 +10,7 @@
         <div>
             <h2 class="text-2xl font-bold text-gray-900">Scan Read Status Summary</h2>
             <p class="mt-1 text-sm text-gray-500">
-                Daily breakdown of BoxTracking READ and NO READ statuses across Both Sides (From & To Plants).
+                Daily breakdown of Issue (FROM) and Receipt (TO) scan READ / NO READ counts from SorterScans_Sync.
             </p>
         </div>
     </div>
@@ -80,12 +80,12 @@
                 <thead class="bg-gradient-to-r from-neutral-50 to-neutral-100">
                     <tr>
                         <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-neutral-600 uppercase tracking-wider">Date</th>
-                        <th scope="col" class="px-6 py-4 text-right text-xs font-bold text-neutral-600 uppercase tracking-wider">Total Scans</th>
-                        <th scope="col" class="px-6 py-4 text-right text-xs font-bold text-green-700 uppercase tracking-wider bg-green-50/50">Both Sides READ</th>
-                        <th scope="col" class="px-6 py-4 text-right text-xs font-bold text-amber-700 uppercase tracking-wider bg-amber-50/50">From READ / To NO READ</th>
-                        <th scope="col" class="px-6 py-4 text-right text-xs font-bold text-amber-700 uppercase tracking-wider bg-amber-50/50">From NO READ / To READ</th>
-                        <th scope="col" class="px-6 py-4 text-right text-xs font-bold text-red-700 uppercase tracking-wider bg-red-50/50">Both Sides NO READ</th>
-                        <th scope="col" class="px-6 py-4 text-right text-xs font-bold text-neutral-600 uppercase tracking-wider border-l border-neutral-200">Incomplete data (NULL)</th>
+                        <th scope="col" class="px-6 py-4 text-right text-xs font-bold text-blue-700 uppercase tracking-wider">Issue Total</th>
+                        <th scope="col" class="px-6 py-4 text-right text-xs font-bold text-emerald-700 uppercase tracking-wider bg-emerald-50/50">Issue Read</th>
+                        <th scope="col" class="px-6 py-4 text-right text-xs font-bold text-red-700 uppercase tracking-wider bg-red-50/50">Issue No Read</th>
+                        <th scope="col" class="px-6 py-4 text-right text-xs font-bold text-indigo-700 uppercase tracking-wider">Receipt Total</th>
+                        <th scope="col" class="px-6 py-4 text-right text-xs font-bold text-emerald-700 uppercase tracking-wider bg-emerald-50/50">Receipt Read</th>
+                        <th scope="col" class="px-6 py-4 text-right text-xs font-bold text-red-700 uppercase tracking-wider bg-red-50/50">Receipt No Read</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-neutral-100">
@@ -97,23 +97,23 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-neutral-900">
                                     @report.ReportDate.ToString("MMM dd, yyyy")
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-neutral-800">
-                                    @report.TotalBoxes.ToString("N0")
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-bold text-blue-700">
+                                    @report.IssueTotal.ToString("N0")
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-bold text-green-600 bg-green-50/20 group-hover:bg-green-50/40">
-                                    @report.BothSideRead.ToString("N0")
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-emerald-600 bg-emerald-50/20 group-hover:bg-emerald-50/40">
+                                    @report.IssueRead.ToString("N0")
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-amber-600 bg-amber-50/20 group-hover:bg-amber-50/40">
-                                    @report.FromReadToNoRead.ToString("N0")
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-red-600 bg-red-50/20 group-hover:bg-red-50/40">
+                                    @report.IssueNoRead.ToString("N0")
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-amber-600 bg-amber-50/20 group-hover:bg-amber-50/40">
-                                    @report.FromNoReadToRead.ToString("N0")
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-bold text-indigo-700">
+                                    @report.ReceiptTotal.ToString("N0")
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-bold text-red-600 bg-red-50/20 group-hover:bg-red-50/40">
-                                    @report.BothSideNoRead.ToString("N0")
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-emerald-600 bg-emerald-50/20 group-hover:bg-emerald-50/40">
+                                    @report.ReceiptRead.ToString("N0")
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-neutral-500 font-mono border-l border-neutral-100 group-hover:border-neutral-200">
-                                    @report.IncompleteOrMissing.ToString("N0")
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-red-600 bg-red-50/20 group-hover:bg-red-50/40">
+                                    @report.ReceiptNoRead.ToString("N0")
                                 </td>
                             </tr>
                         }

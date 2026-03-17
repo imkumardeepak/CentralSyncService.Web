@@ -6,6 +6,5 @@ namespace Web.Core.DTOs
     {
         public DateTime CutoffDate { get; set; }
         public int SorterScansDeleted { get; set; }
-        public int BoxTrackingDeleted { get; set; }
     }
 }

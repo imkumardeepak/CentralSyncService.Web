@@ -9,10 +9,12 @@ namespace Web.Controllers
     public class HomeController : Controller
     {
         private readonly SyncService _syncService;
+        private readonly ReportingService _reportingService;
 
-        public HomeController(SyncService syncService)
+        public HomeController(SyncService syncService, ReportingService reportingService)
         {
             _syncService = syncService;
+            _reportingService = reportingService;
         }
 
         // Redirect root URL to Dashboard
@@ -24,15 +26,14 @@ namespace Web.Controllers
         // Keep the original sync status page accessible
         public async Task<IActionResult> SyncStatus()
         {
-            var summary = await _syncService.GetBoxTrackingSummaryAsync().ConfigureAwait(false);
+            var todayStats = await _reportingService.GetTodayDashboardStatsAsync().ConfigureAwait(false);
             ViewBag.IsRunning = _syncService.IsRunning;
             ViewBag.TotalFromSynced = _syncService.TotalFromSynced;
             ViewBag.TotalToSynced = _syncService.TotalToSynced;
-            ViewBag.TotalMatched = _syncService.TotalMatched;
             ViewBag.LastSyncTime = _syncService.LastSyncTime;
             ViewBag.Plants = _syncService.PlantConfigs;
         
-            return View("Index", summary);
+            return View("Index", todayStats);
         }
     }
 }

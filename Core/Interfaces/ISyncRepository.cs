@@ -11,13 +11,9 @@ namespace Web.Core.Interfaces
     {
         // Central DB Operations
         Task<List<PlantDbConfig>> GetActivePlantsAsync();
-        
-        Task InsertScanRecordAsync(SyncScanRecord record);
-        
-        Task<bool> MatchScanRecordAsync(SyncScanRecord record, int matchWindowMinutes);
-        
-        Task<BoxTrackingSummary> GetBoxTrackingSummaryAsync();
-        
+
+        Task InsertSorterScanAsync(SyncScanRecord record);
+
         Task UpdatePlantSyncStatusAsync(string plantCode, bool success, string status);
 
         Task<DataCleanupResult> CleanupHistoricalDataAsync(int retentionDays, CancellationToken cancellationToken = default);

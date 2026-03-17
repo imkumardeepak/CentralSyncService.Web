@@ -5,11 +5,11 @@ namespace Web.Core.DTOs
     public class ScanReadStatusRecord
     {
         public DateTime ReportDate { get; set; }
-        public long TotalBoxes { get; set; }
-        public long BothSideRead { get; set; }
-        public long FromReadToNoRead { get; set; }
-        public long FromNoReadToRead { get; set; }
-        public long BothSideNoRead { get; set; }
-        public long IncompleteOrMissing { get; set; }
+        public long IssueTotal { get; set; }
+        public long IssueRead { get; set; }
+        public long IssueNoRead { get; set; }
+        public long ReceiptTotal { get; set; }
+        public long ReceiptRead { get; set; }
+        public long ReceiptNoRead { get; set; }
     }
 }

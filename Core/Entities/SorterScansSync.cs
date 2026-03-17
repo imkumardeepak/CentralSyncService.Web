@@ -21,6 +21,5 @@ namespace Web.Core.Entities
         public string? PCName { get; set; }
         public DateTime SyncedAt { get; set; }
         public DateTime? ProcessedAt { get; set; }
-        public long? BoxTrackingId { get; set; }
     }
 }
