@@ -83,7 +83,7 @@ namespace Web.Infrastructure.Repositories
                                 ReportDate = reader.GetDateTime(reader.GetOrdinal("ReportDate")),
                                 Shift = reader.GetString(reader.GetOrdinal("Shift")),
                                 TotalQtyInCs = reader.GetInt32(reader.GetOrdinal("TotalQtyInCs")),
-                                TotalQtyInMT = reader.GetDecimal(reader.GetOrdinal("TotalQtyInMT"))
+                                TotalQtyInMT = Convert.ToDecimal(reader.GetValue(reader.GetOrdinal("TotalQtyInMT")))
                             };
 
                             result.Add(record);
