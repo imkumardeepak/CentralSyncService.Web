@@ -20,24 +20,32 @@ BEGIN
     SELECT 
         ISNULL(mm.MaterialNumber, 'N/A') AS MaterialCode,
         ISNULL(mm.MaterialDescription, 'Unknown Material') AS MaterialDescription,
-        ISNULL(bt.Batch, 'N/A') AS Batch,
-        COUNT(CASE WHEN bt.FromPlant IS NOT NULL THEN 1 END) AS TotalIssue,
-        SUM(CASE WHEN bt.FromFlag = 1 THEN 1 ELSE 0 END) AS IssueRead,
-        SUM(CASE WHEN bt.FromFlag = 0 THEN 1 ELSE 0 END) AS IssueNoRead,
-        COUNT(CASE WHEN bt.ToPlant IS NOT NULL THEN 1 END) AS TotalReceipt,
-        SUM(CASE WHEN bt.ToFlag = 1 THEN 1 ELSE 0 END) AS ReceiptRead,
-        SUM(CASE WHEN bt.ToFlag = 0 THEN 1 ELSE 0 END) AS ReceiptNoRead
-    FROM dbo.BoxTracking bt
+        ISNULL(s.Batch, 'N/A') AS Batch,
+        SUM(CASE WHEN UPPER(s.ScanType) = 'FROM' THEN 1 ELSE 0 END) AS TotalIssue,
+        SUM(CASE WHEN UPPER(s.ScanType) = 'FROM'
+                  AND s.IsRead = 1
+                  AND REPLACE(UPPER(LTRIM(RTRIM(ISNULL(s.Barcode, '')))), ' ', '') <> 'NOREAD'
+             THEN 1 ELSE 0 END) AS IssueRead,
+        SUM(CASE WHEN UPPER(s.ScanType) = 'FROM'
+                  AND NOT (s.IsRead = 1 AND REPLACE(UPPER(LTRIM(RTRIM(ISNULL(s.Barcode, '')))), ' ', '') <> 'NOREAD')
+             THEN 1 ELSE 0 END) AS IssueNoRead,
+        SUM(CASE WHEN UPPER(s.ScanType) = 'TO' THEN 1 ELSE 0 END) AS TotalReceipt,
+        SUM(CASE WHEN UPPER(s.ScanType) = 'TO'
+                  AND s.IsRead = 1
+                  AND REPLACE(UPPER(LTRIM(RTRIM(ISNULL(s.Barcode, '')))), ' ', '') <> 'NOREAD'
+             THEN 1 ELSE 0 END) AS ReceiptRead,
+        SUM(CASE WHEN UPPER(s.ScanType) = 'TO'
+                  AND NOT (s.IsRead = 1 AND REPLACE(UPPER(LTRIM(RTRIM(ISNULL(s.Barcode, '')))), ' ', '') <> 'NOREAD')
+             THEN 1 ELSE 0 END) AS ReceiptNoRead
+    FROM dbo.SorterScans_Sync s
     LEFT JOIN dbo.MaterialMasters mm 
-        ON bt.MaterialCode = mm.ProdInspMemo
+        ON s.Barcode = mm.ProdInspMemo
     WHERE 
-        (bt.CreatedAt >= @Date AND bt.CreatedAt < DATEADD(DAY,1,@Date))
-        OR (bt.FromScanTime >= @Date AND bt.FromScanTime < DATEADD(DAY,1,@Date))
-        OR (bt.ToScanTime >= @Date AND bt.ToScanTime < DATEADD(DAY,1,@Date))
+        CAST(s.ScanDateTime AS DATE) = @Date
     GROUP BY 
         ISNULL(mm.MaterialNumber, 'N/A'),
         ISNULL(mm.MaterialDescription, 'Unknown Material'),
-        ISNULL(bt.Batch, 'N/A')
+        ISNULL(s.Batch, 'N/A')
     ORDER BY 
         MaterialDescription,
         Batch;

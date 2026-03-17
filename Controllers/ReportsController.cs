@@ -25,30 +25,36 @@ namespace Web.Controllers
         // Real-time dashboard: uses sp_GetDashboardStats + pending boxes
         public async Task<IActionResult> Dashboard()
         {
+            List<DashboardStatsRecord> stats = new List<DashboardStatsRecord>();
+            TodayDashboardStats todayStats = new TodayDashboardStats();
+
             try
             {
-                var stats = await _reportingService.GetDashboardStatsAsync().ConfigureAwait(false);
-                var todayStats = await _reportingService.GetTodayDashboardStatsAsync().ConfigureAwait(false);
-
-                var model = new DashboardViewModel
-                {
-                    Stats = stats,
-                    IsSyncRunning = _syncService.IsRunning,
-                    LastSyncTime = _syncService.LastSyncTime,
-                    TodayStats = todayStats
-                };
-
-                return View(model);
+                stats = await _reportingService.GetDashboardStatsAsync().ConfigureAwait(false);
             }
             catch (Exception ex)
             {
-                ViewBag.Error = $"Dashboard error: {ex.Message}";
-                return View(new DashboardViewModel
-                {
-                    IsSyncRunning = _syncService.IsRunning,
-                    LastSyncTime = _syncService.LastSyncTime
-                });
+                ViewBag.Error = $"Dashboard stats unavailable: {ex.Message}. Run CentralDatabase_UpdateScript.sql to fix.";
             }
+
+            try
+            {
+                todayStats = await _reportingService.GetTodayDashboardStatsAsync().ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                // Silently fail - will show zeros
+            }
+
+            var model = new DashboardViewModel
+            {
+                Stats = stats,
+                IsSyncRunning = _syncService.IsRunning,
+                LastSyncTime = _syncService.LastSyncTime,
+                TodayStats = todayStats
+            };
+
+            return View(model);
         }
 
         // Daily summary using sp_GetDailySummary
