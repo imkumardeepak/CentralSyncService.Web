@@ -18,7 +18,7 @@ BEGIN
     SET @Date = ISNULL(@Date, CAST(GETDATE() AS DATE));
     
     SELECT 
-        ISNULL(mm.MaterialNumber, 'N/A') AS MaterialCode,
+        ISNULL(mm.MaterialNumber, s.MaterialCode) AS MaterialCode,
         ISNULL(mm.MaterialDescription, 'Unknown Material') AS MaterialDescription,
         ISNULL(s.Batch, 'N/A') AS Batch,
         SUM(CASE WHEN UPPER(s.ScanType) = 'FROM' THEN 1 ELSE 0 END) AS TotalIssue,
@@ -39,11 +39,11 @@ BEGIN
              THEN 1 ELSE 0 END) AS ReceiptNoRead
     FROM dbo.SorterScans_Sync s
     LEFT JOIN dbo.MaterialMasters mm 
-        ON s.Barcode = mm.ProdInspMemo
+        ON s.MaterialCode = mm.ProdInspMemo
     WHERE 
         CAST(s.ScanDateTime AS DATE) = @Date
     GROUP BY 
-        ISNULL(mm.MaterialNumber, 'N/A'),
+        ISNULL(mm.MaterialNumber, s.MaterialCode),
         ISNULL(mm.MaterialDescription, 'Unknown Material'),
         ISNULL(s.Batch, 'N/A')
     ORDER BY 

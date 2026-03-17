@@ -5,6 +5,8 @@ namespace Web.Core.DTOs
         // Material Information
         public string MaterialCode { get; set; } = string.Empty;
         public string MaterialDescription { get; set; } = string.Empty;
+        
+        // Batch Information
         public string Batch { get; set; } = string.Empty;
         
         // FROM Side (Issue) Metrics
