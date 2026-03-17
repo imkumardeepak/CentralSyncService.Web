@@ -652,7 +652,7 @@ ORDER BY
                         {
                             var record = new OverallTransferByProductionOrderRecord
                             {
-                                OrderNo = reader.IsDBNull(reader.GetOrdinal("OrderNo")) ? string.Empty : reader.GetString(reader.GetOrdinal("OrderNo")),
+                                OrderNo = reader.IsDBNull(reader.GetOrdinal("OrderNo")) ? string.Empty : reader.GetValue(reader.GetOrdinal("OrderNo")).ToString() ?? string.Empty,
                                 MaterialNumber = reader.IsDBNull(reader.GetOrdinal("MaterialNumber")) ? string.Empty : reader.GetString(reader.GetOrdinal("MaterialNumber")),
                                 MaterialDescription = reader.IsDBNull(reader.GetOrdinal("MaterialDescription")) ? string.Empty : reader.GetString(reader.GetOrdinal("MaterialDescription")),
                                 Batch = reader.IsDBNull(reader.GetOrdinal("Batch")) ? string.Empty : reader.GetString(reader.GetOrdinal("Batch")),
