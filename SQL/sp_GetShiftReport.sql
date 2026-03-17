@@ -14,6 +14,10 @@ BEGIN
     SET NOCOUNT ON;
     SET @Date = ISNULL(@Date, CAST(GETDATE() AS DATE));
 
+    -- Optimized: Use date range instead of CAST for index seek
+    DECLARE @StartDate DATETIME = @Date;
+    DECLARE @EndDate DATETIME = DATEADD(DAY, 1, @Date);
+
     ;WITH ShiftData AS (
         SELECT 
             ISNULL(mm.MaterialNumber, '') AS SAPCode,
@@ -21,12 +25,8 @@ BEGIN
             s.Batch AS BatchNo,
             CAST(s.ScanDateTime AS DATE) AS ReportDate,
             CASE
-                WHEN DATEPART(HOUR, s.ScanDateTime) >= 7
-                     AND DATEPART(HOUR, s.ScanDateTime) < 15
-                THEN 'A'
-                WHEN DATEPART(HOUR, s.ScanDateTime) >= 15
-                     AND DATEPART(HOUR, s.ScanDateTime) < 22
-                THEN 'B'
+                WHEN DATEPART(HOUR, s.ScanDateTime) >= 7 AND DATEPART(HOUR, s.ScanDateTime) < 15 THEN 'A'
+                WHEN DATEPART(HOUR, s.ScanDateTime) >= 15 AND DATEPART(HOUR, s.ScanDateTime) < 22 THEN 'B'
                 ELSE 'C'
             END AS ShiftName,
             1 AS QtyInCases,
@@ -34,8 +34,9 @@ BEGIN
         FROM dbo.SorterScans_Sync s WITH(NOLOCK)
         LEFT JOIN dbo.MaterialMasters mm WITH(NOLOCK)
             ON s.MaterialCode = mm.ProdInspMemo
-        WHERE CAST(s.ScanDateTime AS DATE) = CAST(@Date AS DATE)
-          AND UPPER(s.ScanType) = 'TO'
+        WHERE s.ScanDateTime >= @StartDate 
+          AND s.ScanDateTime < @EndDate
+          AND s.ScanType = 'TO'  -- Avoid UPPER() for index usage
     )
     SELECT
         SAPCode,
