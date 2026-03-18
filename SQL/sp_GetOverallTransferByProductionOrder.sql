@@ -33,7 +33,7 @@ BEGIN
         po.CurQTY,
         ISNULL(ss.IssueCount, 0) AS IssueCount,
         ISNULL(ss.ReceiptCount, 0) AS ReceiptCount,
-        ISNULL(ss.ReceiptCount, 0) - po.OrderQty AS Deviation
+        po.CurQTY - ISNULL(ss.ReceiptCount, 0) AS Deviation
     FROM dbo.ProductionOrder po WITH(NOLOCK)
     LEFT JOIN dbo.MaterialMasters mm
         ON po.Material = mm.MaterialNumber
