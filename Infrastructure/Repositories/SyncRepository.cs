@@ -81,6 +81,7 @@ namespace Web.Infrastructure.Repositories
                     command.Parameters.AddWithValue("@PlantCode", (object?)record.PlantCode ?? DBNull.Value);
                     command.Parameters.AddWithValue("@LineCode", (object?)record.LineCode ?? DBNull.Value);
                     command.Parameters.AddWithValue("@Batch", (object?)record.Batch ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@MaterialCode", (object?)record.MaterialCode ?? DBNull.Value);
                     command.Parameters.AddWithValue("@Barcode", record.Barcode);
                     command.Parameters.AddWithValue("@ScanDateTime", record.ScanDateTime);
                     command.Parameters.AddWithValue("@IsRead", record.IsRead ? 1 : 0);
