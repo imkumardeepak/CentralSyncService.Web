@@ -2,8 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Linq;
+using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
+using Web.Core.DTOs;
 using Web.Core.Entities;
 using Web.Core.Interfaces;
 
@@ -294,6 +298,109 @@ namespace Web.Infrastructure.Repositories
             {
                 return null;
             }
+        }
+
+        public async Task<PlantDataCleanupResult> CleanupOldDataAsync(int retentionDays, CancellationToken cancellationToken)
+        {
+            var result = new PlantDataCleanupResult
+            {
+                CutoffDate = DateTime.Now.AddDays(-retentionDays),
+                PlantsProcessed = 0,
+                TablesCleaned = 0,
+                TotalRowsDeleted = 0,
+                Details = ""
+            };
+
+            var details = new StringBuilder();
+
+            // Get all active plants
+            var plants = await GetAllAsync(null, null, true).ConfigureAwait(false);
+
+            foreach (var plant in plants)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                    break;
+
+                try
+                {
+                    // Build connection string for local plant database
+                    var connectionString = BuildPlantConnectionString(plant);
+
+                    using var connection = new SqlConnection(connectionString);
+                    await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+
+                    // Tables to clean in local plant DB
+                    var tablesToClean = new[] { "SorterScans" };
+
+                    foreach (var tableName in tablesToClean)
+                    {
+                        if (cancellationToken.IsCancellationRequested)
+                            break;
+
+                        try
+                        {
+                            // Check if table exists
+                            var checkTableSql = @"
+                                SELECT COUNT(*) 
+                                FROM INFORMATION_SCHEMA.TABLES 
+                                WHERE TABLE_NAME = @TableName";
+
+                            using var checkCmd = new SqlCommand(checkTableSql, connection);
+                            checkCmd.Parameters.AddWithValue("@TableName", tableName);
+                            var tableExists = (int)(await checkCmd.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) ?? 0);
+
+                            if (tableExists == 0)
+                                continue;
+
+                            // Get the date column name - use ScanDateTime for SorterScans
+                            var dateColumn = "ScanDateTime";
+
+                            // Delete old records
+                            var deleteSql = $@"
+                                DELETE FROM {tableName}
+                                WHERE {dateColumn} < @CutoffDate";
+
+                            using var deleteCmd = new SqlCommand(deleteSql, connection);
+                            deleteCmd.Parameters.AddWithValue("@CutoffDate", result.CutoffDate);
+                            var deleted = await deleteCmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+
+                            if (deleted > 0)
+                            {
+                                result.TotalRowsDeleted += deleted;
+                                result.TablesCleaned++;
+                                details.AppendLine($"{plant.PlantName}: {tableName} = {deleted} rows deleted");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            details.AppendLine($"{plant.PlantName}.{tableName}: Error - {ex.Message}");
+                        }
+                    }
+
+                    result.PlantsProcessed++;
+                }
+                catch (Exception ex)
+                {
+                    details.AppendLine($"{plant.PlantName}: Connection Error - {ex.Message}");
+                }
+            }
+
+            result.Details = details.ToString();
+            return result;
+        }
+
+        private string BuildPlantConnectionString(PlantConfiguration plant)
+        {
+            var builder = new SqlConnectionStringBuilder
+            {
+                DataSource = $"{plant.ServerIP},{plant.Port}",
+                InitialCatalog = plant.DatabaseName,
+                UserID = plant.Username,
+                Password = plant.Password,
+                ConnectTimeout = 30,
+                TrustServerCertificate = true
+            };
+            return builder.ConnectionString;
         }
     }
 }
