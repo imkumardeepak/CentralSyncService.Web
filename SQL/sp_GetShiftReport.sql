@@ -36,7 +36,7 @@ BEGIN
             ON s.MaterialCode = mm.ProdInspMemo
         WHERE s.ScanDateTime >= @StartDate 
           AND s.ScanDateTime < @EndDate
-          AND s.ScanType = 'TO'  -- Avoid UPPER() for index usage
+          AND s.ScanType = 'TO'
     )
     SELECT
         SAPCode,

@@ -3,11 +3,11 @@ namespace Web.Core.DTOs
 {
     public class ShiftReportRecord
     {
+        public string Shift { get; set; } = string.Empty;
         public string SAPCode { get; set; } = string.Empty;
         public string ProductName { get; set; } = string.Empty;
         public string BatchNo { get; set; } = string.Empty;
         public DateTime ReportDate { get; set; }
-        public string Shift { get; set; } = string.Empty;
         public int TotalQtyInCs { get; set; }
         public decimal TotalQtyInMT { get; set; }
     }

@@ -14,12 +14,14 @@ namespace Web.Controllers
         private readonly ReportingService _reportingService;
         private readonly SyncService _syncService;
         private readonly IReportingRepository _reportingRepository;
+        private readonly ExcelExportService _excelExportService;
 
-        public ReportsController(ReportingService reportingService, SyncService syncService, IReportingRepository reportingRepository)
+        public ReportsController(ReportingService reportingService, SyncService syncService, IReportingRepository reportingRepository, ExcelExportService excelExportService)
         {
             _reportingService = reportingService;
             _syncService = syncService;
             _reportingRepository = reportingRepository;
+            _excelExportService = excelExportService;
         }
 
         // Real-time dashboard: uses sp_GetDashboardStats + pending boxes
@@ -206,14 +208,20 @@ namespace Web.Controllers
         }
 
         // Shift Report
-        public async Task<IActionResult> ShiftReport(DateTime? date)
+        public async Task<IActionResult> ShiftReport(DateTime? date, string? shift)
         {
             try
             {
                 var searchDate = date ?? DateTime.Today;
                 var records = await _reportingRepository.GetShiftReportAsync(searchDate).ConfigureAwait(false);
                 
+                if (!string.IsNullOrEmpty(shift) && shift != "ALL")
+                {
+                    records = records.Where(r => r.Shift == shift).ToList();
+                }
+                
                 ViewBag.Date = searchDate;
+                ViewBag.Shift = shift ?? "ALL";
                 return View(records);
             }
             catch (Exception ex)
@@ -242,5 +250,121 @@ namespace Web.Controllers
                 return View(new List<OverallTransferByProductionOrderRecord>());
             }
         }
+
+        #region Excel Export Actions
+
+        public async Task<IActionResult> ExportShiftReportExcel(DateTime? date, string? shift)
+        {
+            try
+            {
+                var searchDate = date ?? DateTime.Today;
+                var records = await _reportingRepository.GetShiftReportAsync(searchDate).ConfigureAwait(false);
+                
+                if (!string.IsNullOrEmpty(shift) && shift != "ALL")
+                {
+                    records = records.Where(r => r.Shift == shift).ToList();
+                }
+                
+                var fileName = string.IsNullOrEmpty(shift) || shift == "ALL"
+                    ? $"Shift_Report_{searchDate:yyyy-MM-dd}.xlsx"
+                    : $"Shift_Report_{searchDate:yyyy-MM-dd}_{shift}.xlsx";
+                    
+                var fileBytes = _excelExportService.ExportShiftReport(records, searchDate);
+                return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Error = $"Error exporting: {ex.Message}";
+                return RedirectToAction("ShiftReport");
+            }
+        }
+
+        public async Task<IActionResult> ExportDailyTransferExcel(DateTime? date)
+        {
+            try
+            {
+                var searchDate = date ?? DateTime.Today;
+                var records = await _reportingRepository.GetDailyTransferReportAsync(searchDate).ConfigureAwait(false);
+                var fileBytes = _excelExportService.ExportDailyTransfer(records, searchDate);
+                var fileName = $"Daily_Transfer_{searchDate:yyyy-MM-dd}.xlsx";
+                return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Error = $"Error exporting: {ex.Message}";
+                return RedirectToAction("DailyTransfer");
+            }
+        }
+
+        public async Task<IActionResult> ExportProductWiseTransferExcel(DateTime? date)
+        {
+            try
+            {
+                var searchDate = date ?? DateTime.Today;
+                var records = await _reportingRepository.GetProductWiseDailyTransferAsync(searchDate).ConfigureAwait(false);
+                var fileBytes = _excelExportService.ExportProductWiseTransfer(records, searchDate);
+                var fileName = $"Product_Transfer_{searchDate:yyyy-MM-dd}.xlsx";
+                return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Error = $"Error exporting: {ex.Message}";
+                return RedirectToAction("ProductWiseDailyTransfer");
+            }
+        }
+
+        public async Task<IActionResult> ExportOverallTransferByOrderExcel(DateTime? date)
+        {
+            try
+            {
+                var searchDate = date ?? DateTime.Today;
+                var records = await _reportingRepository.GetOverallTransferByProductionOrderAsync(searchDate).ConfigureAwait(false);
+                var fileBytes = _excelExportService.ExportOverallTransferByOrder(records, searchDate);
+                var fileName = $"Overall_Transfer_Order_{searchDate:yyyy-MM-dd}.xlsx";
+                return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Error = $"Error exporting: {ex.Message}";
+                return RedirectToAction("OverallTransferByProductionOrder");
+            }
+        }
+
+        public async Task<IActionResult> ExportDailySummaryExcel(DateTime? startDate, DateTime? endDate)
+        {
+            try
+            {
+                var sDate = startDate ?? DateTime.Today;
+                var eDate = endDate ?? DateTime.Today;
+                var records = await _reportingService.GetDailySummaryAsync(sDate, eDate).ConfigureAwait(false);
+                var fileBytes = _excelExportService.ExportDailySummary(records, sDate, eDate);
+                var fileName = $"Daily_Summary_{sDate:yyyy-MM-dd}_{eDate:yyyy-MM-dd}.xlsx";
+                return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Error = $"Error exporting: {ex.Message}";
+                return RedirectToAction("DailySummary");
+            }
+        }
+
+        public async Task<IActionResult> ExportNoReadAnalysisExcel(DateTime? date)
+        {
+            try
+            {
+                var searchDate = date ?? DateTime.Today;
+                var records = await _reportingService.GetNoReadAnalysisAsync(searchDate).ConfigureAwait(false);
+                var fileBytes = _excelExportService.ExportNoReadAnalysis(records, searchDate);
+                var fileName = $"NO_READ_Analysis_{searchDate:yyyy-MM-dd}.xlsx";
+                return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Error = $"Error exporting: {ex.Message}";
+                return RedirectToAction("NoReadAnalysis");
+            }
+        }
+
+        #endregion
     }
 }

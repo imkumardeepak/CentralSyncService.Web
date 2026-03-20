@@ -45,6 +45,9 @@ builder.Services.AddSingleton<SyncService>(sp =>
 // ReportingService registration
 builder.Services.AddScoped<ReportingService>();
 
+// Excel Export Service registration
+builder.Services.AddScoped<ExcelExportService>();
+
 // File Logging Service with 2-day retention
 builder.Services.AddFileLogging(options =>
 {

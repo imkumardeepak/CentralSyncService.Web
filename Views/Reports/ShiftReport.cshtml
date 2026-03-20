@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = "Shift Report";
     var selectedDate = ViewBag.Date as DateTime? ?? DateTime.Today;
+    var selectedShift = ViewBag.Shift as string ?? "ALL";
 }
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -13,9 +14,29 @@
                 <p class="mt-1 text-sm text-gray-500">View production by SAP Code, Product, Batch and Shift</p>
             </div>
             <div class="flex items-center gap-3">
+                <a href="@Url.Action("ExportShiftReportExcel", "Reports", new { date = selectedDate, shift = selectedShift })" 
+                   class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-green-600 border border-green-700 rounded-lg hover:bg-green-700 transition-all duration-200">
+                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    Export Excel
+                </a>
+                <button type="button" onclick="exportToCSV()" 
+                        class="inline-flex items-center px-3 py-2 text-sm font-medium text-neutral-600 bg-white border border-neutral-300 rounded-lg hover:bg-neutral-50 hover:border-neutral-400 transition-all duration-200">
+                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    Export CSV
+                </button>
                 <form method="get" class="flex items-center gap-2">
                     <input type="date" name="date" value="@selectedDate.ToString("yyyy-MM-dd")" 
                            class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
+                    <select id="shiftFilter" name="shift" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500">
+                        <option value="ALL" @(selectedShift == "ALL" ? "selected" : "")>All Shifts</option>
+                        <option value="A" @(selectedShift == "A" ? "selected" : "")>Shift A</option>
+                        <option value="B" @(selectedShift == "B" ? "selected" : "")>Shift B</option>
+                        <option value="C" @(selectedShift == "C" ? "selected" : "")>Shift C</option>
+                    </select>
                     <button type="submit" class="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors">
                         <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -64,7 +85,7 @@
                     <tbody class="bg-white divide-y divide-gray-200">
                         @foreach (var item in Model)
                         {
-                            <tr class="hover:bg-gray-50 transition-colors">
+                            <tr class="hover:bg-gray-50 transition-colors" data-shift="@item.Shift">
                                 <td class="px-4 py-3 whitespace-nowrap text-sm font-mono text-gray-900">@item.SAPCode</td>
                                 <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">@item.ProductName</td>
                                 <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">@item.BatchNo</td>
@@ -75,6 +96,14 @@
                             </tr>
                         }
                     </tbody>
+                    <tfoot class="bg-gray-100 font-semibold">
+                        <tr>
+                            <td colspan="4" class="px-4 py-3 text-sm font-bold text-gray-900"></td>
+                            <td class="px-4 py-3 text-sm font-bold text-gray-900">TOTAL</td>
+                            <td class="px-4 py-3 text-sm text-right text-gray-900 font-bold">@Model.Sum(x => x.TotalQtyInCs).ToString("N0")</td>
+                            <td class="px-4 py-3 text-sm text-right text-gray-900 font-bold">@Model.Sum(x => x.TotalQtyInMT).ToString("N3")</td>
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
         }
@@ -90,3 +119,67 @@
         }
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        function filterByShift() {
+            const selectedShift = document.getElementById('shiftFilter').value;
+            const rows = document.querySelectorAll('tbody tr[data-shift]');
+            
+            rows.forEach(row => {
+                const rowShift = row.getAttribute('data-shift');
+                if (selectedShift === 'ALL' || rowShift === selectedShift) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        function exportToCSV() {
+            const table = document.querySelector('table');
+            if (!table) return;
+            
+            if (window.LoadingManager) {
+                window.LoadingManager.show('Exporting...', 'Preparing CSV file for download');
+            }
+            
+            let csv = [];
+            const rows = table.querySelectorAll('tr');
+            
+            for (let i = 0; i < rows.length; i++) {
+                let row = [], cols = rows[i].querySelectorAll('td, th');
+                for (let j = 0; j < cols.length; j++) {
+                    let text = cols[j].innerText.trim();
+                    text = text.replace(/"/g, '""');
+                    if (text.indexOf(',') !== -1 || text.indexOf('"') !== -1 || text.indexOf('\n') !== -1) {
+                        text = '"' + text + '"';
+                    }
+                    row.push(text);
+                }
+                csv.push(row.join(','));
+            }
+            
+            const BOM = '\uFEFF';
+            const csvContent = BOM + csv.join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            const shiftFilter = '@selectedShift';
+            const filename = shiftFilter === 'ALL' 
+                ? 'shift_report_@(selectedDate.ToString("yyyy-MM-dd")).csv'
+                : 'shift_report_@(selectedDate.ToString("yyyy-MM-dd"))_' + shiftFilter + '.csv';
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+            
+            setTimeout(function() {
+                if (window.LoadingManager) {
+                    window.LoadingManager.hide();
+                }
+            }, 1000);
+        }
+    </script>
+}
