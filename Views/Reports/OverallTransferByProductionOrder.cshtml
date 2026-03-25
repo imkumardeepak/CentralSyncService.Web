@@ -106,6 +106,16 @@
                             </tr>
                         }
                     </tbody>
+                    <tfoot class="bg-gray-100 font-semibold">
+                        <tr>
+                            <td colspan="4" class="px-4 py-3 text-sm font-bold text-gray-900 text-right">TOTAL</td>
+                            <td class="px-4 py-3 text-sm text-right text-gray-900 font-bold">@Model.Sum(x => x.OrderQty).ToString("N0")</td>
+                            <td class="px-4 py-3 text-sm text-right text-gray-900 font-bold">@Model.Sum(x => x.CurQTY).ToString("N0")</td>
+                            <td class="px-4 py-3 text-sm text-center text-blue-700 font-bold">@Model.Sum(x => x.IssueCount).ToString("N0")</td>
+                            <td class="px-4 py-3 text-sm text-center text-green-700 font-bold">@Model.Sum(x => x.ReceiptCount).ToString("N0")</td>
+                            <td class="px-4 py-3 text-sm text-center text-gray-900 font-bold">@Model.Sum(x => x.Deviation).ToString("N0")</td>
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
         }

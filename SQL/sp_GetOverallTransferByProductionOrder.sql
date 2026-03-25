@@ -1,8 +1,3 @@
--- =============================================
--- Stored Procedure: sp_GetOverallTransferByProductionOrder
--- Description: Get overall transfer report by Production Order with Issue/Receipt counts
--- =============================================
-
 IF OBJECT_ID('dbo.sp_GetOverallTransferByProductionOrder', 'P') IS NOT NULL
     DROP PROCEDURE dbo.sp_GetOverallTransferByProductionOrder;
 GO
@@ -12,18 +7,19 @@ CREATE PROCEDURE dbo.sp_GetOverallTransferByProductionOrder
 AS
 BEGIN
     SET NOCOUNT ON;
+
     SET @Date = ISNULL(@Date, CAST(GETDATE() AS DATE));
 
-    ;WITH ScanSummary AS
+    ;WITH MaterialCTE AS
     (
         SELECT 
-            Batch,
-            MaterialCode,
-            SUM(CASE WHEN UPPER(ScanType) = 'FROM' THEN 1 ELSE 0 END) AS IssueCount,
-            SUM(CASE WHEN UPPER(ScanType) = 'TO' THEN 1 ELSE 0 END) AS ReceiptCount
-        FROM dbo.SorterScans_Sync WITH(NOLOCK)
-        GROUP BY Batch, MaterialCode
+            MaterialNumber,
+            MaterialDescription,
+            ProdInspMemo,
+            ROW_NUMBER() OVER (PARTITION BY MaterialNumber ORDER BY MaterialNumber) AS rn
+        FROM dbo.MaterialMasters WITH(NOLOCK)
     )
+
     SELECT 
         po.OrderNo,
         ISNULL(mm.MaterialNumber, po.Material) AS MaterialNumber,
@@ -31,19 +27,43 @@ BEGIN
         po.Batch,
         po.OrderQty,
         po.CurQTY,
-        ISNULL(ss.IssueCount, 0) AS IssueCount,
-        ISNULL(ss.ReceiptCount, 0) AS ReceiptCount,
-        po.CurQTY - ISNULL(ss.ReceiptCount, 0) AS Deviation
+
+        ISNULL(SUM(CASE WHEN UPPER(ss.ScanType) = 'FROM' THEN 1 END), 0) AS IssueCount,
+        ISNULL(SUM(CASE WHEN UPPER(ss.ScanType) = 'TO' THEN 1 END), 0) AS ReceiptCount,
+
+        po.CurQTY - 
+        ISNULL(SUM(CASE WHEN UPPER(ss.ScanType) = 'TO' THEN 1 END), 0) AS Deviation
+
     FROM dbo.ProductionOrder po WITH(NOLOCK)
-    LEFT JOIN dbo.MaterialMasters mm
+
+    LEFT JOIN MaterialCTE mm
         ON po.Material = mm.MaterialNumber
-    LEFT JOIN ScanSummary ss
+        AND mm.rn = 1
+
+    LEFT JOIN dbo.SorterScans_Sync ss WITH(NOLOCK)
         ON ss.Batch = po.Batch
         AND ss.MaterialCode = mm.ProdInspMemo
-    WHERE po.BsDate = @Date
+        AND ss.ScanDateTime >= @Date
+        AND ss.ScanDateTime < DATEADD(DAY, 1, @Date)
+
+    WHERE 
+        po.BsDate = @Date
+        AND po.PlantCode = 'HM06'   -- ✅ Added filter
+
+    GROUP BY 
+        po.OrderNo,
+        mm.MaterialNumber,
+        mm.MaterialDescription,
+        po.Material,
+        po.MaterialDescription,
+        po.Batch,
+        po.OrderQty,
+        po.CurQTY
+
     ORDER BY po.OrderNo, po.Batch;
+
 END
 GO
 
-PRINT 'Procedure sp_GetOverallTransferByProductionOrder created.';
+PRINT 'Procedure updated with PlantCode filter.';
 GO
