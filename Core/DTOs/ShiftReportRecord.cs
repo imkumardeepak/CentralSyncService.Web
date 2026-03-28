@@ -8,7 +8,8 @@ namespace Web.Core.DTOs
         public string ProductName { get; set; } = string.Empty;
         public string BatchNo { get; set; } = string.Empty;
         public DateTime ReportDate { get; set; }
-        public int TotalQtyInCs { get; set; }
-        public decimal TotalQtyInMT { get; set; }
+        public int CurQTY { get; set; }           // Printed Quantity
+        public int TotalQtyInCs { get; set; }     // Transfer Quantity in Cases
+        public decimal TotalQtyInMT { get; set; } // Transfer Quantity in MT
     }
 }

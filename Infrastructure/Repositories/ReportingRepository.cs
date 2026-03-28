@@ -44,6 +44,7 @@ namespace Web.Infrastructure.Repositories
                                 ProductName = reader.IsDBNull(reader.GetOrdinal("ProductName")) ? string.Empty : reader.GetString(reader.GetOrdinal("ProductName")),
                                 BatchNo = reader.IsDBNull(reader.GetOrdinal("BatchNo")) ? string.Empty : reader.GetString(reader.GetOrdinal("BatchNo")),
                                 ReportDate = reader.GetDateTime(reader.GetOrdinal("ReportDate")),
+                                CurQTY = reader.IsDBNull(reader.GetOrdinal("CurQTY")) ? 0 : reader.GetInt32(reader.GetOrdinal("CurQTY")),
                                 TotalQtyInCs = reader.IsDBNull(reader.GetOrdinal("TotalQtyInCs")) ? 0 : reader.GetInt32(reader.GetOrdinal("TotalQtyInCs")),
                                 TotalQtyInMT = Convert.ToDecimal(reader.GetValue(reader.GetOrdinal("TotalQtyInMT")))
                             };

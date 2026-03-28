@@ -1,6 +1,6 @@
 -- =============================================
 -- Stored Procedure: sp_GetShiftReport
--- Description: Get shift production report with SAP Code, Product, Batch
+-- Description: Get shift production report with SAP Code, Product, Batch, CurQTY
 -- Uses Production Day: 07:00 to 06:59 next day
 -- Uses stored Shift column (A/B/C) instead of recalculating
 -- =============================================
@@ -25,6 +25,7 @@ BEGIN
             ISNULL(mm.MaterialNumber, '') AS SAPCode,
             ISNULL(mm.MaterialDescription, 'Unknown Product') AS ProductName,
             s.Batch AS BatchNo,
+            s.OrderNumber,
             @Date AS ReportDate,
             ISNULL(s.Shift, 
                 CASE
@@ -41,20 +42,36 @@ BEGIN
         WHERE s.ScanDateTime >= @ProdStart 
           AND s.ScanDateTime < @ProdEnd
           AND s.ScanType = 'TO'
+    ),
+    CurQTYData AS (
+        -- Get CurQTY (printed count) from BarcodePrint by OrderNo and Batch
+        -- Same logic as sp_GetOverallTransferByProductionOrder
+        SELECT 
+            bp.OrderNo,
+            bp.NewBatchNo AS BatchNo,
+            COUNT(*) AS CurQTY
+        FROM dbo.BarcodePrint bp WITH(NOLOCK)
+        WHERE bp.EntryDate >= @ProdStart
+          AND bp.EntryDate < @ProdEnd
+        GROUP BY bp.OrderNo, bp.NewBatchNo
     )
     SELECT
-        SAPCode,
-        ProductName,
-        BatchNo,
-        ReportDate,
-        ShiftName AS Shift,
-        SUM(QtyInCases) AS TotalQtyInCs,
-        SUM(QtyInMT) AS TotalQtyInMT
-    FROM ShiftData
-    GROUP BY SAPCode, ProductName, BatchNo, ReportDate, ShiftName
-    ORDER BY ShiftName, ProductName, BatchNo;
+        sd.SAPCode,
+        sd.ProductName,
+        sd.BatchNo,
+        sd.ReportDate,
+        sd.ShiftName AS Shift,
+        ISNULL(cq.CurQTY, 0) AS CurQTY,
+        SUM(sd.QtyInCases) AS TotalQtyInCs,
+        SUM(sd.QtyInMT) AS TotalQtyInMT
+    FROM ShiftData sd
+    LEFT JOIN CurQTYData cq 
+        ON sd.OrderNumber = cq.OrderNo 
+        AND sd.BatchNo = cq.BatchNo
+    GROUP BY sd.SAPCode, sd.ProductName, sd.BatchNo, sd.OrderNumber, sd.ReportDate, sd.ShiftName, cq.CurQTY
+    ORDER BY sd.ShiftName, sd.ProductName, sd.BatchNo;
 END
 GO
 
-PRINT 'Procedure sp_GetShiftReport created (Production Day: 07:00-06:59).';
+PRINT 'Procedure sp_GetShiftReport created with CurQTY (Production Day: 07:00-06:59).';
 GO
