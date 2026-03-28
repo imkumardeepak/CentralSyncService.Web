@@ -60,7 +60,7 @@
             <p class="text-sm text-gray-500">Date: @selectedDate.ToString("MMMM dd, yyyy")</p>
         </div>
 
-        @if (Model.Any())
+        @if (Model != null && Model.Any())
         {
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">

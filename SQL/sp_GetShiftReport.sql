@@ -1,6 +1,8 @@
 -- =============================================
 -- Stored Procedure: sp_GetShiftReport
 -- Description: Get shift production report with SAP Code, Product, Batch
+-- Uses Production Day: 07:00 to 06:59 next day
+-- Uses stored Shift column (A/B/C) instead of recalculating
 -- =============================================
 
 IF OBJECT_ID('dbo.sp_GetShiftReport', 'P') IS NOT NULL
@@ -14,28 +16,30 @@ BEGIN
     SET NOCOUNT ON;
     SET @Date = ISNULL(@Date, CAST(GETDATE() AS DATE));
 
-    -- Optimized: Use date range instead of CAST for index seek
-    DECLARE @StartDate DATETIME = @Date;
-    DECLARE @EndDate DATETIME = DATEADD(DAY, 1, @Date);
+    -- Production day: 07:00 on @Date to 07:00 next day
+    DECLARE @ProdStart DATETIME2 = DATEADD(HOUR, 7, CAST(@Date AS DATETIME2));
+    DECLARE @ProdEnd DATETIME2 = DATEADD(DAY, 1, @ProdStart);
 
     ;WITH ShiftData AS (
         SELECT 
             ISNULL(mm.MaterialNumber, '') AS SAPCode,
             ISNULL(mm.MaterialDescription, 'Unknown Product') AS ProductName,
             s.Batch AS BatchNo,
-            CAST(s.ScanDateTime AS DATE) AS ReportDate,
-            CASE
-                WHEN DATEPART(HOUR, s.ScanDateTime) >= 7 AND DATEPART(HOUR, s.ScanDateTime) < 15 THEN 'A'
-                WHEN DATEPART(HOUR, s.ScanDateTime) >= 15 AND DATEPART(HOUR, s.ScanDateTime) < 22 THEN 'B'
-                ELSE 'C'
-            END AS ShiftName,
+            @Date AS ReportDate,
+            ISNULL(s.Shift, 
+                CASE
+                    WHEN DATEPART(HOUR, s.ScanDateTime) >= 7 AND DATEPART(HOUR, s.ScanDateTime) < 15 THEN 'A'
+                    WHEN DATEPART(HOUR, s.ScanDateTime) >= 15 AND DATEPART(HOUR, s.ScanDateTime) < 22 THEN 'B'
+                    ELSE 'C'
+                END
+            ) AS ShiftName,
             1 AS QtyInCases,
             ISNULL(mm.NetWeight, 0) / 1000.0 AS QtyInMT
         FROM dbo.SorterScans_Sync s WITH(NOLOCK)
         LEFT JOIN dbo.MaterialMasters mm WITH(NOLOCK)
             ON s.MaterialCode = mm.ProdInspMemo
-        WHERE s.ScanDateTime >= @StartDate 
-          AND s.ScanDateTime < @EndDate
+        WHERE s.ScanDateTime >= @ProdStart 
+          AND s.ScanDateTime < @ProdEnd
           AND s.ScanType = 'TO'
     )
     SELECT
@@ -52,5 +56,5 @@ BEGIN
 END
 GO
 
-PRINT 'Procedure sp_GetShiftReport created.';
+PRINT 'Procedure sp_GetShiftReport created (Production Day: 07:00-06:59).';
 GO

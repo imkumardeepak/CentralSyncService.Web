@@ -24,7 +24,7 @@ namespace Web.Controllers
             _excelExportService = excelExportService;
         }
 
-        // Real-time dashboard: uses sp_GetDashboardStats + pending boxes
+        // Dashboard
         public async Task<IActionResult> Dashboard()
         {
             List<DashboardStatsRecord> stats = new List<DashboardStatsRecord>();
@@ -59,116 +59,6 @@ namespace Web.Controllers
             return View(model);
         }
 
-        // Daily summary using sp_GetDailySummary
-        public async Task<IActionResult> DailySummary(DateTime? startDate, DateTime? endDate)
-        {
-            var records = await _reportingService.GetDailySummaryAsync(startDate, endDate).ConfigureAwait(false);
-            return View(records);
-        }
-
-        // NO READ analysis using sp_GetNoReadAnalysis
-        public async Task<IActionResult> NoReadAnalysis(DateTime? date)
-        {
-            var targetDate = date ?? DateTime.Today;
-            var records = await _reportingService.GetNoReadAnalysisAsync(targetDate).ConfigureAwait(false);
-            ViewBag.Date = targetDate;
-            return View(records);
-        }
-
-        // Barcode search using sp_SearchBarcode
-        [HttpGet]
-        public IActionResult BarcodeSearch()
-        {
-            ViewBag.Query = string.Empty;
-            ViewBag.DaysBack = 30;
-            return View(new List<BarcodeHistoryRecord>());
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> BarcodeSearch(string barcode, int daysBack = 30)
-        {
-            var results = await _reportingService.SearchBarcodeAsync(barcode, daysBack).ConfigureAwait(false);
-            ViewBag.Query = barcode;
-            ViewBag.DaysBack = daysBack;
-            return View(results);
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> GetOrdersByBatch(string batch, DateTime? date)
-        {
-            try
-            {
-                var searchDate = date ?? DateTime.Today;
-                var orders = await _reportingRepository.GetOrdersByBatchAsync(batch, searchDate).ConfigureAwait(false);
-                return Json(orders);
-            }
-            catch (Exception ex)
-            {
-                return Json(new { error = ex.Message });
-            }
-        }
-
-        // Production Order Material Wise Report
-        public async Task<IActionResult> ProductionOrderMaterialReport(string? plantName, string? materialCode, DateTime? date)
-        {
-            try
-            {
-                var searchDate = date ?? DateTime.Today;
-
-                // Load plant names for dropdown
-                var plantNames = await _reportingRepository.GetDistinctPlantNamesAsync().ConfigureAwait(false);
-
-                // Default to "Unit Kasana" if no plant is selected on initial load
-                var selectedPlant = plantName ?? (plantNames.Contains("Unit Kasana") ? "Unit Kasana" : null);
-
-                var records = await _reportingRepository.GetProductionOrderMaterialReportAsync(selectedPlant, materialCode, searchDate).ConfigureAwait(false);
-
-                var model = new ProductionOrderMaterialReportViewModel
-                {
-                    Reports = records,
-                    PlantNames = plantNames,
-                    PlantName = selectedPlant,
-                    MaterialCode = materialCode,
-                    Date = searchDate
-                };
-
-                return View(model);
-            }
-            catch (Exception ex)
-            {
-                ViewBag.Error = $"Error: {ex.Message}";
-                ViewBag.StackTrace = ex.StackTrace;
-                return View(new ProductionOrderMaterialReportViewModel());
-            }
-        }
-
-        // Scan Read Status Report
-        public async Task<IActionResult> ScanReadStatus(DateTime? startDate, DateTime? endDate)
-        {
-            try
-            {
-                var sDate = startDate ?? DateTime.Today.AddDays(-30);
-                var eDate = endDate ?? DateTime.Today;
-
-                var records = await _reportingRepository.GetScanReadStatusAsync(sDate, eDate).ConfigureAwait(false);
-
-                var model = new ScanReadStatusViewModel
-                {
-                    Reports = records,
-                    StartDate = sDate,
-                    EndDate = eDate
-                };
-
-                return View(model);
-            }
-            catch (Exception ex)
-            {
-                ViewBag.Error = $"Error: {ex.Message}";
-                ViewBag.StackTrace = ex.StackTrace;
-                return View(new ScanReadStatusViewModel());
-            }
-        }
-
         // Daily Transfer Report
         public async Task<IActionResult> DailyTransfer(DateTime? date)
         {
@@ -185,25 +75,6 @@ namespace Web.Controllers
                 ViewBag.Error = $"Error: {ex.Message}";
                 ViewBag.StackTrace = ex.StackTrace;
                 return View(new List<DailyTransferReportRecord>());
-            }
-        }
-
-        // Product Wise Daily Transfer Report
-        public async Task<IActionResult> ProductWiseDailyTransfer(DateTime? date)
-        {
-            try
-            {
-                var searchDate = date ?? DateTime.Today;
-                var records = await _reportingRepository.GetProductWiseDailyTransferAsync(searchDate).ConfigureAwait(false);
-                
-                ViewBag.Date = searchDate;
-                return View(records);
-            }
-            catch (Exception ex)
-            {
-                ViewBag.Error = $"Error: {ex.Message}";
-                ViewBag.StackTrace = ex.StackTrace;
-                return View(new List<ProductWiseDailyTransferRecord>());
             }
         }
 
@@ -296,23 +167,6 @@ namespace Web.Controllers
             }
         }
 
-        public async Task<IActionResult> ExportProductWiseTransferExcel(DateTime? date)
-        {
-            try
-            {
-                var searchDate = date ?? DateTime.Today;
-                var records = await _reportingRepository.GetProductWiseDailyTransferAsync(searchDate).ConfigureAwait(false);
-                var fileBytes = _excelExportService.ExportProductWiseTransfer(records, searchDate);
-                var fileName = $"Product_Transfer_{searchDate:yyyy-MM-dd}.xlsx";
-                return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
-            }
-            catch (Exception ex)
-            {
-                ViewBag.Error = $"Error exporting: {ex.Message}";
-                return RedirectToAction("ProductWiseDailyTransfer");
-            }
-        }
-
         public async Task<IActionResult> ExportOverallTransferByOrderExcel(DateTime? date)
         {
             try
@@ -320,48 +174,13 @@ namespace Web.Controllers
                 var searchDate = date ?? DateTime.Today;
                 var records = await _reportingRepository.GetOverallTransferByProductionOrderAsync(searchDate).ConfigureAwait(false);
                 var fileBytes = _excelExportService.ExportOverallTransferByOrder(records, searchDate);
-                var fileName = $"Overall_Transfer_Order_{searchDate:yyyy-MM-dd}.xlsx";
+                var fileName = $"Overall_Transfer_By_Order_{searchDate:yyyy-MM-dd}.xlsx";
                 return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
             }
             catch (Exception ex)
             {
                 ViewBag.Error = $"Error exporting: {ex.Message}";
                 return RedirectToAction("OverallTransferByProductionOrder");
-            }
-        }
-
-        public async Task<IActionResult> ExportDailySummaryExcel(DateTime? startDate, DateTime? endDate)
-        {
-            try
-            {
-                var sDate = startDate ?? DateTime.Today;
-                var eDate = endDate ?? DateTime.Today;
-                var records = await _reportingService.GetDailySummaryAsync(sDate, eDate).ConfigureAwait(false);
-                var fileBytes = _excelExportService.ExportDailySummary(records, sDate, eDate);
-                var fileName = $"Daily_Summary_{sDate:yyyy-MM-dd}_{eDate:yyyy-MM-dd}.xlsx";
-                return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
-            }
-            catch (Exception ex)
-            {
-                ViewBag.Error = $"Error exporting: {ex.Message}";
-                return RedirectToAction("DailySummary");
-            }
-        }
-
-        public async Task<IActionResult> ExportNoReadAnalysisExcel(DateTime? date)
-        {
-            try
-            {
-                var searchDate = date ?? DateTime.Today;
-                var records = await _reportingService.GetNoReadAnalysisAsync(searchDate).ConfigureAwait(false);
-                var fileBytes = _excelExportService.ExportNoReadAnalysis(records, searchDate);
-                var fileName = $"NO_READ_Analysis_{searchDate:yyyy-MM-dd}.xlsx";
-                return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
-            }
-            catch (Exception ex)
-            {
-                ViewBag.Error = $"Error exporting: {ex.Message}";
-                return RedirectToAction("NoReadAnalysis");
             }
         }
 

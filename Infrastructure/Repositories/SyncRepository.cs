@@ -85,7 +85,6 @@ namespace Web.Infrastructure.Repositories
                     command.Parameters.AddWithValue("@Barcode", record.Barcode);
                     command.Parameters.AddWithValue("@ScanDateTime", record.ScanDateTime);
                     command.Parameters.AddWithValue("@IsRead", record.IsRead ? 1 : 0);
-                    command.Parameters.AddWithValue("@PCName", (object?)record.SourceIp ?? DBNull.Value);
 
                     await command.ExecuteNonQueryAsync().ConfigureAwait(false);
                 }

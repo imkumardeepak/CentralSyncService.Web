@@ -3,7 +3,7 @@
 > **Project:** Haldiram Box Tracking / Sorter Scan FROM-TO  
 > **Application:** CentralSyncService.Web (ASP.NET Core)  
 > **Database:** SQL Server  
-> **Last Updated:** 2026-02-25  
+> **Last Updated:** 2026-03-28  
 
 ---
 
@@ -18,11 +18,9 @@
 7. [Stored Procedures — Central Database](#7-stored-procedures--central-database)
 8. [Stored Procedures — Plant Line Database](#8-stored-procedures--plant-line-database)
 9. [Key Entities & DTOs (C# Models)](#9-key-entities--dtos-c-models)
-10. [Match Status Logic](#10-match-status-logic)
-11. [Reporting & Views](#11-reporting--views)
-12. [Error Handling & Logging](#12-error-handling--logging)
-13. [Summary](#13-summary)
-14. [Real-World Scenarios — How BoxTracking Handles Every Case](#14-real-world-scenarios--how-boxtracking-handles-every-case)
+10. [Reporting & Views](#10-reporting--views)
+11. [Error Handling & Logging](#11-error-handling--logging)
+12. [Summary](#12-summary)
 
 ---
 
@@ -31,15 +29,14 @@
 The **CentralSyncService** is a background synchronization service that runs on a **central server PC**. Its job is to:
 
 1. **Pull barcode scan data** from multiple remote plant databases (called **FROM** plants and **TO** plants).
-2. **Match barcodes** scanned at the FROM plant with the same barcode scanned at the TO plant.
-3. **Track each box's journey** — recording when it was scanned at origin (FROM), when it arrived at destination (TO), and the transit time.
-4. **Store everything** in a central `BoxTracking` table for reporting and monitoring.
+2. **Record all scans** in the central `SorterScans_Sync` table for audit and reporting.
+3. **Mark records as synced** on the remote plant databases to prevent re-processing.
 
 ### Business Context
 
 - **FROM Plant** = The origin/source plant where a box is scanned as it **leaves** (e.g., a production/sorting plant).
 - **TO Plant** = The destination plant where a box is scanned as it **arrives** (e.g., a warehouse/distribution center).
-- The system tracks every box by its barcode and tries to match the FROM scan with the TO scan to confirm delivery.
+- The system tracks every box by its barcode and records FROM and TO scans in the central audit table.
 
 ---
 
@@ -59,7 +56,7 @@ The **CentralSyncService** is a background synchronization service that runs on 
 │  │                          │  Every 30 sec:             │     │   │
 │  │                          │  1. Fetch FROM records     │     │   │
 │  │                          │  2. Fetch TO records       │     │   │
-│  │                          │  3. Match & Insert/Update  │     │   │
+│  │                          │  3. Insert into Sync table │     │   │
 │  │                          │  4. Mark synced on remote   │     │   │
 │  │                          └──────────────────────────┘     │   │
 │  │                                                          │   │
@@ -75,9 +72,9 @@ The **CentralSyncService** is a background synchronization service that runs on 
 │  │  (SQL Server)    │  │                                 │       │
 │  │                  │  │  ┌───────────┐  ┌───────────┐   │       │
 │  │  - PlantConfig   │  │  │ FROM Plant│  │ FROM Plant│   │       │
-│  │  - BoxTracking   │  │  │ DB #1     │  │ DB #2     │   │       │
-│  │  - SorterScans   │  │  │(PlantLine)│  │(PlantLine)│   │       │
-│  │    _Sync         │  │  └───────────┘  └───────────┘   │       │
+│  │  - SorterScans   │  │  │ DB #1     │  │ DB #2     │   │       │
+│  │    _Sync         │  │  │(PlantLine)│  │(PlantLine)│   │       │
+│  │                  │  │  └───────────┘  └───────────┘   │       │
 │  │                  │  │  ┌───────────┐  ┌───────────┐   │       │
 │  │                  │  │  │ TO Plant  │  │ TO Plant  │   │       │
 │  │                  │  │  │ DB #1     │  │ DB #2     │   │       │
@@ -100,8 +97,7 @@ The **CentralSyncService** is a background synchronization service that runs on 
   },
   "Sync": {
     "SyncIntervalSeconds": 30,
-    "BatchSize": 100,
-    "MatchWindowMinutes": 60
+    "BatchSize": 100
   }
 }
 ```
@@ -110,7 +106,6 @@ The **CentralSyncService** is a background synchronization service that runs on 
 |---------|---------|-------------|
 | `SyncIntervalSeconds` | `30` | Time gap between each sync cycle (in seconds) |
 | `BatchSize` | `100` | Max number of unsynced records to fetch per plant per cycle |
-| `MatchWindowMinutes` | `60` | Time window (minutes) to match a FROM barcode with a TO barcode |
 
 ---
 
@@ -121,7 +116,7 @@ The **CentralSyncService** is a background synchronization service that runs on 
 | Registration | Lifetime | Purpose |
 |---|---|---|
 | `IPlantRepository` → `PlantRepository` | Scoped | Plant CRUD operations on central DB |
-| `ISyncRepository` → `SyncRepository` | Scoped | Central DB sync operations (insert, match, status) |
+| `ISyncRepository` → `SyncRepository` | Scoped | Central DB sync operations (insert, status) |
 | `IRemotePlantRepository` → `RemotePlantRepository` | Scoped | Connects to remote plant DBs to fetch/mark data |
 | `IReportingRepository` → `ReportingRepository` | Scoped | Dashboard & reporting queries |
 | `IBarcodePrintRepository` → `BarcodePrintRepository` | Scoped | Barcode printing operations |
@@ -211,47 +206,37 @@ SyncService.PerformSyncAsync()
 
 ---
 
-### 🔁 STEP 3: Process FROM Records (Match or Insert)
+### 🔁 STEP 3: Process FROM Records (Insert into Central)
 
 **For each FROM scan record:**
 
 ```
 SyncService.PerformSyncAsync()
   └── foreach (fromRecord)
-       └── ISyncRepository.MatchScanRecordAsync(record, matchWindowMinutes)
+       └── ISyncRepository.MatchScanRecordAsync(record)
             └── Executes: sp_SyncScan (on Central DB)
 ```
 
 **What `sp_SyncScan` does (Central DB):**
 
-1. **INSERT into `SorterScans_Sync`** — Audit/log table recording every incoming scan.
-2. **Try to MATCH** — Looks in `BoxTracking` for an existing record with:
-   - Same `Barcode`
-   - Scan time within the match window (30 min for valid reads, 60 min for NO READs)
-   - The opposite side must be empty (`FromFlag IS NULL` since this is a FROM record looking for existing TO)
-3. **If NO match found → INSERT new row** into `BoxTracking`:
-   - Fills in the FROM columns: `FromPlant`, `FromScanTime`, `FromFlag`, `FromRawData`, `FromSyncTime`, `FromPCName`
-   - TO columns remain NULL → `MatchStatus` = **`PENDING_TO`**
-4. **If match found → UPDATE existing row** in `BoxTracking`:
-   - Fills in the FROM columns on the existing row (which already has TO data)
-   - Now both sides are populated → `MatchStatus` = **`MATCHED`** (auto-computed)
-5. **Link back to `SorterScans_Sync`** — Updates `ProcessedAt` and `BoxTrackingId`.
+1. **INSERT into `SorterScans_Sync`** — Audit/log table recording every incoming scan with ScanType='FROM'.
+2. **Mark as processed** — Sets `ProcessedAt` timestamp.
+3. **ALL within a TRANSACTION** (atomic).
 
 ---
 
-### 🔁 STEP 4: Process TO Records (Match or Insert)
+### 🔁 STEP 4: Process TO Records (Insert into Central)
 
 **Identical logic to Step 3, but for TO records:**
 
 ```
 SyncService.PerformSyncAsync()
   └── foreach (toRecord)
-       └── ISyncRepository.MatchScanRecordAsync(record, matchWindowMinutes)
+       └── ISyncRepository.MatchScanRecordAsync(record)
             └── Executes: sp_SyncScan @ScanType='TO' (on Central DB)
 ```
 
-- If no match → new `BoxTracking` row with TO columns filled, FROM columns NULL → `MatchStatus` = **`PENDING_FROM`**
-- If match found → updates existing row's TO columns → `MatchStatus` = **`MATCHED`**
+- Inserts into `SorterScans_Sync` with `ScanType = 'TO'`.
 
 ---
 
@@ -285,9 +270,8 @@ WHERE Id IN (parsed comma-separated IDs)
 SyncService.PerformSyncAsync()
   └── TotalFromSynced += fromRecords.Count
   └── TotalToSynced += toRecords.Count
-  └── TotalMatched += matchedCount
   └── LastSyncTime = DateTime.Now
-  └── Log: "Sync complete: X FROM, Y TO, Z matched"
+  └── Log: "Sync complete: X FROM, Y TO synced"
 ```
 
 Then the loop **waits for 30 seconds** (`SyncIntervalSeconds`) before starting the next cycle.
@@ -327,49 +311,9 @@ Then the loop **waits for 30 seconds** (`SyncIntervalSeconds`) before starting t
 
 ---
 
-#### Table: `BoxTracking` ⭐ (Main Table)
+#### Table: `SorterScans_Sync` ⭐ (Main Sync/Audit Table)
 
-> The central table that tracks every box's journey from FROM plant to TO plant.
-
-| Column | Type | Description |
-|--------|------|-------------|
-| `Id` | `BIGINT IDENTITY` | Primary key |
-| `Barcode` | `NVARCHAR(50)` | The barcode value scanned |
-| `Batch` | `NVARCHAR(20)` | Batch identifier |
-| `LineCode` | `NVARCHAR(5)` | Production line code |
-| `PlantCode` | `NVARCHAR(10)` | Plant code |
-| **FROM Side** | | |
-| `FromPlant` | `NVARCHAR(50)` | Plant name where FROM scan occurred |
-| `FromScanTime` | `DATETIME2(3)` | Exact time of FROM scan |
-| `FromFlag` | `BIT` | `1` = Read successfully, `0` = NO READ |
-| `FromRawData` | `NVARCHAR(100)` | Raw barcode data or "NO READ" |
-| `FromSyncTime` | `DATETIME2` | When the FROM record was synced to central |
-| `FromPCName` | `NVARCHAR(50)` | IP address of the FROM plant server |
-| **TO Side** | | |
-| `ToPlant` | `NVARCHAR(50)` | Plant name where TO scan occurred |
-| `ToScanTime` | `DATETIME2(3)` | Exact time of TO scan |
-| `ToFlag` | `BIT` | `1` = Read successfully, `0` = NO READ |
-| `ToRawData` | `NVARCHAR(100)` | Raw barcode data or "NO READ" |
-| `ToSyncTime` | `DATETIME2` | When the TO record was synced to central |
-| `ToPCName` | `NVARCHAR(50)` | IP address of the TO plant server |
-| **Computed Columns** | | |
-| `MatchStatus` | `COMPUTED PERSISTED` | Auto-calculated (see [Match Status Logic](#10-match-status-logic)) |
-| `TransitTimeSeconds` | `COMPUTED PERSISTED` | `DATEDIFF(SECOND, FromScanTime, ToScanTime)` |
-| **Metadata** | | |
-| `CreatedAt` | `DATETIME2` | Record creation timestamp |
-| `UpdatedAt` | `DATETIME2` | Last update timestamp |
-
-**Indexes:**
-- `IX_BoxTracking_Barcode` — on `(Barcode, FromScanTime DESC)`
-- `IX_BoxTracking_MatchStatus` — on `(MatchStatus, CreatedAt DESC)`
-- `IX_BoxTracking_FromScanTime` — on `(FromScanTime DESC)` includes Barcode, ToScanTime, MatchStatus
-- `IX_BoxTracking_CreatedAt` — on `(CreatedAt)`
-
----
-
-#### Table: `SorterScans_Sync` (Audit Table)
-
-> Logs every individual scan received by the central server. Acts as an audit trail.
+> Logs every individual scan received by the central server. Acts as the main data store and audit trail.
 
 | Column | Type | Description |
 |--------|------|-------------|
@@ -380,15 +324,20 @@ Then the loop **waits for 30 seconds** (`SyncIntervalSeconds`) before starting t
 | `PlantCode` | `NVARCHAR(10)` | Plant code |
 | `LineCode` | `NVARCHAR(5)` | Line code |
 | `Batch` | `NVARCHAR(20)` | Batch |
+| `MaterialCode` | `NVARCHAR(20)` | Material code |
 | `Barcode` | `NVARCHAR(50)` | Barcode value |
 | `ScanDateTime` | `DATETIME2(3)` | Original scan time |
 | `IsRead` | `BIT` | Was the barcode read successfully? |
 | `PCName` | `NVARCHAR(50)` | Source IP |
 | `SyncedAt` | `DATETIME2` | When this row was synced to central |
-| `ProcessedAt` | `DATETIME2` | When this row was matched/inserted into BoxTracking |
-| `BoxTrackingId` | `BIGINT FK` | Links to `BoxTracking.Id` |
+| `ProcessedAt` | `DATETIME2` | When this row was processed |
 
-**Index:** `IX_SorterScans_Sync_Unprocessed` — on `(ProcessedAt)` WHERE `ProcessedAt IS NULL`
+**Indexes:**
+- `IX_SorterScans_Sync_Unprocessed` — on `(ProcessedAt)` WHERE `ProcessedAt IS NULL`
+- `IX_SorterScans_Sync_Batch` — on `(Batch)` WHERE `Batch IS NOT NULL`
+- `IX_SorterScans_Sync_ScanType` — on `(ScanType, SyncedAt DESC)`
+- `IX_SorterScans_Sync_CurrentPlant` — on `(CurrentPlant, SyncedAt DESC)`
+- `IX_SorterScans_Sync_Barcode` — on `(Barcode, ScanDateTime DESC)`
 
 ---
 
@@ -449,7 +398,7 @@ ORDER BY PlantType, PlantCode;
 
 ### `sp_SyncScan` ⭐ (Core Logic)
 
-**Purpose:** The **heart of the sync system**. Processes a single scan record.  
+**Purpose:** The **heart of the sync system**. Processes a single scan record by inserting into SorterScans_Sync.  
 **Used by:** `SyncRepository.MatchScanRecordAsync()`
 
 | Parameter | Type | Description |
@@ -460,28 +409,20 @@ ORDER BY PlantType, PlantCode;
 | `@PlantCode` | `NVARCHAR(10)` | Plant code |
 | `@LineCode` | `NVARCHAR(5)` | Line code |
 | `@Batch` | `NVARCHAR(20)` | Batch |
+| `@MaterialCode` | `NVARCHAR(20)` | Material code |
 | `@Barcode` | `NVARCHAR(50)` | Barcode value |
 | `@ScanDateTime` | `DATETIME2(3)` | Original scan time |
 | `@IsRead` | `BIT` | Was barcode successfully read? |
 | `@PCName` | `NVARCHAR(50)` | Source IP |
-| `@BoxTrackingId` | `BIGINT OUTPUT` | Returns the BoxTracking ID |
+| `@SyncId` | `BIGINT OUTPUT` | Returns the SorterScans_Sync ID |
 
 **Internal Logic (per execution):**
 
 ```
 1. INSERT into SorterScans_Sync (audit log)
-2. Search BoxTracking for a matching barcode:
-   - Same Barcode
-   - Within time window (30 min for reads, 60 min for NO READs)
-   - Opposite side must be NULL
-3. IF no match exists:
-   → INSERT new BoxTracking row (FROM or TO side filled)
-   → Status will be PENDING_TO or PENDING_FROM
-4. IF match exists:
-   → UPDATE existing BoxTracking row (fill the missing side)
-   → Status becomes MATCHED (auto-computed)
-5. Link SorterScans_Sync → BoxTracking via BoxTrackingId
-6. ALL within a TRANSACTION (atomic)
+2. Set ProcessedAt = current timestamp
+3. Return the new SyncId
+4. ALL within a TRANSACTION (atomic)
 ```
 
 ---
@@ -493,42 +434,15 @@ ORDER BY PlantType, PlantCode;
 
 ---
 
-### `sp_GetDailySummary`
-
-**Purpose:** Returns daily aggregate statistics for box tracking.
-
----
-
-### `sp_GetShiftReport`
-
-**Purpose:** Returns box tracking stats grouped by 3 shifts:
-- SHIFT_A: 06:00–14:00
-- SHIFT_B: 14:00–22:00
-- SHIFT_C: 22:00–06:00
-
----
-
-### `sp_SearchBarcode`
-
-**Purpose:** Search for a specific barcode across box tracking history.
-
----
-
-### `sp_GetNoReadAnalysis`
-
-**Purpose:** Analyze NO READ occurrences by scanner, plant, line, and hour.
-
----
-
-### `sp_ArchiveOldData`
-
-**Purpose:** Deletes `SorterScans_Sync` records older than N days (default 90).
-
----
-
 ### `sp_GetDashboardStats`
 
 **Purpose:** Returns today's and last hour's summary for the dashboard.
+
+---
+
+### `sp_GetTodayDashboardStats`
+
+**Purpose:** Returns today's FROM (issue) and TO (receipt) scan counts with read/no-read breakdown.
 
 ---
 
@@ -607,96 +521,21 @@ public class SyncScanRecord
 }
 ```
 
-### `BoxTracking` — Central Tracking Record
-
-```csharp
-public class BoxTracking
-{
-    long Id;
-    string Barcode;
-    string? Batch, LineCode, PlantCode;
-    // FROM side
-    string? FromPlant;
-    DateTime? FromScanTime;
-    bool? FromFlag;            // 1=read, 0=no read
-    string? FromRawData;
-    DateTime? FromSyncTime;
-    string? FromPCName;        // Source IP
-    // TO side
-    string? ToPlant;
-    DateTime? ToScanTime;
-    bool? ToFlag;
-    string? ToRawData;
-    DateTime? ToSyncTime;
-    string? ToPCName;
-    // Computed
-    string MatchStatus;        // Auto-computed by SQL
-    int? TransitTimeSeconds;   // Auto-computed by SQL
-    DateTime CreatedAt;
-    DateTime? UpdatedAt;
-}
-```
-
-### `BoxTrackingSummary` — Dashboard DTO
-
-```csharp
-public class BoxTrackingSummary
-{
-    int TotalBoxes;
-    int Matched, MissingAtTo, MissingAtFrom, BothFailed, PendingTo, PendingFrom;
-    decimal MatchRatePercent;
-    int? AvgTransitSeconds;
-}
-```
-
 ---
 
-## 10. Match Status Logic
-
-The `MatchStatus` column is a **computed persisted column** in SQL Server. It is auto-calculated based on `FromFlag` and `ToFlag`:
-
-| FromFlag | ToFlag | MatchStatus | Meaning |
-|----------|--------|-------------|---------|
-| `1` (Read) | `1` (Read) | **MATCHED** ✅ | Box scanned at both FROM and TO successfully |
-| `1` (Read) | `0` (No Read) | **MISSING_AT_TO** ⚠️ | Scanned at FROM, but TO scanner couldn't read the barcode |
-| `0` (No Read) | `1` (Read) | **MISSING_AT_FROM** ⚠️ | FROM scanner couldn't read, but TO read it fine |
-| `0` (No Read) | `0` (No Read) | **BOTH_FAILED** ❌ | Neither scanner could read the barcode |
-| NOT NULL | `NULL` | **PENDING_TO** ⏳ | Scanned at FROM, waiting for TO scan |
-| `NULL` | NOT NULL | **PENDING_FROM** ⏳ | Scanned at TO, waiting for FROM scan |
-| `NULL` | `NULL` | **UNKNOWN** ❓ | Should not normally occur |
-
-### Transit Time Calculation
-
-```sql
-TransitTimeSeconds = DATEDIFF(SECOND, FromScanTime, ToScanTime)
-```
-- Only calculated when **both** `FromScanTime` and `ToScanTime` are present.
-- Represents the time a box took to travel from FROM plant to TO plant.
-
----
-
-## 11. Reporting & Views
-
-### SQL Views
-
-| View | Description |
-|------|-------------|
-| `vw_BoxTrackingLive` | Today's box tracking data with human-readable status and transit time |
-| `vw_TodaySummary` | Today's aggregate statistics (total, matched, missing, rate %) |
-| `vw_HourlyBreakdown` | Last 7 days hourly breakdown with match rates |
+## 10. Reporting & Views
 
 ### Reporting Controllers
 
 The `ReportsController` exposes pages for:
 - **Daily Summary** — `sp_GetDailySummary`
-- **Shift Report** — `sp_GetShiftReport`
 - **Barcode Search** — `sp_SearchBarcode`
 - **No Read Analysis** — `sp_GetNoReadAnalysis`
 - **Dashboard Stats** — `sp_GetDashboardStats`
 
 ---
 
-## 12. Error Handling & Logging
+## 11. Error Handling & Logging
 
 ### Error Handling Strategy
 
@@ -723,14 +562,14 @@ The `ReportsController` exposes pages for:
 | INFO | `"Loaded {Count} active plants."` | Plant configs loaded |
 | INFO | `"Starting sync cycle..."` | Each cycle begins |
 | INFO | `"Retrieved {Count} records from {PlantName}"` | After fetching from a plant |
-| INFO | `"Sync complete: X FROM, Y TO, Z matched"` | Cycle ends |
+| INFO | `"Sync complete: X FROM, Y TO synced"` | Cycle ends |
 | ERROR | `"Error fetching FROM from {PlantName}"` | Plant connection failure |
 | ERROR | `"Error syncing FROM record {Id}: {Barcode}"` | Single record processing error |
 | ERROR | `"Error marking synced on {PlantName}"` | Marking as synced failed |
 
 ---
 
-## 13. Summary
+## 12. Summary
 
 ### Complete Data Flow in One Diagram
 
@@ -742,22 +581,10 @@ REMOTE PLANT DB (FROM)              CENTRAL SERVER DB                 REMOTE PLA
 │ Id=1         │ ── sp_GetUnsynced──▶│ SorterScans_Sync │◀── sp_Unsynced ── │ Id=99       │
 │ Barcode=ABC  │     Scans          │ SourceId=1       │                    │ Barcode=ABC │
 │ IsSynced=0   │                    │ ScanType=FROM    │                    │ IsSynced=0  │
-│              │                    │ BoxTrackingId=5   │                    │             │
 │              │                    │                  │                    │             │
-│              │                    │  ┌──────────┐    │                    │             │
-│              │                    │  │BoxTracking│   │                    │             │
-│              │                    │  │ Id=5      │   │                    │             │
-│              │                    │  │ Barcode=  │   │                    │             │
-│              │                    │  │   ABC     │   │                    │             │
-│              │                    │  │ FromPlant=│   │                    │             │
-│              │                    │  │   Delhi   │   │                    │             │
-│              │                    │  │ ToPlant=  │   │                    │             │
-│              │                    │  │   Mumbai  │   │                    │             │
-│              │                    │  │ MatchStat │   │                    │             │
-│              │                    │  │   =MATCHED│   │                    │             │
-│              │                    │  │ Transit=  │   │                    │             │
-│              │                    │  │   45sec   │   │                    │             │
-│              │                    │  └──────────┘    │                    │             │
+│              │                    │ SorterScans_Sync │                    │             │
+│              │                    │ SourceId=99      │                    │             │
+│              │                    │ ScanType=TO      │                    │             │
 │              │                    │                  │                    │             │
 │ IsSynced=1   │◀── sp_MarkAsSynced ─│                  │── sp_MarkAsSynced ──▶│ IsSynced=1 │
 │ SyncedAt=Now │                    │                  │                    │ SyncedAt=Now│
@@ -769,280 +596,13 @@ REMOTE PLANT DB (FROM)              CENTRAL SERVER DB                 REMOTE PLA
 1. **SyncService** runs as a **Singleton background service** on the central server.
 2. It syncs every **30 seconds** by default (configurable).
 3. It pulls max **100 records per plant per cycle** (configurable).
-4. Matching uses a **time window** of **30 minutes** (valid reads) or **60 minutes** (NO READs).
-5. All operations use **stored procedures** — no inline SQL for core sync logic.
-6. The `BoxTracking.MatchStatus` is a **computed column** — it updates automatically when FROM/TO data changes.
-7. `SorterScans_Sync` serves as a complete **audit trail** of every scan received.
-8. Failed plants or records are **logged and skipped** — they don't stop the entire sync cycle.
-9. After syncing to central, records are **marked as synced** on the remote plant DBs to prevent re-processing.
-10. The service waits **3 minutes** after app startup before beginning sync (warm-up delay).
+4. All operations use **stored procedures** — no inline SQL for core sync logic.
+5. `SorterScans_Sync` serves as the **main data store and audit trail** of every scan received.
+6. Failed plants or records are **logged and skipped** — they don't stop the entire sync cycle.
+7. After syncing to central, records are **marked as synced** on the remote plant DBs to prevent re-processing.
+8. The service waits **3 minutes** after app startup before beginning sync (warm-up delay).
 
 ---
 
 *Document generated by analysis of CentralSyncService.Web codebase.*
-
----
-
-## 14. Real-World Scenarios — How BoxTracking Handles Every Case
-
-This section explains every possible scenario for a carton (box) moving from FROM plant to TO plant, how the system processes it, and how many records are created in each table.
-
----
-
-### 📌 Quick Reference — All Scenarios
-
-| # | Scenario | BoxTracking Rows | MatchStatus | TransitTime |
-|---|----------|:----------------:|-------------|:-----------:|
-| 1 | ✅ FROM scanned → TO scanned (within 30 min) | **1 row** (INSERT + UPDATE) | `MATCHED` | Calculated |
-| 2 | ⏳ FROM scanned → TO never scanned | **1 row** (INSERT only) | `PENDING_TO` | NULL |
-| 3 | ⏳ TO scanned → FROM never scanned | **1 row** (INSERT only) | `PENDING_FROM` | NULL |
-| 4 | 🚫 Neither side detected the carton | **0 rows** | N/A — Invisible | N/A |
-| 5 | ⚠️ Both scanned "NO READ" (within 60 min) | **1 row** (INSERT + UPDATE) | `BOTH_FAILED` | Calculated |
-| 6 | 🔀 Both scanned but outside time window | **2 rows** (separate INSERTs) | `PENDING_TO` + `PENDING_FROM` | NULL |
-
----
-
-### ✅ Scenario 1: Normal Successful Match (FROM scanned, then TO scanned within 30 min)
-
-**Real Example:** Barcode `HLEE24A1234567890` scanned at Delhi (FROM) at 10:00 AM, then scanned at Mumbai (TO) at 10:05 AM.
-
-#### Step-by-Step:
-
-**⏱️ Time 10:00 — FROM scan arrives at central server:**
-
-`sp_SyncScan` called with `@ScanType = 'FROM'`, `@Barcode = 'HLEE24A1234567890'`
-
-1. INSERT into `SorterScans_Sync` → Audit record #1
-2. Search `BoxTracking` for matching barcode where `FromFlag IS NULL` → **NOT FOUND**
-3. **INSERT new row** into `BoxTracking`:
-
-| Id | Barcode | FromPlant | FromFlag | FromScanTime | ToPlant | ToFlag | ToScanTime | MatchStatus | TransitTime |
-|----|---------|-----------|----------|-------------|---------|--------|-----------|-------------|-------------|
-| **5** | HLEE24A123... | **Delhi** | **1** | **10:00:00** | NULL | NULL | NULL | **PENDING_TO** ⏳ | NULL |
-
-**⏱️ Time 10:05 — TO scan arrives at central server:**
-
-`sp_SyncScan` called with `@ScanType = 'TO'`, `@Barcode = 'HLEE24A1234567890'`
-
-1. INSERT into `SorterScans_Sync` → Audit record #2
-2. Search `BoxTracking` for matching barcode where `ToFlag IS NULL`:
-   ```sql
-   SELECT TOP 1 Id FROM BoxTracking 
-   WHERE Barcode = 'HLEE24A1234567890'
-     AND ABS(DATEDIFF(MINUTE, FromScanTime, '10:05:00')) <= 30  -- 5 min ✅ within window
-     AND ToFlag IS NULL  -- ✅ TO side is empty
-   ```
-   **FOUND → Id = 5**
-3. **UPDATE existing row** (NOT insert a new one):
-
-| Id | Barcode | FromPlant | FromFlag | FromScanTime | ToPlant | ToFlag | ToScanTime | MatchStatus | TransitTime |
-|----|---------|-----------|----------|-------------|---------|--------|-----------|-------------|-------------|
-| **5** | HLEE24A123... | Delhi | 1 | 10:00:00 | **Mumbai** | **1** | **10:05:00** | **MATCHED** ✅ | **300 sec** |
-
-#### Record Count:
-
-| Table | Records | Details |
-|-------|:-------:|---------|
-| `SorterScans` (FROM plant) | 1 | Original scan at FROM |
-| `SorterScans` (TO plant) | 1 | Original scan at TO |
-| `SorterScans_Sync` (Central) | **2** | One for FROM sync, one for TO sync |
-| `BoxTracking` (Central) | **1** ⭐ | Single row — first INSERT, then UPDATE |
-
----
-
-### ⏳ Scenario 2: Carton Scanned at FROM, Never Scanned at TO
-
-**Real Example:** Barcode `HLEE24B9876543210` scanned at Delhi (FROM) at 10:00 AM, but the carton goes missing during transit or TO scanner misses it entirely.
-
-#### What Happens:
-
-1. FROM scan arrives → `sp_SyncScan` inserts new `BoxTracking` row
-2. No TO scan ever comes → row stays as-is forever
-
-| Id | Barcode | FromPlant | FromFlag | ToPlant | ToFlag | MatchStatus | TransitTime |
-|----|---------|-----------|----------|---------|--------|-------------|-------------|
-| 6 | HLEE24B987... | Delhi | 1 | **NULL** | **NULL** | **PENDING_TO** ⏳ | **NULL** |
-
-#### Where this appears in reports:
-- **Dashboard** → counted as **Pending**
-- **Daily Summary** → counted under **MissingAtTo**
-- **Problem Boxes** view → listed individually
-- **Today Summary** → counted in **PendingTo**
-
-#### Record Count:
-
-| Table | Records |
-|-------|:-------:|
-| `SorterScans` (FROM plant) | 1 |
-| `SorterScans` (TO plant) | **0** |
-| `SorterScans_Sync` (Central) | **1** |
-| `BoxTracking` (Central) | **1** |
-
----
-
-### ⏳ Scenario 3: Carton Missed at FROM, but Scanned at TO
-
-**Real Example:** Barcode `HLEE24C5555555555` — the FROM scanner didn't detect the carton at all, but the TO scanner at Mumbai reads it at 10:10 AM.
-
-#### What Happens:
-
-1. No FROM record exists → nothing to fetch from FROM plant
-2. TO scan arrives → `sp_SyncScan` with `@ScanType = 'TO'`:
-   - Searches for matching barcode where `ToFlag IS NULL` → **NOT FOUND** (no prior row exists)
-   - **INSERT new row** with only TO side filled:
-
-| Id | Barcode | FromPlant | FromFlag | ToPlant | ToFlag | ToScanTime | MatchStatus | TransitTime |
-|----|---------|-----------|----------|---------|--------|-----------|-------------|-------------|
-| 7 | HLEE24C555... | **NULL** | **NULL** | **Mumbai** | **1** | **10:10:00** | **PENDING_FROM** ⏳ | **NULL** |
-
-#### What Happens Next (2 possibilities):
-
-**A) FROM scan arrives LATER (within 30 min):**
-- `sp_SyncScan` with `@ScanType = 'FROM'` finds the existing row (Id=7) where `FromFlag IS NULL`
-- **UPDATES** the FROM side → Status changes to **MATCHED** ✅
-
-**B) FROM scan NEVER arrives:**
-- Row stays as `PENDING_FROM` permanently
-- Visible in Problem Boxes report for investigation
-
-#### Record Count:
-
-| Table | Records |
-|-------|:-------:|
-| `SorterScans` (FROM plant) | **0** (scanner didn't detect carton) |
-| `SorterScans` (TO plant) | 1 |
-| `SorterScans_Sync` (Central) | **1** |
-| `BoxTracking` (Central) | **1** |
-
----
-
-### 🚫 Scenario 4: Carton NOT Scanned at BOTH Sides (Completely Invisible)
-
-**Real Example:** A carton physically passes through both plants, but NEITHER scanner detects it — no barcode scan, not even a "NO READ".
-
-#### What Happens:
-
-**NOTHING.** ❌
-
-- No record in FROM plant's `SorterScans` → nothing to fetch
-- No record in TO plant's `SorterScans` → nothing to fetch
-- No record in central `SorterScans_Sync` → nothing logged
-- No record in central `BoxTracking` → **carton is invisible to the system**
-
-#### Important Distinction: "NO READ" vs "NOT DETECTED"
-
-| Scanner Situation | SorterScans Record? | Barcode Value | IsRead |
-|-------------------|:-------------------:|---------------|:------:|
-| Scanner **reads** barcode successfully | ✅ Yes | `"HLEE24A123..."` | `1` |
-| Scanner **detects carton** but can't read barcode | ✅ Yes | `"NO READ"` | `0` |
-| Scanner **doesn't detect** carton at all | ❌ **No record** | — | — |
-
-> ⚠️ **This is a known limitation.** The system can only track what the scanners report. If a scanner physically fails to detect a carton passing through, there is no software solution — it requires hardware reliability.
-
-#### Record Count:
-
-| Table | Records |
-|-------|:-------:|
-| `SorterScans` (FROM plant) | **0** |
-| `SorterScans` (TO plant) | **0** |
-| `SorterScans_Sync` (Central) | **0** |
-| `BoxTracking` (Central) | **0** ← Carton is invisible |
-
----
-
-### ⚠️ Scenario 5: Both Sides Scan "NO READ" (Scanner detects carton but can't read barcode)
-
-**Real Example:** Barcode is damaged. FROM scanner at Delhi detects the carton at 10:00 AM but can't read barcode → stores `"NO READ"`. TO scanner at Mumbai also detects at 10:15 AM → stores `"NO READ"`.
-
-#### What Happens:
-
-Both NO READ records **use the same barcode value `"NO READ"`**, so the matching logic applies:
-
-**⏱️ Time 10:00 — FROM "NO READ" arrives:**
-
-`sp_SyncScan` with `@ScanType = 'FROM'`, `@Barcode = 'NO READ'`, `@IsRead = 0`
-
-- No matching row found → INSERT new row:
-
-| Id | Barcode | FromFlag | FromRawData | ToFlag | MatchStatus |
-|----|---------|----------|------------|--------|-------------|
-| 8 | NO READ | **0** | NO READ | NULL | **PENDING_TO** |
-
-**⏱️ Time 10:15 — TO "NO READ" arrives:**
-
-`sp_SyncScan` with `@ScanType = 'TO'`, `@Barcode = 'NO READ'`, `@IsRead = 0`
-
-- Match window for NO READs is **60 minutes** (wider than the 30 min for valid reads)
-- Search finds existing row (Id=8) with same barcode `"NO READ"`, within 60 min, `ToFlag IS NULL` → **MATCH!**
-- **UPDATE** existing row:
-
-| Id | Barcode | FromFlag | FromRawData | ToFlag | ToRawData | MatchStatus |
-|----|---------|----------|------------|--------|-----------|-------------|
-| 8 | NO READ | 0 | NO READ | **0** | **NO READ** | **BOTH_FAILED** ❌ |
-
-#### Record Count:
-
-| Table | Records |
-|-------|:-------:|
-| `SorterScans_Sync` (Central) | **2** |
-| `BoxTracking` (Central) | **1** (INSERT + UPDATE) |
-
-> Note: Multiple "NO READ" records from different cartons may match incorrectly since they all share the barcode value `"NO READ"`. This is a known trade-off.
-
----
-
-### 🔀 Scenario 6: Both Scanned but Outside Time Window (No Match — Creates 2 Rows)
-
-**Real Example:** Barcode `HLEE24D1111111111` scanned at Delhi (FROM) at 09:00 AM, but the TO scan arrives at Mumbai at 11:00 AM (2 hours later — well outside the 30-minute match window).
-
-#### What Happens:
-
-**⏱️ Time 09:00 — FROM scan arrives:**
-
-INSERT new row into `BoxTracking`:
-
-| Id | Barcode | FromPlant | FromFlag | ToPlant | ToFlag | MatchStatus |
-|----|---------|-----------|----------|---------|--------|-------------|
-| 9 | HLEE24D111... | Delhi | 1 | NULL | NULL | **PENDING_TO** |
-
-**⏱️ Time 11:00 — TO scan arrives (2 hours later):**
-
-`sp_SyncScan` searches for match:
-```sql
-WHERE Barcode = 'HLEE24D1111111111'
-  AND ABS(DATEDIFF(MINUTE, FromScanTime, '11:00:00')) <= 30  -- 120 min ❌ EXCEEDS 30 min!
-  AND ToFlag IS NULL
-```
-**NO MATCH FOUND** (120 min > 30 min window)
-
-INSERT **another new row** into `BoxTracking`:
-
-| Id | Barcode | FromPlant | FromFlag | ToPlant | ToFlag | MatchStatus |
-|----|---------|-----------|----------|---------|--------|-------------|
-| 9 | HLEE24D111... | Delhi | 1 | NULL | NULL | **PENDING_TO** ⏳ |
-| **10** | HLEE24D111... | NULL | NULL | **Mumbai** | **1** | **PENDING_FROM** ⏳ |
-
-#### Result: **2 separate rows** for the same physical carton!
-
-Both rows will appear in the Problem Boxes report. This happens because the system cannot be sure if it's the same carton after such a long gap.
-
-#### Record Count:
-
-| Table | Records |
-|-------|:-------:|
-| `SorterScans_Sync` (Central) | **2** |
-| `BoxTracking` (Central) | **2** ⚠️ (two separate rows, no match) |
-
----
-
-### 📊 Summary Table — Record Counts Per Scenario
-
-| Scenario | SorterScans (FROM) | SorterScans (TO) | SorterScans_Sync (Central) | BoxTracking (Central) | Final Status |
-|----------|:------------------:|:----------------:|:--------------------------:|:---------------------:|:------------:|
-| 1. Normal match | 1 | 1 | 2 | **1** (INSERT+UPDATE) | MATCHED ✅ |
-| 2. Missed at TO | 1 | 0 | 1 | **1** (INSERT only) | PENDING_TO ⏳ |
-| 3. Missed at FROM | 0 | 1 | 1 | **1** (INSERT only) | PENDING_FROM ⏳ |
-| 4. Both not detected | 0 | 0 | 0 | **0** (invisible) | N/A 🚫 |
-| 5. Both NO READ | 1 | 1 | 2 | **1** (INSERT+UPDATE) | BOTH_FAILED ❌ |
-| 6. Outside time window | 1 | 1 | 2 | **2** (2 INSERTs) | PENDING_TO + PENDING_FROM 🔀 |
-
+*Last Updated: 2026-03-28*

@@ -18,8 +18,8 @@ namespace Web.Core.Entities
         public string Barcode { get; set; } = string.Empty;
         public DateTime ScanDateTime { get; set; }
         public bool IsRead { get; set; }
-        public string? PCName { get; set; }
+        public string? Shift { get; set; }
+        public string? OrderNumber { get; set; }
         public DateTime SyncedAt { get; set; }
-        public DateTime? ProcessedAt { get; set; }
     }
 }

@@ -10,34 +10,9 @@ namespace Web.Services
     {
         private readonly IReportingRepository _repository;
 
-        // ReportingService can now be just a pass-through layer, or can contain business logic.
-        // For now, it is a thin wrapper around the repository.
-        // Alternatively, we could inject IReportingRepository directly into Controller and delete this Service if no logic exists.
-        // However, keeping a service layer is good for future business logic expansion.
-        
         public ReportingService(IReportingRepository repository)
         {
             _repository = repository;
-        }
-
-        public async Task<List<DailySummaryRecord>> GetDailySummaryAsync(DateTime? startDate, DateTime? endDate)
-        {
-            return await _repository.GetDailySummaryAsync(startDate, endDate).ConfigureAwait(false);
-        }
-
-        public async Task<List<ShiftReportRecord>> GetShiftReportAsync(DateTime? date)
-        {
-            return await _repository.GetShiftReportAsync(date).ConfigureAwait(false);
-        }
-
-        public async Task<List<BarcodeHistoryRecord>> SearchBarcodeAsync(string barcode, int daysBack)
-        {
-            return await _repository.SearchBarcodeAsync(barcode, daysBack).ConfigureAwait(false);
-        }
-
-        public async Task<List<NoReadAnalysisRecord>> GetNoReadAnalysisAsync(DateTime? date)
-        {
-            return await _repository.GetNoReadAnalysisAsync(date).ConfigureAwait(false);
         }
 
         public async Task<List<DashboardStatsRecord>> GetDashboardStatsAsync()
@@ -50,19 +25,19 @@ namespace Web.Services
             return await _repository.GetTodayDashboardStatsAsync().ConfigureAwait(false);
         }
 
-        public async Task<List<DailyTransferReportDto>> GetDailyTransferReportAsync()
-        {
-            return await _repository.GetDailyTransferReportAsync().ConfigureAwait(false);
-        }
-
         public async Task<List<DailyTransferReportRecord>> GetDailyTransferReportAsync(DateTime? date)
         {
             return await _repository.GetDailyTransferReportAsync(date).ConfigureAwait(false);
         }
 
-        public async Task<List<ProductWiseDailyTransferRecord>> GetProductWiseDailyTransferAsync(DateTime? date)
+        public async Task<List<ShiftReportRecord>> GetShiftReportAsync(DateTime? date)
         {
-            return await _repository.GetProductWiseDailyTransferAsync(date).ConfigureAwait(false);
+            return await _repository.GetShiftReportAsync(date).ConfigureAwait(false);
+        }
+
+        public async Task<List<OverallTransferByProductionOrderRecord>> GetOverallTransferByProductionOrderAsync(DateTime? date)
+        {
+            return await _repository.GetOverallTransferByProductionOrderAsync(date).ConfigureAwait(false);
         }
     }
 }

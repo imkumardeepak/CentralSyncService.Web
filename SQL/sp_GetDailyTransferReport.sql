@@ -1,3 +1,8 @@
+-- =============================================
+-- Stored Procedure: sp_GetDailyTransferReport
+-- Description: Get daily transfer summary per plant
+-- Uses Production Day: 07:00 to 06:59 next day
+-- =============================================
 
 IF OBJECT_ID('dbo.sp_GetDailyTransferReport', 'P') IS NOT NULL
     DROP PROCEDURE dbo.sp_GetDailyTransferReport;
@@ -11,47 +16,28 @@ BEGIN
     
     SET @Date = ISNULL(@Date, CAST(GETDATE() AS DATE));
     
-    SELECT 
-        -- FROM Plant (Issue) Side
-        ISNULL(bt.FromPlant, 'Unknown') AS FromPlant,
-        
-        -- FROM Total Count (All scans including NO READ)
-        COUNT(*) AS IssueTotal,
-        
-        -- FROM READ Count (FromFlag = 1)
-        SUM(CASE WHEN bt.FromFlag = 1 THEN 1 ELSE 0 END) AS IssueRead,
-        
-        -- FROM NO READ Count (FromFlag = 0)
-        SUM(CASE WHEN bt.FromFlag = 0 THEN 1 ELSE 0 END) AS IssueNoRead,
-        
-        -- TO Plant (Receipt) Side
-        ISNULL(bt.ToPlant, 'Pending') AS ToPlant,
-        
-        -- TO Total Count (All scans including NO READ)
-        SUM(CASE WHEN bt.ToFlag IS NOT NULL THEN 1 ELSE 0 END) AS ReceiptTotal,
-        
-        -- TO READ Count (ToFlag = 1)
-        SUM(CASE WHEN bt.ToFlag = 1 THEN 1 ELSE 0 END) AS ReceiptRead,
-        
-        -- TO NO READ Count (ToFlag = 0)
-        SUM(CASE WHEN bt.ToFlag = 0 THEN 1 ELSE 0 END) AS ReceiptNoRead,
-        
-        -- Match Status Summary
-        SUM(CASE WHEN bt.MatchStatus = 'MATCHED' THEN 1 ELSE 0 END) AS MatchedCount,
-        SUM(CASE WHEN bt.MatchStatus = 'PENDING_TO' THEN 1 ELSE 0 END) AS PendingToCount
-        
-    FROM dbo.BoxTracking bt
-    WHERE CAST(bt.CreatedAt AS DATE) = @Date
-       OR CAST(bt.FromScanTime AS DATE) = @Date
-       OR CAST(bt.ToScanTime AS DATE) = @Date
+    -- Production day: 07:00 on @Date to 07:00 next day
+    DECLARE @ProdStart DATETIME2 = DATEADD(HOUR, 7, CAST(@Date AS DATETIME2));
+    DECLARE @ProdEnd DATETIME2 = DATEADD(DAY, 1, @ProdStart);
     
-    GROUP BY bt.FromPlant, bt.ToPlant
+    SELECT 
+        ss.CurrentPlant AS PlantName,
+        ss.ScanType,
+        COUNT(*) AS TotalCount,
+        SUM(CASE WHEN ss.IsRead = 1 THEN 1 ELSE 0 END) AS ReadCount,
+        SUM(CASE WHEN ss.IsRead = 0 THEN 1 ELSE 0 END) AS NoReadCount
+        
+    FROM dbo.SorterScans_Sync ss
+    WHERE ss.ScanDateTime >= @ProdStart
+      AND ss.ScanDateTime < @ProdEnd
+    
+    GROUP BY ss.CurrentPlant, ss.ScanType
     
     ORDER BY 
-        ISNULL(bt.FromPlant, 'Unknown'),
-        ISNULL(bt.ToPlant, 'Pending');
+        ss.ScanType,
+        ss.CurrentPlant;
 END
 GO
 
-PRINT 'Procedure sp_GetDailyTransferReport created successfully.';
+PRINT 'Procedure sp_GetDailyTransferReport created (Production Day: 07:00-06:59).';
 GO

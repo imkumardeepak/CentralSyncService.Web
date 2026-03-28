@@ -28,7 +28,7 @@ The **Sync Service** is a background service that runs on the central server. It
 │  │                                                           │  │
 │  │  1. Fetch unsynced records from FROM plants               │  │
 │  │  2. Fetch unsynced records from TO plants                 │  │
-│  │  3. Insert/Match records in Central BoxTracking table     │  │
+│  │  3. Insert records into Central SorterScans_Sync table    │  │
 │  │  4. Mark records as synced in local plant DBs             │  │
 │  │                                                           │  │
 │  │  Runs every 30 seconds (configurable)                     │  │
@@ -38,7 +38,7 @@ The **Sync Service** is a background service that runs on the central server. It
 │  │                  CENTRAL DATABASE                         │  │
 │  │                                                           │  │
 │  │  - PlantConfiguration (Plant settings)                    │  │
-│  │  - BoxTracking (Synchronized scan data)                   │  │
+│  │  - SorterScans_Sync (Synchronized scan data)              │  │
 │  │                                                           │  │
 │  └───────────────────────────────────────────────────────────┘  │
 │                                                                 │
@@ -141,16 +141,16 @@ The synchronization happens in **5 sequential steps** every sync cycle (default:
 
 ---
 
-### Step 4: Insert and Match Records in Central DB
+### Step 4: Insert Records in Central DB
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│ STEP 4: Insert & Match Records                              │
+│ STEP 4: Insert Sync Records                                 │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
 │  For each record (FROM + TO):                               │
 │                                                             │
-│    Central DB ──► sp_SyncScan ──► BoxTracking table         │
+│    Central DB ──► sp_SyncScan ──► SorterScans_Sync table    │
 │                                                             │
 │  Parameters:                                                │
 │    - @SourceId        (Local record ID)                     │
@@ -165,22 +165,20 @@ The synchronization happens in **5 sequential steps** every sync cycle (default:
 │    - @PCName          (Source PC/IP)                        │
 │                                                             │
 │  Output:                                                    │
-│    - @BoxTrackingId   (Created/Updated record ID)           │
+│    - @SyncId          (Created record ID)                   │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 **Code Location:** `SyncRepository.MatchScanRecordAsync()`
 
-**Matching Logic (handled by `sp_SyncScan`):**
+**Insert Logic (handled by `sp_SyncScan`):**
 
-| Scenario | Action | MatchStatus |
-|----------|--------|-------------|
-| FROM record, no existing match | INSERT new record | `PENDING_TO` |
-| FROM record, existing TO match found | UPDATE record | `MATCHED` |
-| TO record, no existing match | INSERT new record | `PENDING_FROM` |
-| TO record, existing FROM match found | UPDATE record | `MATCHED` |
-| No read (IsRead = 0) | INSERT with flag | `BOTH_FAILED` |
+| Scenario | Action |
+|----------|--------|
+| FROM record | INSERT into SorterScans_Sync with ScanType='FROM' |
+| TO record | INSERT into SorterScans_Sync with ScanType='TO' |
+| No read (IsRead = 0) | INSERT with IsRead=0 flag |
 
 ---
 
@@ -240,37 +238,23 @@ CREATE TABLE PlantConfiguration (
 );
 ```
 
-#### BoxTracking
+#### SorterScans_Sync
 ```sql
-CREATE TABLE BoxTracking (
-    Id                  BIGINT PRIMARY KEY IDENTITY,
-    Barcode            NVARCHAR(100) NOT NULL,
-    Batch              NVARCHAR(50),
-    LineCode           NVARCHAR(50),
-    PlantCode          NVARCHAR(50),
-    
-    -- FROM scan data
-    FromPlant          NVARCHAR(100),
-    FromScanTime       DATETIME,
-    FromFlag           INT,
-    FromRawData        NVARCHAR(100),
-    FromSyncTime       DATETIME,
-    FromPCName         NVARCHAR(100),
-    
-    -- TO scan data
-    ToPlant            NVARCHAR(100),
-    ToScanTime         DATETIME,
-    ToFlag             INT,
-    ToRawData          NVARCHAR(100),
-    ToSyncTime         DATETIME,
-    ToPCName           NVARCHAR(100),
-    
-    -- Matching status
-    MatchStatus        NVARCHAR(20),  -- MATCHED, PENDING_TO, PENDING_FROM, MISSING_AT_TO, MISSING_AT_FROM, BOTH_FAILED
-    TransitTimeSeconds INT,
-    
-    CreatedAt          DATETIME DEFAULT GETDATE(),
-    UpdatedAt          DATETIME
+CREATE TABLE SorterScans_Sync (
+    Id              BIGINT PRIMARY KEY IDENTITY,
+    SourceId        BIGINT NOT NULL,
+    ScanType        VARCHAR(10) NOT NULL,   -- 'FROM' or 'TO'
+    CurrentPlant    NVARCHAR(50) NOT NULL,
+    PlantCode       NVARCHAR(10),
+    LineCode        NVARCHAR(5),
+    Batch           NVARCHAR(20),
+    MaterialCode    NVARCHAR(20),
+    Barcode         NVARCHAR(50) NOT NULL,
+    ScanDateTime    DATETIME2(3) NOT NULL,
+    IsRead          BIT NOT NULL DEFAULT 1,
+    PCName          NVARCHAR(50),
+    SyncedAt        DATETIME2 NOT NULL DEFAULT GETDATE(),
+    ProcessedAt     DATETIME2
 );
 ```
 
@@ -324,12 +308,11 @@ CREATE PROCEDURE sp_SyncScan
     @ScanDateTime   DATETIME,
     @IsRead         INT,
     @PCName         NVARCHAR(100),
-    @BoxTrackingId  BIGINT OUTPUT
+    @SyncId         BIGINT OUTPUT
 AS
 BEGIN
-    -- Logic to INSERT or UPDATE BoxTracking table
-    -- and determine MatchStatus based on existing data
-    -- Returns the BoxTrackingId of the affected record
+    -- Inserts record into SorterScans_Sync audit table
+    -- Returns the SyncId of the created record
 END
 ```
 
@@ -397,7 +380,7 @@ END
 ```json
 {
   "ConnectionStrings": {
-    "CentralDb": "Server=SERVER_IP;Database=BoxTrackingDB;User Id=sa;Password=***;TrustServerCertificate=True;"
+    "CentralDb": "Server=SERVER_IP;Database=Haldiram_Barcode_Line;User Id=sa;Password=***;TrustServerCertificate=True;"
   }
 }
 ```
@@ -407,16 +390,14 @@ Configured via PlantConfiguration table in the UI.
 
 ---
 
-## 📈 Match Status Reference
+## 📈 Scan Type Reference
 
-| Status | Description |
-|--------|-------------|
-| `MATCHED` | Box scanned at both FROM and TO plants |
-| `PENDING_TO` | Scanned at FROM, waiting for TO scan |
-| `PENDING_FROM` | Scanned at TO, waiting for FROM scan |
-| `MISSING_AT_TO` | Past time window, never received at TO |
-| `MISSING_AT_FROM` | Received at TO but no FROM record |
-| `BOTH_FAILED` | No read at either plant |
+| ScanType | Description |
+|----------|-------------|
+| `FROM` | Box scanned at the source/origin plant |
+| `TO` | Box scanned at the destination plant |
+| `IsRead = 1` | Barcode was read successfully |
+| `IsRead = 0` | Scanner detected carton but could not read barcode (NO READ) |
 
 ---
 

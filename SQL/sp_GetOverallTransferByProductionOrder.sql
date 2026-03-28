@@ -1,3 +1,8 @@
+-- =============================================
+-- Author:      System
+-- Create date: 2026-03-28
+-- Description: Gets overall transfer by production order across all days (lifetime counts)
+-- =============================================
 IF OBJECT_ID('dbo.sp_GetOverallTransferByProductionOrder', 'P') IS NOT NULL
     DROP PROCEDURE dbo.sp_GetOverallTransferByProductionOrder;
 GO
@@ -10,60 +15,54 @@ BEGIN
 
     SET @Date = ISNULL(@Date, CAST(GETDATE() AS DATE));
 
-    ;WITH MaterialCTE AS
-    (
-        SELECT 
-            MaterialNumber,
-            MaterialDescription,
-            ProdInspMemo,
-            ROW_NUMBER() OVER (PARTITION BY MaterialNumber ORDER BY MaterialNumber) AS rn
-        FROM dbo.MaterialMasters WITH(NOLOCK)
-    )
+    -- We evaluate lifetime scans, so shift bounds are not used here.
 
     SELECT 
         po.OrderNo,
-        ISNULL(mm.MaterialNumber, po.Material) AS MaterialNumber,
-        ISNULL(mm.MaterialDescription, po.MaterialDescription) AS MaterialDescription,
+        po.Material AS MaterialNumber,
+        po.MaterialDescription AS MaterialDescription,
         po.Batch,
         po.OrderQty,
-        po.CurQTY,
-
+        ISNULL(bc.PrintCount, 0) AS CurQTY,
         ISNULL(SUM(CASE WHEN UPPER(ss.ScanType) = 'FROM' THEN 1 END), 0) AS IssueCount,
         ISNULL(SUM(CASE WHEN UPPER(ss.ScanType) = 'TO' THEN 1 END), 0) AS ReceiptCount,
 
-        po.CurQTY - 
+        ISNULL(bc.PrintCount, 0) - 
         ISNULL(SUM(CASE WHEN UPPER(ss.ScanType) = 'TO' THEN 1 END), 0) AS Deviation
 
     FROM dbo.ProductionOrder po WITH(NOLOCK)
 
-    LEFT JOIN MaterialCTE mm
-        ON po.Material = mm.MaterialNumber
-        AND mm.rn = 1
+    -- Count actual prints for the order's CurQTY
+    OUTER APPLY (
+        SELECT COUNT(1) AS PrintCount
+        FROM dbo.BarcodePrint bp WITH(NOLOCK)
+        WHERE bp.OrderNo = po.OrderNo 
+          AND bp.NewBatchNo = po.Batch
+    ) bc
 
+    -- Join Scans matching exactly by OrderNumber
+    -- We removed ScanDateTime filters to show OVERALL lifetime counts for these orders,
+    -- because orders can run across multiple days.
     LEFT JOIN dbo.SorterScans_Sync ss WITH(NOLOCK)
-        ON ss.Batch = po.Batch
-        AND ss.MaterialCode = mm.ProdInspMemo
-        AND ss.ScanDateTime >= @Date
-        AND ss.ScanDateTime < DATEADD(DAY, 1, @Date)
+        ON ss.OrderNumber = po.OrderNo
+        AND ss.Batch = po.Batch
 
-    WHERE 
-        po.BsDate = @Date
-        AND po.PlantCode = 'HM06'   -- ✅ Added filter
+    -- Filter to specific business date and plant
+    WHERE po.BsDate = @Date
+      AND po.PlantCode = 'HM06'
 
     GROUP BY 
         po.OrderNo,
-        mm.MaterialNumber,
-        mm.MaterialDescription,
         po.Material,
         po.MaterialDescription,
         po.Batch,
         po.OrderQty,
-        po.CurQTY
+        bc.PrintCount
 
     ORDER BY po.OrderNo, po.Batch;
 
 END
 GO
 
-PRINT 'Procedure updated with PlantCode filter.';
+PRINT 'Procedure updated with PlantCode filter and fresh 07:00 logic.';
 GO
