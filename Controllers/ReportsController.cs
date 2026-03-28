@@ -34,9 +34,9 @@ namespace Web.Controllers
             {
                 stats = await _reportingService.GetDashboardStatsAsync().ConfigureAwait(false);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ViewBag.Error = $"Dashboard stats unavailable: {ex.Message}. Run CentralDatabase_UpdateScript.sql to fix.";
+                // Ignore empty list implementation
             }
 
             try
@@ -45,7 +45,7 @@ namespace Web.Controllers
             }
             catch (Exception ex)
             {
-                // Silently fail - will show zeros
+                ViewBag.Error = $"Dashboard stats unavailable: {ex.Message}. Run CentralDatabase_UpdateScript.sql to fix.";
             }
 
             var model = new DashboardViewModel

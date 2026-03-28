@@ -59,55 +59,9 @@ namespace Web.Infrastructure.Repositories
 
         public async Task<List<DashboardStatsRecord>> GetDashboardStatsAsync()
         {
-            var result = new List<DashboardStatsRecord>();
-
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                await connection.OpenAsync().ConfigureAwait(false);
-
-                using (var command = new SqlCommand("sp_GetDashboardStats", connection))
-                {
-                    command.CommandType = CommandType.StoredProcedure;
-
-                    using (var reader = await command.ExecuteReaderAsync().ConfigureAwait(false))
-                    {
-                        if (await reader.ReadAsync().ConfigureAwait(false))
-                        {
-                            var today = new DashboardStatsRecord
-                            {
-                                Period = reader.IsDBNull(reader.GetOrdinal("Period")) ? string.Empty : reader.GetString(reader.GetOrdinal("Period")),
-                                TotalBoxes = reader.IsDBNull(reader.GetOrdinal("TotalScans")) ? 0 : reader.GetInt32(reader.GetOrdinal("TotalScans")),
-                                IssueTotal = reader.IsDBNull(reader.GetOrdinal("FromScans")) ? 0 : reader.GetInt32(reader.GetOrdinal("FromScans")),
-                                IssueNoRead = reader.IsDBNull(reader.GetOrdinal("NoReadCount")) ? 0 : reader.GetInt32(reader.GetOrdinal("NoReadCount")),
-                                ReceiptTotal = reader.IsDBNull(reader.GetOrdinal("ToScans")) ? 0 : reader.GetInt32(reader.GetOrdinal("ToScans")),
-                                ReceiptNoRead = reader.IsDBNull(reader.GetOrdinal("ReadCount")) ? 0 : reader.GetInt32(reader.GetOrdinal("ReadCount"))
-                            };
-
-                            result.Add(today);
-                        }
-
-                        if (await reader.NextResultAsync().ConfigureAwait(false))
-                        {
-                            if (await reader.ReadAsync().ConfigureAwait(false))
-                            {
-                                var lastHour = new DashboardStatsRecord
-                                {
-                                    Period = reader.IsDBNull(reader.GetOrdinal("Period")) ? string.Empty : reader.GetString(reader.GetOrdinal("Period")),
-                                    TotalBoxes = reader.IsDBNull(reader.GetOrdinal("TotalScans")) ? 0 : reader.GetInt32(reader.GetOrdinal("TotalScans")),
-                                    IssueTotal = reader.IsDBNull(reader.GetOrdinal("FromScans")) ? 0 : reader.GetInt32(reader.GetOrdinal("FromScans")),
-                                    IssueNoRead = reader.IsDBNull(reader.GetOrdinal("NoReadCount")) ? 0 : reader.GetInt32(reader.GetOrdinal("NoReadCount")),
-                                    ReceiptTotal = reader.IsDBNull(reader.GetOrdinal("ToScans")) ? 0 : reader.GetInt32(reader.GetOrdinal("ToScans")),
-                                    ReceiptNoRead = reader.IsDBNull(reader.GetOrdinal("ReadCount")) ? 0 : reader.GetInt32(reader.GetOrdinal("ReadCount"))
-                                };
-
-                                result.Add(lastHour);
-                            }
-                        }
-                    }
-                }
-            }
-
-            return result;
+            // The UI no longer uses this generic breakdown. Keeping method signature to satisfy Interface, 
+            // but returning empty or it could be removed from IReportingRepository in a larger refactor.
+            return new List<DashboardStatsRecord>();
         }
 
         public async Task<TodayDashboardStats> GetTodayDashboardStatsAsync()
@@ -118,27 +72,10 @@ namespace Web.Infrastructure.Repositories
             {
                 await connection.OpenAsync().ConfigureAwait(false);
 
-                const string query = @"
-DECLARE @ProdDayStart DATETIME2 = CAST(CAST(GETDATE() AS DATE) AS DATETIME2);
-SET @ProdDayStart = DATEADD(HOUR, 7, @ProdDayStart);
-
-IF CAST(GETDATE() AS TIME) < '07:00:00'
-    SET @ProdDayStart = DATEADD(DAY, -1, @ProdDayStart);
-
-DECLARE @ProdDayEnd DATETIME2 = DATEADD(DAY, 1, @ProdDayStart);
-
-SELECT
-    TotalIssueCount = SUM(CASE WHEN UPPER(ScanType) = 'FROM' THEN 1 ELSE 0 END),
-    TotalIssueRead = SUM(CASE WHEN UPPER(ScanType) = 'FROM' AND IsRead = 1 AND UPPER(LTRIM(RTRIM(ISNULL(Barcode, '')))) <> 'NOREAD' THEN 1 ELSE 0 END),
-    TotalIssueNoRead = SUM(CASE WHEN UPPER(ScanType) = 'FROM' AND NOT (IsRead = 1 AND UPPER(LTRIM(RTRIM(ISNULL(Barcode, '')))) <> 'NOREAD') THEN 1 ELSE 0 END),
-    TotalReceiptCount = SUM(CASE WHEN UPPER(ScanType) = 'TO' THEN 1 ELSE 0 END),
-    TotalReceiptRead = SUM(CASE WHEN UPPER(ScanType) = 'TO' AND IsRead = 1 AND UPPER(LTRIM(RTRIM(ISNULL(Barcode, '')))) <> 'NOREAD' THEN 1 ELSE 0 END),
-    TotalReceiptNoRead = SUM(CASE WHEN UPPER(ScanType) = 'TO' AND NOT (IsRead = 1 AND UPPER(LTRIM(RTRIM(ISNULL(Barcode, '')))) <> 'NOREAD') THEN 1 ELSE 0 END)
-FROM dbo.SorterScans_Sync
-WHERE ScanDateTime >= @ProdDayStart AND ScanDateTime < @ProdDayEnd;";
-
-                using (var command = new SqlCommand(query, connection))
+                using (var command = new SqlCommand("sp_GetDashboardStats", connection))
                 {
+                    command.CommandType = CommandType.StoredProcedure;
+
                     using (var reader = await command.ExecuteReaderAsync().ConfigureAwait(false))
                     {
                         if (await reader.ReadAsync().ConfigureAwait(false))
