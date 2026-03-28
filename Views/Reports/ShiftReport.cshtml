@@ -64,7 +64,14 @@
     <div class="bg-white rounded-xl shadow-card overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-200">
             <h2 class="text-lg font-semibold text-gray-900">Shift Production Summary</h2>
-            <p class="text-sm text-gray-500">Date: @selectedDate.ToString("MMMM dd, yyyy")</p>
+@{
+                string timeRange = "";
+                if (selectedShift == "A") timeRange = "07:00 AM to 03:00 PM";
+                else if (selectedShift == "B") timeRange = "03:00 PM to 11:00 PM";
+                else if (selectedShift == "C") timeRange = $"11:00 PM to {selectedDate.AddDays(1).ToString("MMMM dd, yyyy")} 07:00 AM";
+                else timeRange = $"07:00 AM to {selectedDate.AddDays(1).ToString("MMMM dd, yyyy")} 06:59 AM";
+            }
+            <p class="text-sm text-gray-500">Showing data from @selectedDate.ToString("MMMM dd, yyyy") @timeRange - Shift: @(selectedShift == "ALL" ? "All Shifts" : selectedShift)</p>
         </div>
 
         @if (Model.Any())

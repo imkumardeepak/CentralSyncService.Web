@@ -57,7 +57,7 @@
     <div class="bg-white rounded-xl shadow-card overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-200">
             <h2 class="text-lg font-semibold text-gray-900">Transfer Details</h2>
-            <p class="text-sm text-gray-500">Date: @selectedDate.ToString("MMMM dd, yyyy") - grouped by plant and plant code</p>
+            <p class="text-sm text-gray-500">Showing data from @selectedDate.ToString("MMMM dd, yyyy") 07:00 AM to @selectedDate.AddDays(1).ToString("MMMM dd, yyyy") 06:59 AM - grouped by plant and plant code</p>
         </div>
 
         @if (Model.Any())
