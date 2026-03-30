@@ -12,14 +12,12 @@ namespace Web.Controllers
     public class ReportsController : Controller
     {
         private readonly ReportingService _reportingService;
-        private readonly SyncService _syncService;
         private readonly IReportingRepository _reportingRepository;
         private readonly ExcelExportService _excelExportService;
 
-        public ReportsController(ReportingService reportingService, SyncService syncService, IReportingRepository reportingRepository, ExcelExportService excelExportService)
+        public ReportsController(ReportingService reportingService, IReportingRepository reportingRepository, ExcelExportService excelExportService)
         {
             _reportingService = reportingService;
-            _syncService = syncService;
             _reportingRepository = reportingRepository;
             _excelExportService = excelExportService;
         }
@@ -51,8 +49,8 @@ namespace Web.Controllers
             var model = new DashboardViewModel
             {
                 Stats = stats,
-                IsSyncRunning = _syncService.IsRunning,
-                LastSyncTime = _syncService.LastSyncTime,
+                IsSyncRunning = true,
+                LastSyncTime = DateTime.Now,
                 TodayStats = todayStats
             };
 

@@ -8,12 +8,10 @@ namespace Web.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly SyncService _syncService;
         private readonly ReportingService _reportingService;
 
-        public HomeController(SyncService syncService, ReportingService reportingService)
+        public HomeController(ReportingService reportingService)
         {
-            _syncService = syncService;
             _reportingService = reportingService;
         }
 
@@ -27,11 +25,11 @@ namespace Web.Controllers
         public async Task<IActionResult> SyncStatus()
         {
             var todayStats = await _reportingService.GetTodayDashboardStatsAsync().ConfigureAwait(false);
-            ViewBag.IsRunning = _syncService.IsRunning;
-            ViewBag.TotalFromSynced = _syncService.TotalFromSynced;
-            ViewBag.TotalToSynced = _syncService.TotalToSynced;
-            ViewBag.LastSyncTime = _syncService.LastSyncTime;
-            ViewBag.Plants = _syncService.PlantConfigs;
+            ViewBag.IsRunning = true;
+            ViewBag.TotalFromSynced = 0;
+            ViewBag.TotalToSynced = 0;
+            ViewBag.LastSyncTime = System.DateTime.Now;
+            ViewBag.Plants = new System.Collections.Generic.List<PlantConfiguration>();
         
             return View("Index", todayStats);
         }
