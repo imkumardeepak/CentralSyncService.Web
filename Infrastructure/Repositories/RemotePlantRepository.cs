@@ -6,11 +6,19 @@ using System.Threading.Tasks;
 using System.Linq;
 using Web.Core.Entities;
 using Web.Core.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace Web.Infrastructure.Repositories
 {
     public class RemotePlantRepository : IRemotePlantRepository
     {
+        private readonly ILogger<RemotePlantRepository> _logger;
+
+        public RemotePlantRepository(ILogger<RemotePlantRepository> logger)
+        {
+            _logger = logger;
+        }
+
         public async Task<bool> TestConnectionAsync(string connectionString)
         {
             try
@@ -21,8 +29,9 @@ namespace Web.Infrastructure.Repositories
                     return true;
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogWarning(ex, "Connection test failed.");
                 return false;
             }
         }
@@ -42,31 +51,71 @@ namespace Web.Infrastructure.Repositories
 
                     using (var reader = await command.ExecuteReaderAsync().ConfigureAwait(false))
                     {
+                        var columns = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+                        for (int i = 0; i < reader.FieldCount; i++)
+                        {
+                            columns[reader.GetName(i)] = i;
+                        }
+
                         while (await reader.ReadAsync().ConfigureAwait(false))
                         {
                             try
                             {
-                                var record = new SyncScanRecord
+                                var record = new SyncScanRecord();
+
+                                if (columns.TryGetValue("Id", out int idOrdinal) && !reader.IsDBNull(idOrdinal))
+                                    record.Id = Convert.ToInt64(reader.GetValue(idOrdinal));
+
+                                if (columns.TryGetValue("CurrentPlant", out int cpOrdinal) && !reader.IsDBNull(cpOrdinal))
+                                    record.CurrentPlant = Convert.ToString(reader.GetValue(cpOrdinal)) ?? string.Empty;
+
+                                if (columns.TryGetValue("PlantCode", out int pcOrdinal) && !reader.IsDBNull(pcOrdinal))
+                                    record.PlantCode = Convert.ToString(reader.GetValue(pcOrdinal));
+
+                                if (columns.TryGetValue("LineCode", out int lcOrdinal) && !reader.IsDBNull(lcOrdinal))
+                                    record.LineCode = Convert.ToString(reader.GetValue(lcOrdinal));
+
+                                if (columns.TryGetValue("Batch", out int bOrdinal) && !reader.IsDBNull(bOrdinal))
+                                    record.Batch = Convert.ToString(reader.GetValue(bOrdinal));
+
+                                if (columns.TryGetValue("MaterialCode", out int mOrdinal) && !reader.IsDBNull(mOrdinal))
+                                    record.MaterialCode = Convert.ToString(reader.GetValue(mOrdinal));
+
+                                if (columns.TryGetValue("Barcode", out int barOrdinal) && !reader.IsDBNull(barOrdinal))
+                                    record.Barcode = Convert.ToString(reader.GetValue(barOrdinal)) ?? string.Empty;
+                                else
+                                    record.Barcode = "UNKNOWN";
+
+                                if (columns.TryGetValue("ScanDateTime", out int sdtOrdinal) && !reader.IsDBNull(sdtOrdinal))
+                                    record.ScanDateTime = Convert.ToDateTime(reader.GetValue(sdtOrdinal));
+                                else
+                                    record.ScanDateTime = DateTime.Now;
+
+                                if (columns.TryGetValue("CreatedAt", out int caOrdinal) && !reader.IsDBNull(caOrdinal))
+                                    record.CreatedAt = Convert.ToDateTime(reader.GetValue(caOrdinal));
+                                else
+                                    record.CreatedAt = record.ScanDateTime; // Fallback
+
+                                if (columns.TryGetValue("IsRead", out int irOrdinal) && !reader.IsDBNull(irOrdinal))
                                 {
-                                    Id = reader.GetInt64(reader.GetOrdinal("Id")),
-                                    CurrentPlant = reader.GetString(reader.GetOrdinal("CurrentPlant")),
-                                    PlantCode = reader.IsDBNull(reader.GetOrdinal("PlantCode")) ? null : reader.GetString(reader.GetOrdinal("PlantCode")),
-                                    LineCode = reader.IsDBNull(reader.GetOrdinal("LineCode")) ? null : reader.GetString(reader.GetOrdinal("LineCode")),
-                                    Batch = reader.IsDBNull(reader.GetOrdinal("Batch")) ? null : reader.GetString(reader.GetOrdinal("Batch")),
-                                    MaterialCode = reader.IsDBNull(reader.GetOrdinal("MaterialCode")) ? null : reader.GetString(reader.GetOrdinal("MaterialCode")),
-                                    Barcode = reader.GetString(reader.GetOrdinal("Barcode")),
-                                    ScanDateTime = reader.GetDateTime(reader.GetOrdinal("ScanDateTime")),
-                                    CreatedAt = reader.IsDBNull(reader.GetOrdinal("CreatedAt")) ? DateTime.Now : reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
-                                    IsRead = reader.IsDBNull(reader.GetOrdinal("IsRead")) ? true : (reader.GetInt32(reader.GetOrdinal("IsRead")) == 1),
-                                    SourceType = plantConfig.PlantType,
-                                    SourceIp = plantConfig.IpAddress
-                                };
+                                    var val = reader.GetValue(irOrdinal);
+                                    if (val is bool bVal) record.IsRead = bVal;
+                                    else record.IsRead = Convert.ToInt32(val) == 1;
+                                }
+                                else
+                                {
+                                    record.IsRead = record.Barcode != "NO READ";
+                                }
+
+                                record.SourceType = plantConfig.PlantType;
+                                record.SourceIp = plantConfig.IpAddress;
+
                                 records.Add(record);
                             }
                             catch (Exception ex)
                             {
                                 // Log error but continue processing other records
-                                System.Diagnostics.Debug.WriteLine($"Error reading scan record: {ex.Message}");
+                                _logger.LogError(ex, "Error reading scan record from {PlantIp}", plantConfig.IpAddress);
                             }
                         }
                     }
