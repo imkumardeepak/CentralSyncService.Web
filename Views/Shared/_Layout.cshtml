@@ -190,26 +190,10 @@
                         </div>
                     </div>
 
-                    <a href="@Url.Action("SyncStatus", "Home")" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700 transition-colors">
-                        <svg class="inline-block w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        Sync Status
-                    </a>
+
                 </nav>
 
-                <!-- Sync Status Indicator -->
-                <div class="hidden md:flex items-center space-x-4">
-                    <div id="syncStatusIndicator" class="flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                        <span class="w-2 h-2 rounded-full bg-gray-400 mr-2 animate-pulse"></span>
-                        <span>Checking...</span>
-                    </div>
-                    <button id="menuButton" class="lg:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                        </svg>
-                    </button>
-                </div>
+
 
                 <!-- Mobile menu button -->
                 <button id="mobileMenuButton" class="lg:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100">
@@ -254,12 +238,7 @@
                 </a>
 
                 
-                <div class="border-t border-gray-100 my-2 ml-3"></div>
 
-                <a href="@Url.Action("SyncStatus", "Home")" class="flex items-center px-3 py-2.5 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-100 transition-colors">
-                    <svg class="w-5 h-5 mr-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    Sync Status
-                </a>
             </div>
         </div>
     </header>
@@ -292,34 +271,7 @@
             });
         }
 
-        // Simulate sync status check (replace with actual API call)
-        function updateSyncStatus() {
-            const indicator = document.getElementById('syncStatusIndicator');
-            if (indicator) {
-                // This would normally be an API call to check sync service status
-                const isRunning = true; // Replace with actual status check
-                
-                if (isRunning) {
-                    indicator.innerHTML = `
-                        <span class="w-2 h-2 rounded-full bg-green-500 mr-2"></span>
-                        <span>Syncing</span>
-                    `;
-                    indicator.className = 'flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800';
-                } else {
-                    indicator.innerHTML = `
-                        <span class="w-2 h-2 rounded-full bg-red-500 mr-2"></span>
-                        <span>Stopped</span>
-                    `;
-                    indicator.className = 'flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800';
-                }
-            }
-        }
 
-        // Update sync status on page load
-        updateSyncStatus();
-        
-        // Update sync status every 10 seconds
-        setInterval(updateSyncStatus, 10000);
 
         // Highlight active navigation link
         const currentPath = window.location.pathname;
