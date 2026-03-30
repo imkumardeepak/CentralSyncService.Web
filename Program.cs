@@ -21,26 +21,7 @@ builder.Services.AddScoped<IReportingRepository, ReportingRepository>();
 builder.Services.AddScoped<IBarcodePrintRepository, BarcodePrintRepository>();
 builder.Services.AddScoped<IProductionOrderRepository, ProductionOrderRepository>();
 
-// SyncService configuration and registration
-// Plant configurations are now loaded dynamically from the PlantConfiguration table
-// SyncService registration as Singleton with configuration values from appsettings.json
-builder.Services.AddSingleton<SyncService>(sp =>
-{
-    var config = sp.GetRequiredService<IConfiguration>();
-    var logger = sp.GetRequiredService<ILogger<SyncService>>();
-    var scopeFactory = sp.GetRequiredService<IServiceScopeFactory>();
-    
-    // Read configuration values from appsettings.json
-    var syncIntervalSeconds = config.GetValue<int>("Sync:SyncIntervalSeconds", 30);
-    var batchSize = config.GetValue<int>("Sync:BatchSize", 100);
-    
-    return new SyncService(
-        scopeFactory,
-        logger,
-        syncIntervalSeconds * 1000, // Convert seconds to milliseconds
-        batchSize
-    );
-});
+
 
 // ReportingService registration
 builder.Services.AddScoped<ReportingService>();
@@ -57,10 +38,7 @@ builder.Services.AddFileLogging(options =>
     options.EnableConsoleOutput = true;
 });
 
-// Background hosted service that starts/stops the sync loop
-builder.Services.AddHostedService<SyncHostedService>();
-builder.Services.AddHostedService<DataCleanupHostedService>();
-builder.Services.AddHostedService<PlantDataCleanupHostedService>();
+
 
 var app = builder.Build();
 
