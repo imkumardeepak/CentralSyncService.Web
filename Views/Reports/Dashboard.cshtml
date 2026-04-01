@@ -56,7 +56,7 @@
                             Today Issue Summary (FROM)
                         </h2>
                         <p class="text-sm text-neutral-500 mt-1">
-                            Showing data from <strong>@Model.TodayStats.PeriodStart:yyyy-MM-dd HH:mm</strong> to <strong>@Model.TodayStats.PeriodEnd:yyyy-MM-dd HH:mm</strong>
+                            Showing data from <strong>@Model.TodayStats.PeriodStart.ToString("dd-MM-yyyy HH:mm")</strong> to <strong>@Model.TodayStats.PeriodEnd.ToString("dd-MM-yyyy HH:mm")</strong>
                         </p>
                     </div>
                     
@@ -93,8 +93,8 @@
                             </svg>
                             Today Receipt Summary (TO)
                         </h2>
-                         <p class="text-sm text-neutral-500 mt-1">
-                            Showing data from <strong>@Model.TodayStats.PeriodStart:yyyy-MM-dd HH:mm</strong> to <strong>@Model.TodayStats.PeriodEnd:yyyy-MM-dd HH:mm</strong>
+                        <p class="text-sm text-neutral-500 mt-1">
+                            Showing data from <strong>@Model.TodayStats.PeriodStart.ToString("dd-MM-yyyy HH:mm")</strong> to <strong>@Model.TodayStats.PeriodEnd.ToString("dd-MM-yyyy HH:mm")</strong>
                         </p>
                     </div>
                     
