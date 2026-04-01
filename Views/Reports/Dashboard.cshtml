@@ -55,7 +55,9 @@
                             </svg>
                             Today Issue Summary (FROM)
                         </h2>
-                        <p class="text-sm text-neutral-500 mt-1">Today's total FROM scans from the central sync table.</p>
+                        <p class="text-sm text-neutral-500 mt-1">
+                            Showing data from <strong>@Model.TodayStats.PeriodStart:yyyy-MM-dd HH:mm</strong> to <strong>@Model.TodayStats.PeriodEnd:yyyy-MM-dd HH:mm</strong>
+                        </p>
                     </div>
                     
                     <div class="flex flex-col sm:flex-row items-center gap-4">
@@ -91,7 +93,9 @@
                             </svg>
                             Today Receipt Summary (TO)
                         </h2>
-                         <p class="text-sm text-neutral-500 mt-1">Today's total TO scans from the central sync table.</p>
+                         <p class="text-sm text-neutral-500 mt-1">
+                            Showing data from <strong>@Model.TodayStats.PeriodStart:yyyy-MM-dd HH:mm</strong> to <strong>@Model.TodayStats.PeriodEnd:yyyy-MM-dd HH:mm</strong>
+                        </p>
                     </div>
                     
                     <div class="flex flex-col sm:flex-row items-center gap-4">

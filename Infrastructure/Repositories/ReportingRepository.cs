@@ -80,6 +80,8 @@ namespace Web.Infrastructure.Repositories
                     {
                         if (await reader.ReadAsync().ConfigureAwait(false))
                         {
+                            result.PeriodStart = reader.IsDBNull(reader.GetOrdinal("PeriodStart")) ? DateTime.Now : reader.GetDateTime(reader.GetOrdinal("PeriodStart"));
+                            result.PeriodEnd = reader.IsDBNull(reader.GetOrdinal("PeriodEnd")) ? DateTime.Now : reader.GetDateTime(reader.GetOrdinal("PeriodEnd"));
                             result.TotalIssueCount = reader.IsDBNull(reader.GetOrdinal("TotalIssueCount")) ? 0 : reader.GetInt32(reader.GetOrdinal("TotalIssueCount"));
                             result.TotalIssueRead = reader.IsDBNull(reader.GetOrdinal("TotalIssueRead")) ? 0 : reader.GetInt32(reader.GetOrdinal("TotalIssueRead"));
                             result.TotalIssueNoRead = reader.IsDBNull(reader.GetOrdinal("TotalIssueNoRead")) ? 0 : reader.GetInt32(reader.GetOrdinal("TotalIssueNoRead"));

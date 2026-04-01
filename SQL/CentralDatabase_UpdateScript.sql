@@ -19,6 +19,8 @@ BEGIN
     DECLARE @ProdDayEnd DATETIME2 = DATEADD(DAY, 1, @ProdDayStart);  -- Next day 07:00
     
     SELECT
+        @ProdDayStart AS PeriodStart,
+        @ProdDayEnd AS PeriodEnd,
         ISNULL(SUM(CASE WHEN UPPER(ScanType) = 'FROM' THEN 1 ELSE 0 END), 0) AS TotalIssueCount,
         ISNULL(SUM(CASE WHEN UPPER(ScanType) = 'FROM' AND IsRead = 1 AND UPPER(LTRIM(RTRIM(ISNULL(Barcode, '')))) <> 'NOREAD' THEN 1 ELSE 0 END), 0) AS TotalIssueRead,
         ISNULL(SUM(CASE WHEN UPPER(ScanType) = 'FROM' AND NOT (IsRead = 1 AND UPPER(LTRIM(RTRIM(ISNULL(Barcode, '')))) <> 'NOREAD') THEN 1 ELSE 0 END), 0) AS TotalIssueNoRead,
