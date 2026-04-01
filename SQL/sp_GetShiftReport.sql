@@ -28,22 +28,15 @@ BEGIN
                  ELSE 'C'
             END
         ) AS Shift,
-        ISNULL(bp.PrintCount, 0) AS CurQTY,
         COUNT(*) AS TotalQtyInCs,
         CAST(COUNT(*) * (ISNULL(mm.NetWeight, 0) / 1000.0) AS DECIMAL(18,3)) AS TotalQtyInMT
     FROM dbo.SorterScans_Sync s WITH(NOLOCK)
     LEFT JOIN dbo.ProductionOrder po WITH(NOLOCK) ON s.OrderNumber = po.OrderNo AND s.Batch = po.Batch
     LEFT JOIN dbo.MaterialMasters mm WITH(NOLOCK) ON s.MaterialCode = mm.ProdInspMemo
-    LEFT JOIN (
-        SELECT OrderNo, NewBatchNo, COUNT(*) AS PrintCount
-        FROM dbo.BarcodePrint WITH(NOLOCK)
-        WHERE EntryDate >= @ProdStart AND EntryDate < @ProdEnd
-        GROUP BY OrderNo, NewBatchNo
-    ) bp ON s.OrderNumber = bp.OrderNo AND s.Batch = bp.NewBatchNo
     WHERE s.ScanDateTime >= @ProdStart AND s.ScanDateTime < @ProdEnd AND s.ScanType = 'TO'
     GROUP BY 
         po.Material, po.MaterialDescription, s.Batch, s.Shift,
-        DATEPART(HOUR, s.ScanDateTime), mm.NetWeight, bp.PrintCount
+        DATEPART(HOUR, s.ScanDateTime), mm.NetWeight
     ORDER BY Shift, ProductName, BatchNo;
 END
 GO
