@@ -75,6 +75,9 @@
                             <th colspan="2" class="px-6 py-3 text-center text-sm font-bold text-green-700 uppercase tracking-wider bg-green-50 border-b border-green-200">
                                 TO Plant (Receipt)
                             </th>
+                            <th rowspan="2" class="px-6 py-4 text-center text-sm font-bold text-amber-700 uppercase tracking-wider bg-amber-50 border-b border-amber-200">
+                                Deviation
+                            </th>
                         </tr>
                         <tr>
                             <!-- FROM Columns -->
@@ -100,6 +103,11 @@
                                 <!-- TO Plant -->
                                 <td class="px-6 py-4 whitespace-nowrap text-xl text-center text-green-600 font-semibold">@item.ReceiptRead</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-xl text-center text-red-600 font-semibold">@item.ReceiptNoRead</td>
+                                
+                                <!-- Deviation -->
+                                <td class="px-6 py-4 whitespace-nowrap text-xl text-center font-bold @(item.Deviation == 0 ? "text-gray-900" : item.Deviation > 0 ? "text-green-600" : "text-red-600")">
+                                    @item.Deviation
+                                </td>
                             </tr>
                         }
                     </tbody>

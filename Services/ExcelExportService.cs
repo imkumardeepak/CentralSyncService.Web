@@ -60,7 +60,7 @@ namespace Web.Services
             ApplyHeaderStyle(worksheet, "Daily Transfer Summary", selectedDate);
 
             // Main headers
-            var headers1 = new[] { "Total Production\n(BarcodePrint)", "FROM Plant (Issue)", "", "TO Plant (Receipt)", "" };
+            var headers1 = new[] { "Total Production\n(BarcodePrint)", "FROM Plant (Issue)", "", "TO Plant (Receipt)", "", "Deviation" };
             var headerRow1 = worksheet.Row(4);
             for (int i = 0; i < headers1.Length; i++)
             {
@@ -89,6 +89,14 @@ namespace Web.Services
                     cell.Style.Font.FontColor = XLColor.White;
                     cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                 }
+                else if (i == 5)
+                {
+                    cell.Style.Font.Bold = true;
+                    cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#F59E0B");
+                    cell.Style.Font.FontColor = XLColor.White;
+                    cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                    cell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                }
             }
             
             // Merge cells for grouped headers
@@ -96,7 +104,7 @@ namespace Web.Services
             worksheet.Range(4, 4, 4, 5).Merge();  // TO Plant (Receipt)
 
             // Sub-headers
-            var subHeaders = new[] { "", "Read Count", "No Read", "Read Count", "No Read" };
+            var subHeaders = new[] { "", "Read Count", "No Read", "Read Count", "No Read", "" };
             var subHeaderRow = worksheet.Row(5);
             for (int i = 0; i < subHeaders.Length; i++)
             {
@@ -107,6 +115,14 @@ namespace Web.Services
                     cell.Style.Font.Bold = true;
                     cell.Style.Font.FontSize = 11;
                     cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#A855F7");
+                    cell.Style.Font.FontColor = XLColor.White;
+                    cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                    cell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                }
+                else if (i == 5)
+                {
+                    cell.Style.Font.Bold = true;
+                    cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#F59E0B");
                     cell.Style.Font.FontColor = XLColor.White;
                     cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                     cell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
@@ -149,8 +165,21 @@ namespace Web.Services
                 worksheet.Cell(dataRow, 5).Style.Font.FontSize = 12;
                 worksheet.Cell(dataRow, 5).Style.Font.FontColor = XLColor.FromHtml("#DC2626");
                 worksheet.Cell(dataRow, 5).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                
+                // Deviation
+                worksheet.Cell(dataRow, 6).Value = item.Deviation;
+                worksheet.Cell(dataRow, 6).Style.Font.Bold = true;
+                worksheet.Cell(dataRow, 6).Style.Font.FontSize = 12;
+                worksheet.Cell(dataRow, 6).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                
+                if (item.Deviation > 0)
+                    worksheet.Cell(dataRow, 6).Style.Font.FontColor = XLColor.FromHtml("#059669");
+                else if (item.Deviation < 0)
+                    worksheet.Cell(dataRow, 6).Style.Font.FontColor = XLColor.FromHtml("#DC2626");
+                else
+                    worksheet.Cell(dataRow, 6).Style.Font.FontColor = XLColor.FromHtml("#374151");
 
-                ApplyDataRowStyle(worksheet, dataRow, 5);
+                ApplyDataRowStyle(worksheet, dataRow, 6);
                 worksheet.Row(dataRow).Height = 25;
 
                 dataRow++;
@@ -162,6 +191,7 @@ namespace Web.Services
             worksheet.Column(3).Width = 15;
             worksheet.Column(4).Width = 15;
             worksheet.Column(5).Width = 15;
+            worksheet.Column(6).Width = 15;
 
             using var stream = new MemoryStream();
             workbook.SaveAs(stream);

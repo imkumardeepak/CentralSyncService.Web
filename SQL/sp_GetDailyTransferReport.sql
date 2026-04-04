@@ -64,12 +64,16 @@ BEGIN
       AND ScanDateTime < @EndDate
       AND UPPER(LTRIM(RTRIM(ISNULL(ScanType, '')))) = 'TO';
 
+    -- Calculate total FROM scans for deviation
+    DECLARE @TotalIssueScans INT = ISNULL(@IssueRead, 0) + ISNULL(@IssueNoRead, 0);
+    
     -- Return single row with all totals
     SELECT
         TotalProduction = ISNULL(@TotalProduction, 0),
         IssueRead = ISNULL(@IssueRead, 0),
         IssueNoRead = ISNULL(@IssueNoRead, 0),
         ReceiptRead = ISNULL(@ReceiptRead, 0),
-        ReceiptNoRead = ISNULL(@ReceiptNoRead, 0);
+        ReceiptNoRead = ISNULL(@ReceiptNoRead, 0),
+        Deviation = ISNULL(@TotalProduction, 0) - @TotalIssueScans;
 END
 GO

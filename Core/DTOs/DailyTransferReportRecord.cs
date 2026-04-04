@@ -12,5 +12,8 @@ namespace Web.Core.DTOs
         // TO Plant (Receipt) Side - Overall Totals
         public int ReceiptRead { get; set; }
         public int ReceiptNoRead { get; set; }
+        
+        // Deviation: Difference between Total Production and Total FROM Scans
+        public int Deviation { get; set; }
     }
 }
