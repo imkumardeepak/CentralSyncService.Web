@@ -119,17 +119,11 @@ namespace Web.Infrastructure.Repositories
                         {
                             var record = new DailyTransferReportRecord
                             {
-                                FromPlant = reader.IsDBNull(reader.GetOrdinal("FromPlant")) ? string.Empty : reader.GetString(reader.GetOrdinal("FromPlant")),
-                                IssueTotal = reader.IsDBNull(reader.GetOrdinal("IssueTotal")) ? 0 : reader.GetInt32(reader.GetOrdinal("IssueTotal")),
+                                TotalProduction = reader.IsDBNull(reader.GetOrdinal("TotalProduction")) ? 0 : reader.GetInt32(reader.GetOrdinal("TotalProduction")),
                                 IssueRead = reader.IsDBNull(reader.GetOrdinal("IssueRead")) ? 0 : reader.GetInt32(reader.GetOrdinal("IssueRead")),
                                 IssueNoRead = reader.IsDBNull(reader.GetOrdinal("IssueNoRead")) ? 0 : reader.GetInt32(reader.GetOrdinal("IssueNoRead")),
-                                ToPlant = reader.IsDBNull(reader.GetOrdinal("ToPlant")) ? string.Empty : reader.GetString(reader.GetOrdinal("ToPlant")),
-                                ReceiptTotal = reader.IsDBNull(reader.GetOrdinal("ReceiptTotal")) ? 0 : reader.GetInt32(reader.GetOrdinal("ReceiptTotal")),
                                 ReceiptRead = reader.IsDBNull(reader.GetOrdinal("ReceiptRead")) ? 0 : reader.GetInt32(reader.GetOrdinal("ReceiptRead")),
-                                ReceiptNoRead = reader.IsDBNull(reader.GetOrdinal("ReceiptNoRead")) ? 0 : reader.GetInt32(reader.GetOrdinal("ReceiptNoRead")),
-                                MatchedCount = reader.IsDBNull(reader.GetOrdinal("MatchedCount")) ? 0 : reader.GetInt32(reader.GetOrdinal("MatchedCount")),
-                                PendingToCount = reader.IsDBNull(reader.GetOrdinal("PendingToCount")) ? 0 : reader.GetInt32(reader.GetOrdinal("PendingToCount")),
-                                Deviation = reader.IsDBNull(reader.GetOrdinal("Deviation")) ? 0 : reader.GetInt32(reader.GetOrdinal("Deviation"))
+                                ReceiptNoRead = reader.IsDBNull(reader.GetOrdinal("ReceiptNoRead")) ? 0 : reader.GetInt32(reader.GetOrdinal("ReceiptNoRead"))
                             };
 
                             result.Add(record);

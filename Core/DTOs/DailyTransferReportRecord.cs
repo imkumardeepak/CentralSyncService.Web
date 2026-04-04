@@ -2,23 +2,15 @@ namespace Web.Core.DTOs
 {
     public class DailyTransferReportRecord
     {
-        // FROM Plant (Issue) Side
-        public string FromPlant { get; set; } = string.Empty;
+        // Total Production from BarcodePrint (HF Plant)
+        public int TotalProduction { get; set; }
         
-        public int IssueTotal { get; set; }
+        // FROM Plant (Issue) Side - Overall Totals
         public int IssueRead { get; set; }
         public int IssueNoRead { get; set; }
         
-        // TO Plant (Receipt) Side
-        public string ToPlant { get; set; } = string.Empty;
-        
-        public int ReceiptTotal { get; set; }
+        // TO Plant (Receipt) Side - Overall Totals
         public int ReceiptRead { get; set; }
         public int ReceiptNoRead { get; set; }
-        
-        // Summary
-        public int MatchedCount { get; set; }
-        public int PendingToCount { get; set; }
-        public int Deviation { get; set; }
     }
 }

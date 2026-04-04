@@ -1,7 +1,8 @@
 -- =============================================
 -- Author:      System (Refactored)
--- Description: Gets daily transfer report pivoting FROM and TO issues and receipts
--- Uses Production Day logic externally passed in
+-- Description: Gets daily transfer report showing overall production vs scan totals
+-- Shows single row with: Total Production (BarcodePrint), FROM scans, TO scans
+-- Uses Production Day logic (07:00 to 06:59 next day)
 -- =============================================
 
 IF OBJECT_ID('dbo.sp_GetDailyTransferReport', 'P') IS NOT NULL
@@ -15,84 +16,60 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    WITH BaseScans AS (
-        SELECT
-            ScanType = UPPER(LTRIM(RTRIM(ISNULL(ScanType, '')))),
-            PlantName = ISNULL(NULLIF(LTRIM(RTRIM(CurrentPlant)), ''), 'Unknown'),
-            LaneKey = UPPER(
-                CASE
-                    WHEN CHARINDEX(' ', LTRIM(RTRIM(ISNULL(CurrentPlant, '')))) > 0
-                        THEN RIGHT(
-                            LTRIM(RTRIM(CurrentPlant)),
-                            CHARINDEX(' ', REVERSE(LTRIM(RTRIM(CurrentPlant)))) - 1
-                        )
-                    ELSE ISNULL(NULLIF(LTRIM(RTRIM(CurrentPlant)), ''), 'UNKNOWN')
-                END
-            ),
-            IsReadable =
-                CASE
-                    WHEN IsRead = 1
-                         AND UPPER(LTRIM(RTRIM(ISNULL(Barcode, '')))) <> 'NOREAD'
-                        THEN 1
-                    ELSE 0
-                END
-        FROM dbo.SorterScans_Sync WITH(NOLOCK)
-        WHERE ScanDateTime >= @StartDate
-          AND ScanDateTime < @EndDate
-    ),
-    FromSummary AS (
-        SELECT
-            LaneKey,
-            FromPlant = PlantName,
-            IssueTotal = COUNT(*),
-            IssueRead = SUM(IsReadable),
-            IssueNoRead = COUNT(*) - SUM(IsReadable)
-        FROM BaseScans
-        WHERE ScanType = 'FROM'
-        GROUP BY LaneKey, PlantName
-    ),
-    ToSummary AS (
-        SELECT
-            LaneKey,
-            ToPlant = PlantName,
-            ReceiptTotal = COUNT(*),
-            ReceiptRead = SUM(IsReadable),
-            ReceiptNoRead = COUNT(*) - SUM(IsReadable)
-        FROM BaseScans
-        WHERE ScanType = 'TO'
-        GROUP BY LaneKey, PlantName
-    ),
-    ToLaneTotals AS (
-        SELECT
-            LaneKey,
-            ReceiptTotal = COUNT(*)
-        FROM BaseScans
-        WHERE ScanType = 'TO'
-        GROUP BY LaneKey
-    )
+    -- Get total production count from BarcodePrint for HF plant
+    DECLARE @TotalProduction INT;
+    SELECT @TotalProduction = COUNT(*)
+    FROM dbo.BarcodePrint WITH(NOLOCK)
+    WHERE EntryDate >= @StartDate
+      AND EntryDate < @EndDate
+      AND NewPlant = 'HF';
+
+    -- Get overall FROM scan totals (no lane grouping)
+    DECLARE @IssueRead INT, @IssueNoRead INT;
+    SELECT 
+        @IssueRead = SUM(CASE 
+            WHEN IsRead = 1 
+                 AND UPPER(LTRIM(RTRIM(ISNULL(Barcode, '')))) <> 'NOREAD'
+                THEN 1 
+            ELSE 0 
+        END),
+        @IssueNoRead = SUM(CASE 
+            WHEN NOT (IsRead = 1 
+                 AND UPPER(LTRIM(RTRIM(ISNULL(Barcode, '')))) <> 'NOREAD')
+                THEN 1 
+            ELSE 0 
+        END)
+    FROM dbo.SorterScans_Sync WITH(NOLOCK)
+    WHERE ScanDateTime >= @StartDate
+      AND ScanDateTime < @EndDate
+      AND UPPER(LTRIM(RTRIM(ISNULL(ScanType, '')))) = 'FROM';
+
+    -- Get overall TO scan totals (no lane grouping)
+    DECLARE @ReceiptRead INT, @ReceiptNoRead INT;
+    SELECT 
+        @ReceiptRead = SUM(CASE 
+            WHEN IsRead = 1 
+                 AND UPPER(LTRIM(RTRIM(ISNULL(Barcode, '')))) <> 'NOREAD'
+                THEN 1 
+            ELSE 0 
+        END),
+        @ReceiptNoRead = SUM(CASE 
+            WHEN NOT (IsRead = 1 
+                 AND UPPER(LTRIM(RTRIM(ISNULL(Barcode, '')))) <> 'NOREAD')
+                THEN 1 
+            ELSE 0 
+        END)
+    FROM dbo.SorterScans_Sync WITH(NOLOCK)
+    WHERE ScanDateTime >= @StartDate
+      AND ScanDateTime < @EndDate
+      AND UPPER(LTRIM(RTRIM(ISNULL(ScanType, '')))) = 'TO';
+
+    -- Return single row with all totals
     SELECT
-        FromPlant = ISNULL(f.FromPlant, ''),
-        IssueTotal = ISNULL(f.IssueTotal, 0),
-        IssueRead = ISNULL(f.IssueRead, 0),
-        IssueNoRead = ISNULL(f.IssueNoRead, 0),
-        ToPlant = ISNULL(t.ToPlant, 'Pending'),
-        ReceiptTotal = ISNULL(t.ReceiptTotal, 0),
-        ReceiptRead = ISNULL(t.ReceiptRead, 0),
-        ReceiptNoRead = ISNULL(t.ReceiptNoRead, 0),
-        MatchedCount = 0,
-        PendingToCount = 0,
-        Deviation = ISNULL(f.IssueTotal, 0) - ISNULL(tl.ReceiptTotal, 0)
-    FROM FromSummary f
-    FULL OUTER JOIN ToSummary t
-        ON f.LaneKey = t.LaneKey
-    LEFT JOIN ToLaneTotals tl
-        ON tl.LaneKey = COALESCE(f.LaneKey, t.LaneKey)
-    ORDER BY
-        CASE COALESCE(f.LaneKey, t.LaneKey)
-            WHEN 'TOP' THEN 1
-            WHEN 'BELOW' THEN 2
-            ELSE 99
-        END,
-        COALESCE(f.FromPlant, t.ToPlant);
+        TotalProduction = ISNULL(@TotalProduction, 0),
+        IssueRead = ISNULL(@IssueRead, 0),
+        IssueNoRead = ISNULL(@IssueNoRead, 0),
+        ReceiptRead = ISNULL(@ReceiptRead, 0),
+        ReceiptNoRead = ISNULL(@ReceiptNoRead, 0);
 END
 GO
