@@ -30,9 +30,9 @@ namespace Web.Services
             return await _repository.GetDailyTransferReportAsync(date).ConfigureAwait(false);
         }
 
-        public async Task<List<ShiftReportRecord>> GetShiftReportAsync(DateTime? date)
+        public async Task<List<ShiftReportRecord>> GetShiftReportAsync(DateTime? date, bool consolidated = false)
         {
-            return await _repository.GetShiftReportAsync(date).ConfigureAwait(false);
+            return await _repository.GetShiftReportAsync(date, consolidated).ConfigureAwait(false);
         }
 
         public async Task<List<OverallTransferByProductionOrderRecord>> GetOverallTransferByProductionOrderAsync(DateTime? date)

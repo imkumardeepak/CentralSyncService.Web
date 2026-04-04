@@ -1,6 +1,6 @@
 -- =============================================
 -- Stored Procedure: sp_GetShiftReport
--- Simple version with GROUP BY in main query
+-- CTE-based version with Shift Wise and Consolidated modes
 -- =============================================
 
 IF OBJECT_ID('dbo.sp_GetShiftReport', 'P') IS NOT NULL
@@ -8,7 +8,8 @@ IF OBJECT_ID('dbo.sp_GetShiftReport', 'P') IS NOT NULL
 GO
 
 CREATE PROCEDURE dbo.sp_GetShiftReport
-    @Date DATE = NULL
+    @Date DATE = NULL,
+    @Consolidated BIT = 0
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -17,29 +18,50 @@ BEGIN
     DECLARE @ProdStart DATETIME2 = DATEADD(HOUR, 7, CAST(@Date AS DATETIME2));
     DECLARE @ProdEnd DATETIME2 = DATEADD(DAY, 1, @ProdStart);
 
-    SELECT 
+    ;WITH ScanData AS (
+        SELECT  
+            s.OrderNumber,
+            s.Batch,
+            s.MaterialCode,
+            s.ScanDateTime,
+            s.ScanType,
+            ISNULL(s.Shift, 
+                CASE 
+                    WHEN DATEPART(HOUR, s.ScanDateTime) BETWEEN 7 AND 14 THEN 'A'
+                    WHEN DATEPART(HOUR, s.ScanDateTime) BETWEEN 15 AND 21 THEN 'B'
+                    ELSE 'C'
+                END
+            ) AS Shift
+        FROM dbo.SorterScans_Sync s WITH(NOLOCK)
+        WHERE s.ScanDateTime >= @ProdStart 
+          AND s.ScanDateTime < @ProdEnd 
+          AND s.ScanType = 'TO'
+    )
+    SELECT  
         ISNULL(po.Material, '') AS SAPCode,
         ISNULL(po.MaterialDescription, 'Unknown Product') AS ProductName,
-        s.Batch AS BatchNo,
+        sd.Batch AS BatchNo,
         @Date AS ReportDate,
-        ISNULL(s.Shift, 
-            CASE WHEN DATEPART(HOUR, s.ScanDateTime) BETWEEN 7 AND 14 THEN 'A'
-                 WHEN DATEPART(HOUR, s.ScanDateTime) BETWEEN 15 AND 21 THEN 'B'
-                 ELSE 'C'
-            END
-        ) AS Shift,
+        CASE WHEN @Consolidated = 1 THEN 'ALL' ELSE sd.Shift END AS Shift,
         COUNT(*) AS TotalQtyInCs,
         CAST(COUNT(*) * (ISNULL(mm.NetWeight, 0) / 1000.0) AS DECIMAL(18,3)) AS TotalQtyInMT
-    FROM dbo.SorterScans_Sync s WITH(NOLOCK)
-    LEFT JOIN dbo.ProductionOrder po WITH(NOLOCK) ON s.OrderNumber = po.OrderNo AND s.Batch = po.Batch
-    LEFT JOIN dbo.MaterialMasters mm WITH(NOLOCK) ON s.MaterialCode = mm.ProdInspMemo
-    WHERE s.ScanDateTime >= @ProdStart AND s.ScanDateTime < @ProdEnd AND s.ScanType = 'TO'
-    GROUP BY 
-        po.Material, po.MaterialDescription, s.Batch, s.Shift,
-        DATEPART(HOUR, s.ScanDateTime), mm.NetWeight
-    ORDER BY Shift, ProductName, BatchNo;
+    FROM ScanData sd
+    LEFT JOIN dbo.ProductionOrder po WITH(NOLOCK) 
+        ON sd.OrderNumber = po.OrderNo AND sd.Batch = po.Batch
+    LEFT JOIN dbo.MaterialMasters mm WITH(NOLOCK) 
+        ON sd.MaterialCode = mm.ProdInspMemo
+    GROUP BY  
+        po.Material, 
+        po.MaterialDescription, 
+        sd.Batch, 
+        CASE WHEN @Consolidated = 1 THEN 'ALL' ELSE sd.Shift END, 
+        mm.NetWeight
+    ORDER BY 
+        CASE WHEN @Consolidated = 1 THEN 'ALL' ELSE sd.Shift END, 
+        ProductName, 
+        BatchNo;
 END
 GO
 
-PRINT 'Procedure sp_GetShiftReport updated - SIMPLE VERSION';
+PRINT 'Procedure sp_GetShiftReport updated - WITH CONSOLIDATED OPTION';
 GO

@@ -8,14 +8,17 @@ namespace Web.Services
 {
     public class ExcelExportService
     {
-        public byte[] ExportShiftReport(List<Core.DTOs.ShiftReportRecord> data, DateTime selectedDate)
+        public byte[] ExportShiftReport(List<Core.DTOs.ShiftReportRecord> data, DateTime selectedDate, bool consolidated = false)
         {
             using var workbook = new XLWorkbook();
             var worksheet = workbook.Worksheets.Add("Shift Report");
 
-            ApplyHeaderStyle(worksheet, "Shift Report", selectedDate);
+            var reportTitle = consolidated ? "Shift Report - Consolidated" : "Shift Report";
+            ApplyHeaderStyle(worksheet, reportTitle, selectedDate);
 
-            var headers = new[] { "SAP Code", "Product Name", "Batch No", "Date", "Shift", "Total Qty (Cs)", "Total Qty (MT)" };
+            var headers = consolidated
+                ? new[] { "SAP Code", "Product Name", "Batch No", "Date", "Total Qty (Cs)", "Total Qty (MT)" }
+                : new[] { "SAP Code", "Product Name", "Batch No", "Date", "Shift", "Total Qty (Cs)", "Total Qty (MT)" };
             var headerRow = worksheet.Row(4);
             for (int i = 0; i < headers.Length; i++)
             {
@@ -31,11 +34,20 @@ namespace Web.Services
                 worksheet.Cell(row, 2).Value = item.ProductName;
                 worksheet.Cell(row, 3).Value = item.BatchNo;
                 worksheet.Cell(row, 4).Value = item.ReportDate.ToString("dd-MM-yyyy");
-                worksheet.Cell(row, 5).Value = item.Shift;
-                worksheet.Cell(row, 6).Value = item.TotalQtyInCs;
-                worksheet.Cell(row, 7).Value = item.TotalQtyInMT;
-
-                ApplyDataRowStyle(worksheet, row, 7);
+                
+                if (consolidated)
+                {
+                    worksheet.Cell(row, 5).Value = item.TotalQtyInCs;
+                    worksheet.Cell(row, 6).Value = item.TotalQtyInMT;
+                    ApplyDataRowStyle(worksheet, row, 6);
+                }
+                else
+                {
+                    worksheet.Cell(row, 5).Value = item.Shift;
+                    worksheet.Cell(row, 6).Value = item.TotalQtyInCs;
+                    worksheet.Cell(row, 7).Value = item.TotalQtyInMT;
+                    ApplyDataRowStyle(worksheet, row, 7);
+                }
                 row++;
             }
 
@@ -43,9 +55,17 @@ namespace Web.Services
             worksheet.Column(2).Width = 35;
             worksheet.Column(3).Width = 15;
             worksheet.Column(4).Width = 12;
-            worksheet.Column(5).Width = 10;
-            worksheet.Column(6).Width = 15;
-            worksheet.Column(7).Width = 15;
+            if (consolidated)
+            {
+                worksheet.Column(5).Width = 15;
+                worksheet.Column(6).Width = 15;
+            }
+            else
+            {
+                worksheet.Column(5).Width = 10;
+                worksheet.Column(6).Width = 15;
+                worksheet.Column(7).Width = 15;
+            }
 
             using var stream = new MemoryStream();
             workbook.SaveAs(stream);

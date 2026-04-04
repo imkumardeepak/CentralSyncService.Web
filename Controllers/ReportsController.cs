@@ -77,20 +77,22 @@ namespace Web.Controllers
         }
 
         // Shift Report
-        public async Task<IActionResult> ShiftReport(DateTime? date, string? shift)
+        public async Task<IActionResult> ShiftReport(DateTime? date, string? shift, bool? consolidated)
         {
             try
             {
                 var searchDate = date ?? DateTime.Today;
-                var records = await _reportingRepository.GetShiftReportAsync(searchDate).ConfigureAwait(false);
+                var isConsolidated = consolidated ?? false;
+                var records = await _reportingRepository.GetShiftReportAsync(searchDate, isConsolidated).ConfigureAwait(false);
                 
-                if (!string.IsNullOrEmpty(shift) && shift != "ALL")
+                if (!isConsolidated && !string.IsNullOrEmpty(shift) && shift != "ALL")
                 {
                     records = records.Where(r => r.Shift == shift).ToList();
                 }
                 
                 ViewBag.Date = searchDate;
                 ViewBag.Shift = shift ?? "ALL";
+                ViewBag.Consolidated = isConsolidated;
                 return View(records);
             }
             catch (Exception ex)
@@ -122,23 +124,26 @@ namespace Web.Controllers
 
         #region Excel Export Actions
 
-        public async Task<IActionResult> ExportShiftReportExcel(DateTime? date, string? shift)
+        public async Task<IActionResult> ExportShiftReportExcel(DateTime? date, string? shift, bool? consolidated)
         {
             try
             {
                 var searchDate = date ?? DateTime.Today;
-                var records = await _reportingRepository.GetShiftReportAsync(searchDate).ConfigureAwait(false);
+                var isConsolidated = consolidated ?? false;
+                var records = await _reportingRepository.GetShiftReportAsync(searchDate, isConsolidated).ConfigureAwait(false);
                 
-                if (!string.IsNullOrEmpty(shift) && shift != "ALL")
+                if (!isConsolidated && !string.IsNullOrEmpty(shift) && shift != "ALL")
                 {
                     records = records.Where(r => r.Shift == shift).ToList();
                 }
                 
-                var fileName = string.IsNullOrEmpty(shift) || shift == "ALL"
-                    ? $"Shift_Report_{searchDate:yyyy-MM-dd}.xlsx"
-                    : $"Shift_Report_{searchDate:yyyy-MM-dd}_{shift}.xlsx";
+                var fileName = isConsolidated
+                    ? $"Shift_Report_Consolidated_{searchDate:yyyy-MM-dd}.xlsx"
+                    : (string.IsNullOrEmpty(shift) || shift == "ALL"
+                        ? $"Shift_Report_{searchDate:yyyy-MM-dd}.xlsx"
+                        : $"Shift_Report_{searchDate:yyyy-MM-dd}_{shift}.xlsx");
                     
-                var fileBytes = _excelExportService.ExportShiftReport(records, searchDate);
+                var fileBytes = _excelExportService.ExportShiftReport(records, searchDate, isConsolidated);
                 return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
             }
             catch (Exception ex)

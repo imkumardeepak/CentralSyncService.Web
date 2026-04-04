@@ -20,7 +20,7 @@ namespace Web.Infrastructure.Repositories
                 ?? throw new InvalidOperationException("Central DB connection string is not configured.");
         }
 
-        public async Task<List<ShiftReportRecord>> GetShiftReportAsync(DateTime? date)
+        public async Task<List<ShiftReportRecord>> GetShiftReportAsync(DateTime? date, bool consolidated = false)
         {
             var result = new List<ShiftReportRecord>();
 
@@ -32,6 +32,7 @@ namespace Web.Infrastructure.Repositories
                 {
                     command.CommandType = CommandType.StoredProcedure;
                     command.Parameters.AddWithValue("@Date", (object?)date ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@Consolidated", consolidated);
 
                     using (var reader = await command.ExecuteReaderAsync().ConfigureAwait(false))
                     {
