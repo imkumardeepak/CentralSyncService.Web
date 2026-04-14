@@ -72,12 +72,13 @@ namespace Web.Services
             return stream.ToArray();
         }
 
-        public byte[] ExportDailyTransfer(List<Core.DTOs.OverallDailyTransferRecord> data, DateTime selectedDate)
+        public byte[] ExportDailyTransfer(List<Core.DTOs.OverallDailyTransferRecord> data, DateTime fromDate, DateTime toDate)
         {
             using var workbook = new XLWorkbook();
             var worksheet = workbook.Worksheets.Add("Daily Transfer");
 
-            ApplyHeaderStyle(worksheet, "Daily Transfer Summary", selectedDate);
+            var title = $"Daily Transfer Summary ({fromDate:yyyy-MM-dd} to {toDate:yyyy-MM-dd})";
+            ApplyHeaderStyle(worksheet, title, fromDate);
 
             // Main headers
             var headers1 = new[] { "Issue (FROM)", "", "", "Receipt (TO)", "", "Deviation" };

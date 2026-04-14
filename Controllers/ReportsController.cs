@@ -58,14 +58,16 @@ namespace Web.Controllers
         }
 
         // Daily Transfer Report
-        public async Task<IActionResult> DailyTransfer(DateTime? date)
+        public async Task<IActionResult> DailyTransfer(DateTime? fromDate, DateTime? toDate)
         {
             try
             {
-                var searchDate = date ?? DateTime.Today;
-                var records = await _reportingRepository.GetDailyTransferReportAsync(searchDate).ConfigureAwait(false);
+                var searchFromDate = fromDate ?? DateTime.Today;
+                var searchToDate = toDate ?? DateTime.Today;
+                var records = await _reportingRepository.GetDailyTransferReportAsync(searchFromDate, searchToDate).ConfigureAwait(false);
                 
-                ViewBag.Date = searchDate;
+                ViewBag.FromDate = searchFromDate;
+                ViewBag.ToDate = searchToDate;
                 return View(records);
             }
             catch (Exception ex)
@@ -174,14 +176,15 @@ namespace Web.Controllers
             }
         }
 
-        public async Task<IActionResult> ExportDailyTransferExcel(DateTime? date)
+        public async Task<IActionResult> ExportDailyTransferExcel(DateTime? fromDate, DateTime? toDate)
         {
             try
             {
-                var searchDate = date ?? DateTime.Today;
-                var records = await _reportingRepository.GetDailyTransferReportAsync(searchDate).ConfigureAwait(false);
-                var fileBytes = _excelExportService.ExportDailyTransfer(records, searchDate);
-                var fileName = $"Daily_Transfer_{searchDate:yyyy-MM-dd}.xlsx";
+                var searchFromDate = fromDate ?? DateTime.Today;
+                var searchToDate = toDate ?? DateTime.Today;
+                var records = await _reportingRepository.GetDailyTransferReportAsync(searchFromDate, searchToDate).ConfigureAwait(false);
+                var fileBytes = _excelExportService.ExportDailyTransfer(records, searchFromDate, searchToDate);
+                var fileName = $"Daily_Transfer_{searchFromDate:yyyy-MM-dd}_to_{searchToDate:yyyy-MM-dd}.xlsx";
                 return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
             }
             catch (Exception ex)

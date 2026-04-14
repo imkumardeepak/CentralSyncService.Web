@@ -97,7 +97,7 @@ namespace Web.Infrastructure.Repositories
             return result;
         }
 
-        public async Task<List<OverallDailyTransferRecord>> GetDailyTransferReportAsync(DateTime? date)
+        public async Task<List<OverallDailyTransferRecord>> GetDailyTransferReportAsync(DateTime? fromDate, DateTime? toDate)
         {
             var result = new List<OverallDailyTransferRecord>();
 
@@ -108,11 +108,12 @@ namespace Web.Infrastructure.Repositories
                 using (var command = new SqlCommand("sp_GetDailyTransferReport", connection))
                 {
                     command.CommandType = CommandType.StoredProcedure;
-                    var selectedDate = (date ?? DateTime.Today).Date;
+                    var startDate = (fromDate ?? DateTime.Today).Date;
+                    var endDate = (toDate ?? DateTime.Today).Date;
                     
-                    // Production day: 07:00 on selected date to 07:00 next day
-                    command.Parameters.Add("@StartDate", SqlDbType.DateTime2).Value = selectedDate.AddHours(7);
-                    command.Parameters.Add("@EndDate", SqlDbType.DateTime2).Value = selectedDate.AddDays(1).AddHours(7);
+                    // Production day: 07:00 on fromDate to 07:00 next day of toDate
+                    command.Parameters.Add("@StartDate", SqlDbType.DateTime2).Value = startDate.AddHours(7);
+                    command.Parameters.Add("@EndDate", SqlDbType.DateTime2).Value = endDate.AddDays(1).AddHours(7);
 
                     using (var reader = await command.ExecuteReaderAsync().ConfigureAwait(false))
                     {
