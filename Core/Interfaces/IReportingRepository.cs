@@ -1,3 +1,8 @@
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Web.Core.DTOs;
+
 namespace Web.Core.Interfaces
 {
     public interface IReportingRepository
