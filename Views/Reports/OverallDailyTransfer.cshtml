@@ -1,6 +1,6 @@
 @model List<Web.Core.DTOs.OverallDailyTransferRecord>
 @{
-    ViewData["Title"] = "Overall Daily Transfer";
+    ViewData["Title"] = "Carton Transfer Summary";
     var fromDate = ViewBag.FromDate as DateTime? ?? DateTime.Today.AddDays(-7);
     var toDate = ViewBag.ToDate as DateTime? ?? DateTime.Today;
 }
@@ -10,7 +10,7 @@
     <div class="mb-8">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-                <h1 class="text-2xl font-bold text-gray-900">Overall Daily Transfer</h1>
+                <h1 class="text-2xl font-bold text-gray-900">Carton Transfer Summary</h1>
                 <p class="mt-1 text-sm text-gray-500">Cumulative transfer statistics across date ranges</p>
             </div>
             <div class="flex items-center gap-3">
@@ -63,7 +63,7 @@
     <!-- Data Table -->
     <div class="bg-white rounded-xl shadow-card overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-900">Daily Transfer Summary</h2>
+            <h2 class="text-lg font-semibold text-gray-900">Carton Transfer Summary</h2>
             <p class="text-sm text-gray-500">Showing data from @fromDate.ToString("MMMM dd, yyyy") 00:00 to @toDate.ToString("MMMM dd, yyyy") 23:59</p>
         </div>
 

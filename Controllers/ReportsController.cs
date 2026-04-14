@@ -72,7 +72,7 @@ namespace Web.Controllers
             {
                 ViewBag.Error = $"Error: {ex.Message}";
                 ViewBag.StackTrace = ex.StackTrace;
-                return View(new List<DailyTransferReportRecord>());
+                return View(new List<OverallDailyTransferRecord>());
             }
         }
 

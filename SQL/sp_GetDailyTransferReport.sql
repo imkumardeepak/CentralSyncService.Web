@@ -1,8 +1,7 @@
 -- =============================================
--- Author:      System (Refactored)
--- Description: Gets daily transfer report showing overall production vs scan totals
--- Shows single row with: Total Production (BarcodePrint), FROM scans, TO scans
--- Uses Production Day logic (07:00 to 06:59 next day)
+-- Author:      System
+-- Description: Gets daily transfer summary totals (single row)
+-- Time Range: 07:00 AM to 06:59 AM next day
 -- =============================================
 
 IF OBJECT_ID('dbo.sp_GetDailyTransferReport', 'P') IS NOT NULL
@@ -16,64 +15,21 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    -- Get total production count from BarcodePrint for HF plant
-    DECLARE @TotalProduction INT;
-    SELECT @TotalProduction = COUNT(*)
-    FROM dbo.BarcodePrint WITH(NOLOCK)
-    WHERE EntryDate >= @StartDate
-      AND EntryDate < @EndDate
-      AND NewPlant = 'HF';
+    DECLARE @ReportDate DATE = CAST(@StartDate AS DATE);
 
-    -- Get overall FROM scan totals (no lane grouping)
-    DECLARE @IssueRead INT, @IssueNoRead INT;
     SELECT 
-        @IssueRead = SUM(CASE 
-            WHEN IsRead = 1 
-                 AND UPPER(LTRIM(RTRIM(ISNULL(Barcode, '')))) <> 'NOREAD'
-                THEN 1 
-            ELSE 0 
-        END),
-        @IssueNoRead = SUM(CASE 
-            WHEN NOT (IsRead = 1 
-                 AND UPPER(LTRIM(RTRIM(ISNULL(Barcode, '')))) <> 'NOREAD')
-                THEN 1 
-            ELSE 0 
-        END)
+        @ReportDate AS ReportDate,
+        ISNULL(SUM(CASE WHEN UPPER(ScanType) = 'FROM' THEN 1 ELSE 0 END), 0) AS IssueTotal,
+        ISNULL(SUM(CASE WHEN UPPER(ScanType) = 'FROM' AND IsRead = 1 AND UPPER(LTRIM(RTRIM(ISNULL(Barcode, '')))) <> 'NOREAD' THEN 1 ELSE 0 END), 0) AS IssueRead,
+        ISNULL(SUM(CASE WHEN UPPER(ScanType) = 'FROM' AND (IsRead = 0 OR UPPER(LTRIM(RTRIM(ISNULL(Barcode, '')))) = 'NOREAD') THEN 1 ELSE 0 END), 0) AS IssueNoRead,
+        ISNULL(SUM(CASE WHEN UPPER(ScanType) = 'TO' THEN 1 ELSE 0 END), 0) AS ReceiptTotal,
+        ISNULL(SUM(CASE WHEN UPPER(ScanType) = 'TO' AND IsRead = 1 AND UPPER(LTRIM(RTRIM(ISNULL(Barcode, '')))) <> 'NOREAD' THEN 1 ELSE 0 END), 0) AS ReceiptRead,
+        ISNULL(SUM(CASE WHEN UPPER(ScanType) = 'TO' AND (IsRead = 0 OR UPPER(LTRIM(RTRIM(ISNULL(Barcode, '')))) = 'NOREAD') THEN 1 ELSE 0 END), 0) AS ReceiptNoRead,
+        ISNULL(SUM(CASE WHEN UPPER(ScanType) = 'FROM' THEN 1 ELSE 0 END), 0) - ISNULL(SUM(CASE WHEN UPPER(ScanType) = 'TO' THEN 1 ELSE 0 END), 0) AS Deviation
     FROM dbo.SorterScans_Sync WITH(NOLOCK)
-    WHERE ScanDateTime >= @StartDate
-      AND ScanDateTime < @EndDate
-      AND UPPER(LTRIM(RTRIM(ISNULL(ScanType, '')))) = 'FROM';
-
-    -- Get overall TO scan totals (no lane grouping)
-    DECLARE @ReceiptRead INT, @ReceiptNoRead INT;
-    SELECT 
-        @ReceiptRead = SUM(CASE 
-            WHEN IsRead = 1 
-                 AND UPPER(LTRIM(RTRIM(ISNULL(Barcode, '')))) <> 'NOREAD'
-                THEN 1 
-            ELSE 0 
-        END),
-        @ReceiptNoRead = SUM(CASE 
-            WHEN NOT (IsRead = 1 
-                 AND UPPER(LTRIM(RTRIM(ISNULL(Barcode, '')))) <> 'NOREAD')
-                THEN 1 
-            ELSE 0 
-        END)
-    FROM dbo.SorterScans_Sync WITH(NOLOCK)
-    WHERE ScanDateTime >= @StartDate
-      AND ScanDateTime < @EndDate
-      AND UPPER(LTRIM(RTRIM(ISNULL(ScanType, '')))) = 'TO';
-
-    -- Calculate total FROM scans for deviation
-    DECLARE @TotalIssueScans INT = ISNULL(@IssueRead, 0) + ISNULL(@IssueNoRead, 0);
-    
-    -- Return single row with all totals
-    SELECT
-        TotalProduction = ISNULL(@TotalProduction, 0),
-        IssueRead = ISNULL(@IssueRead, 0),
-        IssueNoRead = ISNULL(@IssueNoRead, 0),
-        ReceiptRead = ISNULL(@ReceiptRead, 0),
-        ReceiptNoRead = ISNULL(@ReceiptNoRead, 0),
-        Deviation = ISNULL(@TotalProduction, 0) - @TotalIssueScans;
+    WHERE ScanDateTime >= @StartDate AND ScanDateTime < @EndDate;
 END
+GO
+
+PRINT 'Procedure sp_GetDailyTransferReport updated - simple totals version';
 GO

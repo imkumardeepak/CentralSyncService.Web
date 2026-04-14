@@ -72,7 +72,7 @@ namespace Web.Services
             return stream.ToArray();
         }
 
-        public byte[] ExportDailyTransfer(List<Core.DTOs.DailyTransferReportRecord> data, DateTime selectedDate)
+        public byte[] ExportDailyTransfer(List<Core.DTOs.OverallDailyTransferRecord> data, DateTime selectedDate)
         {
             using var workbook = new XLWorkbook();
             var worksheet = workbook.Worksheets.Add("Daily Transfer");
@@ -80,22 +80,13 @@ namespace Web.Services
             ApplyHeaderStyle(worksheet, "Daily Transfer Summary", selectedDate);
 
             // Main headers
-            var headers1 = new[] { "Total Production\n(BarcodePrint)", "FROM Plant (Issue)", "", "TO Plant (Receipt)", "", "Deviation" };
+            var headers1 = new[] { "Issue (FROM)", "", "", "Receipt (TO)", "", "Deviation" };
             var headerRow1 = worksheet.Row(4);
             for (int i = 0; i < headers1.Length; i++)
             {
                 var cell = headerRow1.Cell(i + 1);
                 cell.Value = headers1[i];
-                if (i == 0)
-                {
-                    cell.Style.Font.Bold = true;
-                    cell.Style.Font.FontSize = 11;
-                    cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#A855F7");
-                    cell.Style.Font.FontColor = XLColor.White;
-                    cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                    cell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
-                }
-                else if (i == 1 || i == 2)
+                if (i == 0 || i == 1 || i == 2)
                 {
                     cell.Style.Font.Bold = true;
                     cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#3B82F6");
@@ -120,32 +111,22 @@ namespace Web.Services
             }
             
             // Merge cells for grouped headers
-            worksheet.Range(4, 2, 4, 3).Merge();  // FROM Plant (Issue)
-            worksheet.Range(4, 4, 4, 5).Merge();  // TO Plant (Receipt)
+            worksheet.Range(4, 1, 4, 3).Merge();  // Issue (FROM)
+            worksheet.Range(4, 4, 4, 5).Merge();  // Receipt (TO)
 
             // Sub-headers
-            var subHeaders = new[] { "", "Read Count", "No Read", "Read Count", "No Read", "" };
+            var subHeaders = new[] { "Total", "Read", "No Read", "Total", "Read", "No Read", "Deviation" };
             var subHeaderRow = worksheet.Row(5);
             for (int i = 0; i < subHeaders.Length; i++)
             {
                 var cell = subHeaderRow.Cell(i + 1);
                 cell.Value = subHeaders[i];
-                if (i == 0)
-                {
-                    cell.Style.Font.Bold = true;
-                    cell.Style.Font.FontSize = 11;
-                    cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#A855F7");
-                    cell.Style.Font.FontColor = XLColor.White;
-                    cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                    cell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
-                }
-                else if (i == 5)
+                if (i == 6)
                 {
                     cell.Style.Font.Bold = true;
                     cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#F59E0B");
                     cell.Style.Font.FontColor = XLColor.White;
                     cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                    cell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
                 }
                 else
                 {
@@ -156,50 +137,59 @@ namespace Web.Services
             int dataRow = 6;
             foreach (var item in data)
             {
-                // Total Production
-                worksheet.Cell(dataRow, 1).Value = item.TotalProduction;
+                // Issue Total
+                worksheet.Cell(dataRow, 1).Value = item.IssueTotal;
                 worksheet.Cell(dataRow, 1).Style.Font.Bold = true;
                 worksheet.Cell(dataRow, 1).Style.Font.FontSize = 14;
-                worksheet.Cell(dataRow, 1).Style.Font.FontColor = XLColor.FromHtml("#6B21A8");
-                worksheet.Cell(dataRow, 1).Style.Fill.BackgroundColor = XLColor.FromHtml("#FAF5FF");
+                worksheet.Cell(dataRow, 1).Style.Font.FontColor = XLColor.FromHtml("#1D4ED8");
                 worksheet.Cell(dataRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                 
-                // FROM Plant
+                // Issue Read
                 worksheet.Cell(dataRow, 2).Value = item.IssueRead;
                 worksheet.Cell(dataRow, 2).Style.Font.FontSize = 12;
                 worksheet.Cell(dataRow, 2).Style.Font.FontColor = XLColor.FromHtml("#059669");
                 worksheet.Cell(dataRow, 2).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                 
+                // Issue No Read
                 worksheet.Cell(dataRow, 3).Value = item.IssueNoRead;
                 worksheet.Cell(dataRow, 3).Style.Font.FontSize = 12;
                 worksheet.Cell(dataRow, 3).Style.Font.FontColor = XLColor.FromHtml("#DC2626");
                 worksheet.Cell(dataRow, 3).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                 
-                // TO Plant
-                worksheet.Cell(dataRow, 4).Value = item.ReceiptRead;
-                worksheet.Cell(dataRow, 4).Style.Font.FontSize = 12;
-                worksheet.Cell(dataRow, 4).Style.Font.FontColor = XLColor.FromHtml("#059669");
+                // Receipt Total
+                worksheet.Cell(dataRow, 4).Value = item.ReceiptTotal;
+                worksheet.Cell(dataRow, 4).Style.Font.Bold = true;
+                worksheet.Cell(dataRow, 4).Style.Font.FontSize = 14;
+                worksheet.Cell(dataRow, 4).Style.Font.FontColor = XLColor.FromHtml("#047857");
                 worksheet.Cell(dataRow, 4).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                 
-                worksheet.Cell(dataRow, 5).Value = item.ReceiptNoRead;
+                // Receipt Read
+                worksheet.Cell(dataRow, 5).Value = item.ReceiptRead;
                 worksheet.Cell(dataRow, 5).Style.Font.FontSize = 12;
-                worksheet.Cell(dataRow, 5).Style.Font.FontColor = XLColor.FromHtml("#DC2626");
+                worksheet.Cell(dataRow, 5).Style.Font.FontColor = XLColor.FromHtml("#059669");
                 worksheet.Cell(dataRow, 5).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                 
-                // Deviation
-                worksheet.Cell(dataRow, 6).Value = item.Deviation;
-                worksheet.Cell(dataRow, 6).Style.Font.Bold = true;
+                // Receipt No Read
+                worksheet.Cell(dataRow, 6).Value = item.ReceiptNoRead;
                 worksheet.Cell(dataRow, 6).Style.Font.FontSize = 12;
+                worksheet.Cell(dataRow, 6).Style.Font.FontColor = XLColor.FromHtml("#DC2626");
                 worksheet.Cell(dataRow, 6).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                 
+                // Deviation
+                var deviationText = item.Deviation > 0 ? $"+{item.Deviation}" : item.Deviation.ToString();
+                worksheet.Cell(dataRow, 7).Value = deviationText;
+                worksheet.Cell(dataRow, 7).Style.Font.Bold = true;
+                worksheet.Cell(dataRow, 7).Style.Font.FontSize = 12;
+                worksheet.Cell(dataRow, 7).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                
                 if (item.Deviation > 0)
-                    worksheet.Cell(dataRow, 6).Style.Font.FontColor = XLColor.FromHtml("#059669");
+                    worksheet.Cell(dataRow, 7).Style.Font.FontColor = XLColor.FromHtml("#059669");
                 else if (item.Deviation < 0)
-                    worksheet.Cell(dataRow, 6).Style.Font.FontColor = XLColor.FromHtml("#DC2626");
+                    worksheet.Cell(dataRow, 7).Style.Font.FontColor = XLColor.FromHtml("#DC2626");
                 else
-                    worksheet.Cell(dataRow, 6).Style.Font.FontColor = XLColor.FromHtml("#374151");
+                    worksheet.Cell(dataRow, 7).Style.Font.FontColor = XLColor.FromHtml("#374151");
 
-                ApplyDataRowStyle(worksheet, dataRow, 6);
+                ApplyDataRowStyle(worksheet, dataRow, 7);
                 worksheet.Row(dataRow).Height = 25;
 
                 dataRow++;
@@ -209,9 +199,13 @@ namespace Web.Services
             worksheet.Column(1).Width = 25;
             worksheet.Column(2).Width = 15;
             worksheet.Column(3).Width = 15;
+            worksheet.Column(1).Width = 15;
+            worksheet.Column(2).Width = 15;
+            worksheet.Column(3).Width = 15;
             worksheet.Column(4).Width = 15;
             worksheet.Column(5).Width = 15;
             worksheet.Column(6).Width = 15;
+            worksheet.Column(7).Width = 15;
 
             using var stream = new MemoryStream();
             workbook.SaveAs(stream);

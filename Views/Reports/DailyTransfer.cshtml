@@ -1,4 +1,4 @@
-@model List<Web.Core.DTOs.DailyTransferReportRecord>
+@model List<Web.Core.DTOs.OverallDailyTransferRecord>
 @{
     ViewData["Title"] = "Daily Transfer Report";
     var selectedDate = ViewBag.Date as DateTime? ?? DateTime.Today;
@@ -13,13 +13,6 @@
                 <p class="mt-1 text-sm text-gray-500">View daily FROM and TO scan totals from the central sync table</p>
             </div>
             <div class="flex items-center gap-3">
-                <a href="@Url.Action("ExportDailyTransferExcel", "Reports", new { date = selectedDate })" 
-                   class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-green-600 border border-green-700 rounded-lg hover:bg-green-700 transition-all duration-200">
-                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
-                    Export Excel
-                </a>
                 <button type="button" onclick="exportToCSV()" 
                         class="inline-flex items-center px-3 py-2 text-sm font-medium text-neutral-600 bg-white border border-neutral-300 rounded-lg hover:bg-neutral-50 hover:border-neutral-400 transition-all duration-200">
                     <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -57,7 +50,7 @@
     <div class="bg-white rounded-xl shadow-card overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-200">
             <h2 class="text-lg font-semibold text-gray-900">Daily Transfer Summary</h2>
-            <p class="text-sm text-gray-500">Showing overall production and scan data from @selectedDate.ToString("MMMM dd, yyyy") 07:00 AM to @selectedDate.AddDays(1).ToString("MMMM dd, yyyy") 06:59 AM - HF Plant</p>
+            <p class="text-sm text-gray-500">Showing data from @selectedDate.ToString("MMMM dd, yyyy") 07:00 AM to @selectedDate.AddDays(1).ToString("MMMM dd, yyyy") 06:59 AM</p>
         </div>
 
         @if (Model.Any())
@@ -66,14 +59,11 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th rowspan="2" class="px-6 py-4 text-center text-sm font-bold text-purple-700 uppercase tracking-wider bg-purple-50 border-b border-purple-200">
-                                Total Production<br/>(BarcodePrint)
+                            <th colspan="3" class="px-6 py-3 text-center text-sm font-bold text-blue-700 uppercase tracking-wider bg-blue-50 border-b border-blue-200">
+                                Issue (FROM)
                             </th>
-                            <th colspan="2" class="px-6 py-3 text-center text-sm font-bold text-blue-700 uppercase tracking-wider bg-blue-50 border-b border-blue-200">
-                                Issue
-                            </th>
-                            <th colspan="2" class="px-6 py-3 text-center text-sm font-bold text-green-700 uppercase tracking-wider bg-green-50 border-b border-green-200">
-                                Receipt
+                            <th colspan="3" class="px-6 py-3 text-center text-sm font-bold text-green-700 uppercase tracking-wider bg-green-50 border-b border-green-200">
+                                Receipt (TO)
                             </th>
                             <th rowspan="2" class="px-6 py-4 text-center text-sm font-bold text-amber-700 uppercase tracking-wider bg-amber-50 border-b border-amber-200">
                                 Deviation
@@ -81,65 +71,38 @@
                         </tr>
                         <tr>
                             <!-- Issue Columns -->
-                            <th class="px-6 py-3 text-center text-xs font-medium text-green-600 uppercase tracking-wider">Read Count</th>
-                            <th class="px-6 py-3 text-center text-xs font-medium text-red-600 uppercase tracking-wider">No Read</th>
+                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Total Issue</th>
+                            <th class="px-6 py-3 text-center text-xs font-medium text-green-600 uppercase tracking-wider">Issue Read</th>
+                            <th class="px-6 py-3 text-center text-xs font-medium text-red-600 uppercase tracking-wider">Issue No Read</th>
                             
                             <!-- Receipt Columns -->
-                            <th class="px-6 py-3 text-center text-xs font-medium text-green-600 uppercase tracking-wider">Read Count</th>
-                            <th class="px-6 py-3 text-center text-xs font-medium text-red-600 uppercase tracking-wider">No Read</th>
+                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Total Receipt</th>
+                            <th class="px-6 py-3 text-center text-xs font-medium text-green-600 uppercase tracking-wider">Receipt Read</th>
+                            <th class="px-6 py-3 text-center text-xs font-medium text-red-600 uppercase tracking-wider">Receipt No Read</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         @foreach (var item in Model)
                         {
                             <tr class="hover:bg-gray-50 transition-colors">
-                                <!-- Total Production -->
-                                <td class="px-6 py-4 whitespace-nowrap text-2xl text-center font-bold text-purple-700 bg-purple-50">@item.TotalProduction</td>
-                                
                                 <!-- Issue -->
+                                <td class="px-6 py-4 whitespace-nowrap text-xl text-center font-bold text-blue-700">@item.IssueTotal</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-xl text-center text-green-600 font-semibold">@item.IssueRead</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-xl text-center text-red-600 font-semibold">@item.IssueNoRead</td>
                                 
                                 <!-- Receipt -->
+                                <td class="px-6 py-4 whitespace-nowrap text-xl text-center font-bold text-green-700">@item.ReceiptTotal</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-xl text-center text-green-600 font-semibold">@item.ReceiptRead</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-xl text-center text-red-600 font-semibold">@item.ReceiptNoRead</td>
                                 
-                                <!-- Deviation: (IssueRead + IssueNoRead) - (ReceiptRead + ReceiptNoRead) -->
-                                @{
-                                    var deviation = (item.IssueRead + item.IssueNoRead) - (item.ReceiptRead + item.ReceiptNoRead);
-                                }
-                                <td class="px-6 py-4 whitespace-nowrap text-xl text-center font-bold @(deviation == 0 ? "text-gray-900" : deviation > 0 ? "text-green-600" : "text-red-600")">
-                                    @deviation
+                                <!-- Deviation -->
+                                <td class="px-6 py-4 whitespace-nowrap text-xl text-center font-bold @(item.Deviation == 0 ? "text-gray-900" : item.Deviation > 0 ? "text-green-600" : "text-red-600")">
+                                    @(item.Deviation > 0 ? $"+{item.Deviation}" : item.Deviation.ToString())
                                 </td>
                             </tr>
                         }
                     </tbody>
                 </table>
-            </div>
-            
-            <!-- Summary Cards -->
-            <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    @{
-                        var record = Model.First();
-                        var totalIssueScans = record.IssueRead + record.IssueNoRead;
-                        var totalReceiptScans = record.ReceiptRead + record.ReceiptNoRead;
-                    }
-                    <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                        <div class="text-sm text-blue-600 font-medium mb-1">Total Issue Scans</div>
-                        <div class="text-2xl font-bold text-blue-900">@totalIssueScans</div>
-                    </div>
-                    <div class="bg-green-50 rounded-lg p-4 border border-green-200">
-                        <div class="text-sm text-green-600 font-medium mb-1">Total Receipt Scans</div>
-                        <div class="text-2xl font-bold text-green-900">@totalReceiptScans</div>
-                    </div>
-                    <div class="bg-amber-50 rounded-lg p-4 border border-amber-200">
-                        <div class="text-sm text-amber-600 font-medium mb-1">Scan Coverage</div>
-                        <div class="text-2xl font-bold text-amber-900">
-                            @(record.TotalProduction > 0 ? $"{(totalIssueScans * 100.0 / record.TotalProduction):F1}%" : "N/A")
-                        </div>
-                    </div>
-                </div>
             </div>
         }
         else
@@ -149,7 +112,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
                 <h3 class="text-lg font-medium text-gray-900 mb-1">No Data Found</h3>
-                <p class="text-gray-500">No production or scan records found for the selected date.</p>
+                <p class="text-gray-500">No scan records found for the selected date.</p>
             </div>
         }
     </div>
