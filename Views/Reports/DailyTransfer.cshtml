@@ -59,7 +59,7 @@
     <div class="bg-white rounded-xl shadow-card overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-200">
             <h2 class="text-lg font-semibold text-gray-900">Daily Transfer Summary</h2>
-            <p class="text-sm text-gray-500">@Model.FirstOrDefault()?.ReportDate</p>
+            <p class="text-sm text-gray-500">Showing data from @selectedFromDate.ToString("dd-MM-yyyy") 07:00 to @selectedToDate.AddDays(1).ToString("dd-MM-yyyy") 06:59</p>
         </div>
 
         @if (Model.Any())
@@ -68,49 +68,69 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th colspan="3" class="px-6 py-3 text-center text-sm font-bold text-blue-700 uppercase tracking-wider bg-blue-50 border-b border-blue-200">
+                            <th rowspan="2" class="px-4 py-3 text-center text-sm font-bold text-gray-700 uppercase tracking-wider bg-gray-100 border-b border-r border-gray-200">
+                                Date
+                            </th>
+                            <th colspan="3" class="px-4 py-3 text-center text-sm font-bold text-blue-700 uppercase tracking-wider bg-blue-50 border-b border-blue-200">
                                 Issue (FROM)
                             </th>
-                            <th colspan="3" class="px-6 py-3 text-center text-sm font-bold text-green-700 uppercase tracking-wider bg-green-50 border-b border-green-200">
+                            <th colspan="3" class="px-4 py-3 text-center text-sm font-bold text-green-700 uppercase tracking-wider bg-green-50 border-b border-green-200">
                                 Receipt (TO)
                             </th>
-                            <th rowspan="2" class="px-6 py-4 text-center text-sm font-bold text-amber-700 uppercase tracking-wider bg-amber-50 border-b border-amber-200">
+                            <th rowspan="2" class="px-4 py-3 text-center text-sm font-bold text-amber-700 uppercase tracking-wider bg-amber-50 border-b border-amber-200">
                                 Deviation
                             </th>
                         </tr>
                         <tr>
                             <!-- Issue Columns -->
-                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Total Issue</th>
-                            <th class="px-6 py-3 text-center text-xs font-medium text-green-600 uppercase tracking-wider">Issue Read</th>
-                            <th class="px-6 py-3 text-center text-xs font-medium text-red-600 uppercase tracking-wider">Issue No Read</th>
+                            <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r">Total</th>
+                            <th class="px-4 py-2 text-center text-xs font-medium text-green-600 uppercase tracking-wider">Read</th>
+                            <th class="px-4 py-2 text-center text-xs font-medium text-red-600 uppercase tracking-wider border-r">No Read</th>
                             
                             <!-- Receipt Columns -->
-                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Total Receipt</th>
-                            <th class="px-6 py-3 text-center text-xs font-medium text-green-600 uppercase tracking-wider">Receipt Read</th>
-                            <th class="px-6 py-3 text-center text-xs font-medium text-red-600 uppercase tracking-wider">Receipt No Read</th>
+                            <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                            <th class="px-4 py-2 text-center text-xs font-medium text-green-600 uppercase tracking-wider">Read</th>
+                            <th class="px-4 py-2 text-center text-xs font-medium text-red-600 uppercase tracking-wider">No Read</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         @foreach (var item in Model)
                         {
                             <tr class="hover:bg-gray-50 transition-colors">
+                                <!-- Date -->
+                                <td class="px-4 py-3 whitespace-nowrap text-sm font-bold text-gray-800 border-r">@item.ReportDate</td>
+                                
                                 <!-- Issue -->
-                                <td class="px-6 py-4 whitespace-nowrap text-xl text-center font-bold text-blue-700">@item.IssueTotal</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-xl text-center text-green-600 font-semibold">@item.IssueRead</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-xl text-center text-red-600 font-semibold">@item.IssueNoRead</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-base text-center font-semibold text-blue-700 border-r">@item.IssueTotal</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-base text-center text-green-600">@item.IssueRead</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-base text-center text-red-600 border-r">@item.IssueNoRead</td>
                                 
                                 <!-- Receipt -->
-                                <td class="px-6 py-4 whitespace-nowrap text-xl text-center font-bold text-green-700">@item.ReceiptTotal</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-xl text-center text-green-600 font-semibold">@item.ReceiptRead</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-xl text-center text-red-600 font-semibold">@item.ReceiptNoRead</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-base text-center font-semibold text-green-700">@item.ReceiptTotal</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-base text-center text-green-600">@item.ReceiptRead</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-base text-center text-red-600">@item.ReceiptNoRead</td>
                                 
                                 <!-- Deviation -->
-                                <td class="px-6 py-4 whitespace-nowrap text-xl text-center font-bold @(item.Deviation == 0 ? "text-gray-900" : item.Deviation > 0 ? "text-green-600" : "text-red-600")">
+                                <td class="px-4 py-3 whitespace-nowrap text-base text-center font-bold @(item.Deviation == 0 ? "text-gray-900" : item.Deviation > 0 ? "text-green-600" : "text-red-600")">
                                     @(item.Deviation > 0 ? $"+{item.Deviation}" : item.Deviation.ToString())
                                 </td>
                             </tr>
                         }
                     </tbody>
+                    <tfoot class="bg-gray-100 font-semibold">
+                        <tr>
+                            <td class="px-4 py-3 text-sm font-bold text-gray-900 border-r">TOTAL</td>
+                            <td class="px-4 py-3 text-base text-center font-bold text-blue-700 border-r">@Model.Sum(x => x.IssueTotal).ToString("N0")</td>
+                            <td class="px-4 py-3 text-base text-center text-green-600 font-bold">@Model.Sum(x => x.IssueRead).ToString("N0")</td>
+                            <td class="px-4 py-3 text-base text-center text-red-600 font-bold border-r">@Model.Sum(x => x.IssueNoRead).ToString("N0")</td>
+                            <td class="px-4 py-3 text-base text-center font-bold text-green-700">@Model.Sum(x => x.ReceiptTotal).ToString("N0")</td>
+                            <td class="px-4 py-3 text-base text-center text-green-600 font-bold">@Model.Sum(x => x.ReceiptRead).ToString("N0")</td>
+                            <td class="px-4 py-3 text-base text-center text-red-600 font-bold">@Model.Sum(x => x.ReceiptNoRead).ToString("N0")</td>
+                            <td class="px-4 py-3 text-base text-center font-bold @(Model.Sum(x => x.Deviation) == 0 ? "text-gray-900" : Model.Sum(x => x.Deviation) > 0 ? "text-green-600" : "text-red-600")">
+                                @(Model.Sum(x => x.Deviation) > 0 ? $"+{Model.Sum(x => x.Deviation):N0}" : Model.Sum(x => x.Deviation).ToString("N0"))
+                            </td>
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
         }

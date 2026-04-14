@@ -1,6 +1,6 @@
 -- =============================================
 -- Author:      System
--- Description: Gets daily transfer summary totals for date range
+-- Description: Gets daily transfer summary totals grouped by date
 -- Time Range: 07:00 AM to 06:59 AM next day
 -- =============================================
 
@@ -15,11 +15,8 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    DECLARE @FromDateStr VARCHAR(20) = CONVERT(VARCHAR(20), CAST(@StartDate AS DATE), 106);
-    DECLARE @ToDateStr VARCHAR(20) = CONVERT(VARCHAR(20), DATEADD(DAY, -1, CAST(@EndDate AS DATE)), 106);
-
     SELECT 
-        @FromDateStr + ' to ' + @ToDateStr AS ReportDate,
+        CONVERT(VARCHAR(20), CAST(s.ScanDateTime AS DATE), 106) AS ReportDate,
         ISNULL(SUM(CASE WHEN UPPER(ScanType) = 'FROM' THEN 1 ELSE 0 END), 0) AS IssueTotal,
         ISNULL(SUM(CASE WHEN UPPER(ScanType) = 'FROM' AND IsRead = 1 AND UPPER(LTRIM(RTRIM(ISNULL(Barcode, '')))) <> 'NOREAD' THEN 1 ELSE 0 END), 0) AS IssueRead,
         ISNULL(SUM(CASE WHEN UPPER(ScanType) = 'FROM' AND (IsRead = 0 OR UPPER(LTRIM(RTRIM(ISNULL(Barcode, '')))) = 'NOREAD') THEN 1 ELSE 0 END), 0) AS IssueNoRead,
@@ -27,10 +24,12 @@ BEGIN
         ISNULL(SUM(CASE WHEN UPPER(ScanType) = 'TO' AND IsRead = 1 AND UPPER(LTRIM(RTRIM(ISNULL(Barcode, '')))) <> 'NOREAD' THEN 1 ELSE 0 END), 0) AS ReceiptRead,
         ISNULL(SUM(CASE WHEN UPPER(ScanType) = 'TO' AND (IsRead = 0 OR UPPER(LTRIM(RTRIM(ISNULL(Barcode, '')))) = 'NOREAD') THEN 1 ELSE 0 END), 0) AS ReceiptNoRead,
         ISNULL(SUM(CASE WHEN UPPER(ScanType) = 'FROM' THEN 1 ELSE 0 END), 0) - ISNULL(SUM(CASE WHEN UPPER(ScanType) = 'TO' THEN 1 ELSE 0 END), 0) AS Deviation
-    FROM dbo.SorterScans_Sync WITH(NOLOCK)
-    WHERE ScanDateTime >= @StartDate AND ScanDateTime < @EndDate;
+    FROM dbo.SorterScans_Sync s WITH(NOLOCK)
+    WHERE ScanDateTime >= @StartDate AND ScanDateTime < @EndDate
+    GROUP BY CAST(s.ScanDateTime AS DATE)
+    ORDER BY CAST(s.ScanDateTime AS DATE);
 END
 GO
 
-PRINT 'Procedure sp_GetDailyTransferReport updated - supports date range';
+PRINT 'Procedure sp_GetDailyTransferReport updated - grouped by date';
 GO
