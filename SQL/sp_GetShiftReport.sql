@@ -36,6 +36,7 @@ BEGIN
         WHERE s.ScanDateTime >= @ProdStart 
           AND s.ScanDateTime < @ProdEnd 
           AND s.ScanType = 'TO'
+          AND s.IsRead = 1
     )
     SELECT  
         ISNULL(po.Material, '') AS SAPCode,
