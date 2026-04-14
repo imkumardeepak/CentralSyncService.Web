@@ -27,7 +27,7 @@ BEGIN
         ISNULL(SUM(CASE WHEN UPPER(ss.ScanType) = 'FROM' THEN 1 END), 0) AS IssueCount,
         ISNULL(SUM(CASE WHEN UPPER(ss.ScanType) = 'TO' THEN 1 END), 0) AS ReceiptCount,
 
-        ISNULL(bc.PrintCount, 0) - 
+        ISNULL(SUM(CASE WHEN UPPER(ss.ScanType) = 'FROM' THEN 1 END), 0) - 
         ISNULL(SUM(CASE WHEN UPPER(ss.ScanType) = 'TO' THEN 1 END), 0) AS Deviation
 
     FROM dbo.ProductionOrder po WITH(NOLOCK)

@@ -70,21 +70,21 @@
                                 Total Production<br/>(BarcodePrint)
                             </th>
                             <th colspan="2" class="px-6 py-3 text-center text-sm font-bold text-blue-700 uppercase tracking-wider bg-blue-50 border-b border-blue-200">
-                                FROM Plant (Issue)
+                                Issue
                             </th>
                             <th colspan="2" class="px-6 py-3 text-center text-sm font-bold text-green-700 uppercase tracking-wider bg-green-50 border-b border-green-200">
-                                TO Plant (Receipt)
+                                Receipt
                             </th>
                             <th rowspan="2" class="px-6 py-4 text-center text-sm font-bold text-amber-700 uppercase tracking-wider bg-amber-50 border-b border-amber-200">
                                 Deviation
                             </th>
                         </tr>
                         <tr>
-                            <!-- FROM Columns -->
+                            <!-- Issue Columns -->
                             <th class="px-6 py-3 text-center text-xs font-medium text-green-600 uppercase tracking-wider">Read Count</th>
                             <th class="px-6 py-3 text-center text-xs font-medium text-red-600 uppercase tracking-wider">No Read</th>
                             
-                            <!-- TO Columns -->
+                            <!-- Receipt Columns -->
                             <th class="px-6 py-3 text-center text-xs font-medium text-green-600 uppercase tracking-wider">Read Count</th>
                             <th class="px-6 py-3 text-center text-xs font-medium text-red-600 uppercase tracking-wider">No Read</th>
                         </tr>
@@ -96,17 +96,20 @@
                                 <!-- Total Production -->
                                 <td class="px-6 py-4 whitespace-nowrap text-2xl text-center font-bold text-purple-700 bg-purple-50">@item.TotalProduction</td>
                                 
-                                <!-- FROM Plant -->
+                                <!-- Issue -->
                                 <td class="px-6 py-4 whitespace-nowrap text-xl text-center text-green-600 font-semibold">@item.IssueRead</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-xl text-center text-red-600 font-semibold">@item.IssueNoRead</td>
                                 
-                                <!-- TO Plant -->
+                                <!-- Receipt -->
                                 <td class="px-6 py-4 whitespace-nowrap text-xl text-center text-green-600 font-semibold">@item.ReceiptRead</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-xl text-center text-red-600 font-semibold">@item.ReceiptNoRead</td>
                                 
-                                <!-- Deviation -->
-                                <td class="px-6 py-4 whitespace-nowrap text-xl text-center font-bold @(item.Deviation == 0 ? "text-gray-900" : item.Deviation > 0 ? "text-green-600" : "text-red-600")">
-                                    @item.Deviation
+                                <!-- Deviation: (IssueRead + IssueNoRead) - (ReceiptRead + ReceiptNoRead) -->
+                                @{
+                                    var deviation = (item.IssueRead + item.IssueNoRead) - (item.ReceiptRead + item.ReceiptNoRead);
+                                }
+                                <td class="px-6 py-4 whitespace-nowrap text-xl text-center font-bold @(deviation == 0 ? "text-gray-900" : deviation > 0 ? "text-green-600" : "text-red-600")">
+                                    @deviation
                                 </td>
                             </tr>
                         }
@@ -119,21 +122,21 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     @{
                         var record = Model.First();
-                        var totalFromScans = record.IssueRead + record.IssueNoRead;
-                        var totalToScans = record.ReceiptRead + record.ReceiptNoRead;
+                        var totalIssueScans = record.IssueRead + record.IssueNoRead;
+                        var totalReceiptScans = record.ReceiptRead + record.ReceiptNoRead;
                     }
                     <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                        <div class="text-sm text-blue-600 font-medium mb-1">Total FROM Scans</div>
-                        <div class="text-2xl font-bold text-blue-900">@totalFromScans</div>
+                        <div class="text-sm text-blue-600 font-medium mb-1">Total Issue Scans</div>
+                        <div class="text-2xl font-bold text-blue-900">@totalIssueScans</div>
                     </div>
                     <div class="bg-green-50 rounded-lg p-4 border border-green-200">
-                        <div class="text-sm text-green-600 font-medium mb-1">Total TO Scans</div>
-                        <div class="text-2xl font-bold text-green-900">@totalToScans</div>
+                        <div class="text-sm text-green-600 font-medium mb-1">Total Receipt Scans</div>
+                        <div class="text-2xl font-bold text-green-900">@totalReceiptScans</div>
                     </div>
                     <div class="bg-amber-50 rounded-lg p-4 border border-amber-200">
                         <div class="text-sm text-amber-600 font-medium mb-1">Scan Coverage</div>
                         <div class="text-2xl font-bold text-amber-900">
-                            @(record.TotalProduction > 0 ? $"{(totalFromScans * 100.0 / record.TotalProduction):F1}%" : "N/A")
+                            @(record.TotalProduction > 0 ? $"{(totalIssueScans * 100.0 / record.TotalProduction):F1}%" : "N/A")
                         </div>
                     </div>
                 </div>
