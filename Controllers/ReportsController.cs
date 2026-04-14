@@ -208,6 +208,24 @@ namespace Web.Controllers
             }
         }
 
+        public async Task<IActionResult> ExportOverallDailyTransferExcel(DateTime? fromDate, DateTime? toDate)
+        {
+            try
+            {
+                var from = fromDate ?? DateTime.Today.AddDays(-7);
+                var to = toDate ?? DateTime.Today;
+                var records = await _reportingRepository.GetOverallDailyTransferAsync(from, to).ConfigureAwait(false);
+                var fileBytes = _excelExportService.ExportOverallDailyTransfer(records, from, to);
+                var fileName = $"Overall_Daily_Transfer_{from:yyyy-MM-dd}_to_{to:yyyy-MM-dd}.xlsx";
+                return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Error = $"Error exporting: {ex.Message}";
+                return RedirectToAction("OverallDailyTransfer");
+            }
+        }
+
         #endregion
     }
 }
