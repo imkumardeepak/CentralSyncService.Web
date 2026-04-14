@@ -393,7 +393,7 @@ namespace Web.Services
             foreach (var item in data)
             {
                 // Date
-                worksheet.Cell(dataRow, 1).Value = item.ReportDate.ToString("dd-MM-yyyy");
+                worksheet.Cell(dataRow, 1).Value = item.ReportDate;
                 worksheet.Cell(dataRow, 1).Style.Font.Bold = true;
                 worksheet.Cell(dataRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 

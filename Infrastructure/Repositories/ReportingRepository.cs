@@ -121,7 +121,7 @@ namespace Web.Infrastructure.Repositories
                         {
                             var record = new OverallDailyTransferRecord
                             {
-                                ReportDate = reader.IsDBNull(reader.GetOrdinal("ReportDate")) ? DateTime.Today : reader.GetDateTime(reader.GetOrdinal("ReportDate")),
+                                ReportDate = reader.IsDBNull(reader.GetOrdinal("ReportDate")) ? "" : reader.GetString(reader.GetOrdinal("ReportDate")),
                                 IssueTotal = reader.IsDBNull(reader.GetOrdinal("IssueTotal")) ? 0 : reader.GetInt32(reader.GetOrdinal("IssueTotal")),
                                 IssueRead = reader.IsDBNull(reader.GetOrdinal("IssueRead")) ? 0 : reader.GetInt32(reader.GetOrdinal("IssueRead")),
                                 IssueNoRead = reader.IsDBNull(reader.GetOrdinal("IssueNoRead")) ? 0 : reader.GetInt32(reader.GetOrdinal("IssueNoRead")),
@@ -195,7 +195,7 @@ namespace Web.Infrastructure.Repositories
                         {
                             var record = new OverallDailyTransferRecord
                             {
-                                ReportDate = reader.IsDBNull(reader.GetOrdinal("ReportDate")) ? DateTime.MinValue : reader.GetDateTime(reader.GetOrdinal("ReportDate")),
+                                ReportDate = reader.IsDBNull(reader.GetOrdinal("ReportDate")) ? "" : reader.GetString(reader.GetOrdinal("ReportDate")),
                                 IssueTotal = reader.IsDBNull(reader.GetOrdinal("IssueTotal")) ? 0 : reader.GetInt32(reader.GetOrdinal("IssueTotal")),
                                 IssueRead = reader.IsDBNull(reader.GetOrdinal("IssueRead")) ? 0 : reader.GetInt32(reader.GetOrdinal("IssueRead")),
                                 IssueNoRead = reader.IsDBNull(reader.GetOrdinal("IssueNoRead")) ? 0 : reader.GetInt32(reader.GetOrdinal("IssueNoRead")),

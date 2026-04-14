@@ -59,7 +59,7 @@
     <div class="bg-white rounded-xl shadow-card overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-200">
             <h2 class="text-lg font-semibold text-gray-900">Daily Transfer Summary</h2>
-            <p class="text-sm text-gray-500">Showing data from @selectedFromDate.ToString("MMMM dd, yyyy") 07:00 AM to @selectedToDate.AddDays(1).ToString("MMMM dd, yyyy") 06:59 AM</p>
+            <p class="text-sm text-gray-500">@Model.FirstOrDefault()?.ReportDate</p>
         </div>
 
         @if (Model.Any())

@@ -4,7 +4,7 @@ namespace Web.Core.DTOs
 {
     public class OverallDailyTransferRecord
     {
-        public DateTime ReportDate { get; set; }
+        public string ReportDate { get; set; } = string.Empty;
         public int IssueTotal { get; set; }
         public int IssueRead { get; set; }
         public int IssueNoRead { get; set; }
