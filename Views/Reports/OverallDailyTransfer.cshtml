@@ -19,11 +19,13 @@
                         <label class="text-sm font-medium text-gray-700">From:</label>
                         <input type="date" name="fromDate" value="@fromDate.ToString("yyyy-MM-dd")" 
                                class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
+                        <span class="text-xs text-gray-500">00:00</span>
                     </div>
                     <div class="flex items-center gap-1">
                         <label class="text-sm font-medium text-gray-700">To:</label>
                         <input type="date" name="toDate" value="@toDate.ToString("yyyy-MM-dd")" 
                                class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
+                        <span class="text-xs text-gray-500">23:59</span>
                     </div>
                     <button type="submit" class="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors">
                         <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -62,7 +64,7 @@
     <div class="bg-white rounded-xl shadow-card overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-200">
             <h2 class="text-lg font-semibold text-gray-900">Daily Transfer Summary</h2>
-            <p class="text-sm text-gray-500">Showing data from @fromDate.ToString("MMMM dd, yyyy") to @toDate.ToString("MMMM dd, yyyy")</p>
+            <p class="text-sm text-gray-500">Showing data from @fromDate.ToString("MMMM dd, yyyy") 00:00 to @toDate.ToString("MMMM dd, yyyy") 23:59</p>
         </div>
 
         @if (Model.Any())
