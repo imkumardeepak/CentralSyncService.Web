@@ -20,7 +20,7 @@ BEGIN
     DECLARE @EndDateTime DATETIME2 = DATEADD(SECOND, -1, DATEADD(DAY, 1, CAST(@ToDate AS DATETIME2)));
 
     SELECT  
-        ReportDate = CAST(s.ScanDateTime AS DATE),
+        ReportDate = CONVERT(VARCHAR(20), CAST(s.ScanDateTime AS DATE), 106),
         IssueTotal = SUM(CASE WHEN UPPER(LTRIM(RTRIM(ISNULL(s.ScanType, '')))) = 'FROM' THEN 1 ELSE 0 END),
         IssueRead = SUM(CASE 
             WHEN UPPER(LTRIM(RTRIM(ISNULL(s.ScanType, '')))) = 'FROM'
