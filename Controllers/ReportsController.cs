@@ -122,6 +122,27 @@ namespace Web.Controllers
             }
         }
 
+        // Overall Daily Transfer Report
+        public async Task<IActionResult> OverallDailyTransfer(DateTime? fromDate, DateTime? toDate)
+        {
+            try
+            {
+                var from = fromDate ?? DateTime.Today.AddDays(-7);
+                var to = toDate ?? DateTime.Today;
+                var records = await _reportingRepository.GetOverallDailyTransferAsync(from, to).ConfigureAwait(false);
+                
+                ViewBag.FromDate = from;
+                ViewBag.ToDate = to;
+                return View(records);
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Error = $"Error: {ex.Message}";
+                ViewBag.StackTrace = ex.StackTrace;
+                return View(new List<OverallDailyTransferRecord>());
+            }
+        }
+
         #region Excel Export Actions
 
         public async Task<IActionResult> ExportShiftReportExcel(DateTime? date, string? shift, bool? consolidated)

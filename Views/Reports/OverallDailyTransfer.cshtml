@@ -1,0 +1,141 @@
+@model List<Web.Core.DTOs.OverallDailyTransferRecord>
+@{
+    ViewData["Title"] = "Overall Daily Transfer";
+    var fromDate = ViewBag.FromDate as DateTime? ?? DateTime.Today.AddDays(-7);
+    var toDate = ViewBag.ToDate as DateTime? ?? DateTime.Today;
+}
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Page Header -->
+    <div class="mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Overall Daily Transfer</h1>
+                <p class="mt-1 text-sm text-gray-500">Cumulative transfer statistics across date ranges</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <form method="get" class="flex items-center gap-2">
+                    <div class="flex items-center gap-1">
+                        <label class="text-sm font-medium text-gray-700">From:</label>
+                        <input type="date" name="fromDate" value="@fromDate.ToString("yyyy-MM-dd")" 
+                               class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <label class="text-sm font-medium text-gray-700">To:</label>
+                        <input type="date" name="toDate" value="@toDate.ToString("yyyy-MM-dd")" 
+                               class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
+                    </div>
+                    <button type="submit" class="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors">
+                        <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        Search
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    @if (ViewBag.Error != null)
+    {
+        <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div class="flex items-center">
+                <svg class="w-5 h-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span class="text-red-700 font-medium">@ViewBag.Error</span>
+            </div>
+        </div>
+    }
+
+    <!-- Data Table -->
+    <div class="bg-white rounded-xl shadow-card overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Daily Transfer Summary</h2>
+            <p class="text-sm text-gray-500">Showing data from @fromDate.ToString("MMMM dd, yyyy") to @toDate.ToString("MMMM dd, yyyy")</p>
+        </div>
+
+        @if (Model.Any())
+        {
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th rowspan="2" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r">
+                                Date
+                            </th>
+                            <th colspan="3" class="px-4 py-3 text-center text-xs font-bold text-blue-700 uppercase tracking-wider bg-blue-50 border-b border-blue-200">
+                                FROM Plant (Issue)
+                            </th>
+                            <th colspan="3" class="px-4 py-3 text-center text-xs font-bold text-green-700 uppercase tracking-wider bg-green-50 border-b border-green-200">
+                                TO Plant (Receipt)
+                            </th>
+                            <th rowspan="2" class="px-4 py-3 text-center text-xs font-bold text-amber-700 uppercase tracking-wider bg-amber-50 border-b border-amber-200">
+                                Deviation
+                            </th>
+                        </tr>
+                        <tr>
+                            <!-- FROM Columns -->
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-green-600 uppercase tracking-wider">Read</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-red-600 uppercase tracking-wider border-r">No Read</th>
+                            
+                            <!-- TO Columns -->
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-green-600 uppercase tracking-wider">Read</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-red-600 uppercase tracking-wider">No Read</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        @foreach (var item in Model)
+                        {
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <!-- Date -->
+                                <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 border-r">@item.ReportDate.ToString("dd-MM-yyyy")</td>
+                                
+                                <!-- FROM Plant -->
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-900 font-semibold">@item.IssueTotal.ToString("N0")</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-green-600">@item.IssueRead.ToString("N0")</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-red-600 border-r">@item.IssueNoRead.ToString("N0")</td>
+                                
+                                <!-- TO Plant -->
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-900 font-semibold">@item.ReceiptTotal.ToString("N0")</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-green-600">@item.ReceiptRead.ToString("N0")</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-red-600">@item.ReceiptNoRead.ToString("N0")</td>
+                                
+                                <!-- Deviation -->
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-center font-semibold @(item.Deviation == 0 ? "text-gray-900" : item.Deviation > 0 ? "text-green-600" : "text-red-600")">
+                                    @item.Deviation.ToString("N0")
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot class="bg-gray-100 font-semibold">
+                        <tr>
+                            <td class="px-4 py-3 text-sm font-bold text-gray-900 border-r">TOTAL</td>
+                            <td class="px-4 py-3 text-sm text-center text-gray-900 font-bold">@Model.Sum(x => x.IssueTotal).ToString("N0")</td>
+                            <td class="px-4 py-3 text-sm text-center text-green-600 font-bold">@Model.Sum(x => x.IssueRead).ToString("N0")</td>
+                            <td class="px-4 py-3 text-sm text-center text-red-600 font-bold border-r">@Model.Sum(x => x.IssueNoRead).ToString("N0")</td>
+                            <td class="px-4 py-3 text-sm text-center text-gray-900 font-bold">@Model.Sum(x => x.ReceiptTotal).ToString("N0")</td>
+                            <td class="px-4 py-3 text-sm text-center text-green-600 font-bold">@Model.Sum(x => x.ReceiptRead).ToString("N0")</td>
+                            <td class="px-4 py-3 text-sm text-center text-red-600 font-bold">@Model.Sum(x => x.ReceiptNoRead).ToString("N0")</td>
+                            <td class="px-4 py-3 text-sm text-center font-bold @(Model.Sum(x => x.Deviation) == 0 ? "text-gray-900" : Model.Sum(x => x.Deviation) > 0 ? "text-green-600" : "text-red-600")">
+                                @Model.Sum(x => x.Deviation).ToString("N0")
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="p-8 text-center">
+                <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <h3 class="text-lg font-medium text-gray-900 mb-1">No Data Found</h3>
+                <p class="text-gray-500">No transfer records found for the selected date range.</p>
+            </div>
+        }
+    </div>
+</div>

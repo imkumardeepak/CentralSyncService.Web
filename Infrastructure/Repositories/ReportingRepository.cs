@@ -171,5 +171,44 @@ namespace Web.Infrastructure.Repositories
             }
             return result;
         }
+
+        public async Task<List<OverallDailyTransferRecord>> GetOverallDailyTransferAsync(DateTime fromDate, DateTime toDate)
+        {
+            var result = new List<OverallDailyTransferRecord>();
+
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                await connection.OpenAsync().ConfigureAwait(false);
+
+                using (var command = new SqlCommand("sp_GetOverallDailyTransfer", connection))
+                {
+                    command.CommandType = CommandType.StoredProcedure;
+                    command.Parameters.AddWithValue("@FromDate", fromDate.Date);
+                    command.Parameters.AddWithValue("@ToDate", toDate.Date);
+
+                    using (var reader = await command.ExecuteReaderAsync().ConfigureAwait(false))
+                    {
+                        while (await reader.ReadAsync().ConfigureAwait(false))
+                        {
+                            var record = new OverallDailyTransferRecord
+                            {
+                                ReportDate = reader.IsDBNull(reader.GetOrdinal("ReportDate")) ? DateTime.MinValue : reader.GetDateTime(reader.GetOrdinal("ReportDate")),
+                                IssueTotal = reader.IsDBNull(reader.GetOrdinal("IssueTotal")) ? 0 : reader.GetInt32(reader.GetOrdinal("IssueTotal")),
+                                IssueRead = reader.IsDBNull(reader.GetOrdinal("IssueRead")) ? 0 : reader.GetInt32(reader.GetOrdinal("IssueRead")),
+                                IssueNoRead = reader.IsDBNull(reader.GetOrdinal("IssueNoRead")) ? 0 : reader.GetInt32(reader.GetOrdinal("IssueNoRead")),
+                                ReceiptTotal = reader.IsDBNull(reader.GetOrdinal("ReceiptTotal")) ? 0 : reader.GetInt32(reader.GetOrdinal("ReceiptTotal")),
+                                ReceiptRead = reader.IsDBNull(reader.GetOrdinal("ReceiptRead")) ? 0 : reader.GetInt32(reader.GetOrdinal("ReceiptRead")),
+                                ReceiptNoRead = reader.IsDBNull(reader.GetOrdinal("ReceiptNoRead")) ? 0 : reader.GetInt32(reader.GetOrdinal("ReceiptNoRead")),
+                                Deviation = reader.IsDBNull(reader.GetOrdinal("Deviation")) ? 0 : reader.GetInt32(reader.GetOrdinal("Deviation"))
+                            };
+
+                            result.Add(record);
+                        }
+                    }
+                }
+            }
+
+            return result;
+        }
     }
 }
