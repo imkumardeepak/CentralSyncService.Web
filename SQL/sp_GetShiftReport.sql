@@ -25,6 +25,8 @@ BEGIN
             s.MaterialCode,
             s.ScanDateTime,
             s.ScanType,
+            s.IsRead,
+            s.Barcode,
             ISNULL(s.Shift, 
                 CASE 
                     WHEN DATEPART(HOUR, s.ScanDateTime) BETWEEN 7 AND 14 THEN 'A'
@@ -36,6 +38,8 @@ BEGIN
         WHERE s.ScanDateTime >= @ProdStart 
           AND s.ScanDateTime < @ProdEnd 
           AND s.ScanType = 'TO'
+          AND s.IsRead = 1 
+          AND UPPER(LTRIM(RTRIM(ISNULL(s.Barcode, '')))) <> 'NOREAD'
     )
     SELECT  
         ISNULL(po.Material, '') AS SAPCode,
