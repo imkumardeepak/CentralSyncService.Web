@@ -1,7 +1,6 @@
 -- =============================================
 -- Stored Procedure: sp_GetOverallDailyTransfer
--- Shows transfer statistics grouped by date and CurrentPlant
--- Uses calendar date (00:00 to 23:59:59)
+-- Shows transfer by date and plant pairs (TOP->TOP, BELOW->BELOW)
 -- =============================================
 
 IF OBJECT_ID('dbo.sp_GetOverallDailyTransfer', 'P') IS NOT NULL
@@ -22,7 +21,17 @@ BEGIN
         SELECT
             ScanDate = CAST(s.ScanDateTime AS DATE),
             ScanType = UPPER(LTRIM(RTRIM(ISNULL(s.ScanType, '')))),
-            PlantName = ISNULL(NULLIF(LTRIM(RTRIM(s.CurrentPlant)), ''), 'Unknown'),
+            PlantName = UPPER(LTRIM(RTRIM(ISNULL(s.CurrentPlant, '')))),
+            LaneKey = UPPER(
+                CASE
+                    WHEN CHARINDEX(' ', LTRIM(RTRIM(ISNULL(s.CurrentPlant, '')))) > 0
+                        THEN RIGHT(
+                            LTRIM(RTRIM(s.CurrentPlant)),
+                            CHARINDEX(' ', REVERSE(LTRIM(RTRIM(s.CurrentPlant)))) - 1
+                        )
+                    ELSE 'UNKNOWN'
+                END
+            ),
             IsReadable = CASE
                 WHEN s.IsRead = 1 AND UPPER(LTRIM(RTRIM(ISNULL(s.Barcode, '')))) <> 'NOREAD'
                     THEN 1
@@ -35,24 +44,26 @@ BEGIN
     IssueData AS (
         SELECT
             ScanDate,
+            LaneKey,
             IssueLine = PlantName,
             IssueTotal = COUNT(*),
             IssueRead = SUM(IsReadable),
             IssueNoRead = COUNT(*) - SUM(IsReadable)
         FROM ScanData
         WHERE ScanType = 'FROM'
-        GROUP BY ScanDate, PlantName
+        GROUP BY ScanDate, LaneKey, PlantName
     ),
     ReceiptData AS (
         SELECT
             ScanDate,
+            LaneKey,
             ReceiptLine = PlantName,
             ReceiptTotal = COUNT(*),
             ReceiptRead = SUM(IsReadable),
             ReceiptNoRead = COUNT(*) - SUM(IsReadable)
         FROM ScanData
         WHERE ScanType = 'TO'
-        GROUP BY ScanDate, PlantName
+        GROUP BY ScanDate, LaneKey, PlantName
     )
     SELECT
         ReportDate = CONVERT(VARCHAR(20), ISNULL(i.ScanDate, r.ScanDate), 106),
@@ -67,11 +78,10 @@ BEGIN
         Deviation = ISNULL(i.IssueTotal, 0) - ISNULL(r.ReceiptTotal, 0)
     FROM IssueData i
     FULL OUTER JOIN ReceiptData r
-        ON i.ScanDate = r.ScanDate
+        ON i.ScanDate = r.ScanDate AND i.LaneKey = r.LaneKey
     ORDER BY 
         ISNULL(i.ScanDate, r.ScanDate),
-        i.IssueLine,
-        r.ReceiptLine;
+        i.LaneKey;
 END
 GO
 
