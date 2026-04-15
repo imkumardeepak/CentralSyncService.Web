@@ -67,11 +67,23 @@ BEGIN
     )
     SELECT
         ReportDate = CONVERT(VARCHAR(20), ISNULL(i.ScanDate, r.ScanDate), 106),
-        IssueLine = ISNULL(i.IssueLine, ''),
+        IssueLine = ISNULL(i.IssueLine, 
+            CASE ISNULL(i.LaneKey, r.LaneKey)
+                WHEN 'TOP' THEN 'KASANA TOP'
+                WHEN 'BELOW' THEN 'KASANA BELOW'
+                ELSE ''
+            END
+        ),
         IssueTotal = ISNULL(i.IssueTotal, 0),
         IssueRead = ISNULL(i.IssueRead, 0),
         IssueNoRead = ISNULL(i.IssueNoRead, 0),
-        ReceiptLine = ISNULL(r.ReceiptLine, ''),
+        ReceiptLine = ISNULL(r.ReceiptLine,
+            CASE ISNULL(i.LaneKey, r.LaneKey)
+                WHEN 'TOP' THEN 'KOMAL TOP'
+                WHEN 'BELOW' THEN 'KOMAL BELOW'
+                ELSE ''
+            END
+        ),
         ReceiptTotal = ISNULL(r.ReceiptTotal, 0),
         ReceiptRead = ISNULL(r.ReceiptRead, 0),
         ReceiptNoRead = ISNULL(r.ReceiptNoRead, 0),
