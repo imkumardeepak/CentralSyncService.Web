@@ -121,14 +121,16 @@ namespace Web.Infrastructure.Repositories
                         {
                             var record = new OverallDailyTransferRecord
                             {
-                                ReportDate = reader.IsDBNull(reader.GetOrdinal("ReportDate")) ? "" : reader.GetString(reader.GetOrdinal("ReportDate")),
-                                IssueTotal = reader.IsDBNull(reader.GetOrdinal("IssueTotal")) ? 0 : reader.GetInt32(reader.GetOrdinal("IssueTotal")),
-                                IssueRead = reader.IsDBNull(reader.GetOrdinal("IssueRead")) ? 0 : reader.GetInt32(reader.GetOrdinal("IssueRead")),
-                                IssueNoRead = reader.IsDBNull(reader.GetOrdinal("IssueNoRead")) ? 0 : reader.GetInt32(reader.GetOrdinal("IssueNoRead")),
-                                ReceiptTotal = reader.IsDBNull(reader.GetOrdinal("ReceiptTotal")) ? 0 : reader.GetInt32(reader.GetOrdinal("ReceiptTotal")),
-                                ReceiptRead = reader.IsDBNull(reader.GetOrdinal("ReceiptRead")) ? 0 : reader.GetInt32(reader.GetOrdinal("ReceiptRead")),
-                                ReceiptNoRead = reader.IsDBNull(reader.GetOrdinal("ReceiptNoRead")) ? 0 : reader.GetInt32(reader.GetOrdinal("ReceiptNoRead")),
-                                Deviation = reader.IsDBNull(reader.GetOrdinal("Deviation")) ? 0 : reader.GetInt32(reader.GetOrdinal("Deviation"))
+                                ReportDate = GetNullableString(reader, "ReportDate") ?? string.Empty,
+                                FromPlant = GetNullableString(reader, "FromPlant") ?? string.Empty,
+                                ToPlant = GetNullableString(reader, "ToPlant") ?? string.Empty,
+                                IssueTotal = GetInt32(reader, "IssueTotal"),
+                                IssueRead = GetInt32(reader, "IssueRead"),
+                                IssueNoRead = GetInt32(reader, "IssueNoRead"),
+                                ReceiptTotal = GetInt32(reader, "ReceiptTotal"),
+                                ReceiptRead = GetInt32(reader, "ReceiptRead"),
+                                ReceiptNoRead = GetInt32(reader, "ReceiptNoRead"),
+                                Deviation = GetInt32(reader, "Deviation")
                             };
 
                             result.Add(record);
@@ -195,14 +197,16 @@ namespace Web.Infrastructure.Repositories
                         {
                             var record = new OverallDailyTransferRecord
                             {
-                                ReportDate = reader.IsDBNull(reader.GetOrdinal("ReportDate")) ? "" : reader.GetString(reader.GetOrdinal("ReportDate")),
-                                IssueTotal = reader.IsDBNull(reader.GetOrdinal("IssueTotal")) ? 0 : reader.GetInt32(reader.GetOrdinal("IssueTotal")),
-                                IssueRead = reader.IsDBNull(reader.GetOrdinal("IssueRead")) ? 0 : reader.GetInt32(reader.GetOrdinal("IssueRead")),
-                                IssueNoRead = reader.IsDBNull(reader.GetOrdinal("IssueNoRead")) ? 0 : reader.GetInt32(reader.GetOrdinal("IssueNoRead")),
-                                ReceiptTotal = reader.IsDBNull(reader.GetOrdinal("ReceiptTotal")) ? 0 : reader.GetInt32(reader.GetOrdinal("ReceiptTotal")),
-                                ReceiptRead = reader.IsDBNull(reader.GetOrdinal("ReceiptRead")) ? 0 : reader.GetInt32(reader.GetOrdinal("ReceiptRead")),
-                                ReceiptNoRead = reader.IsDBNull(reader.GetOrdinal("ReceiptNoRead")) ? 0 : reader.GetInt32(reader.GetOrdinal("ReceiptNoRead")),
-                                Deviation = reader.IsDBNull(reader.GetOrdinal("Deviation")) ? 0 : reader.GetInt32(reader.GetOrdinal("Deviation"))
+                                ReportDate = GetNullableString(reader, "ReportDate") ?? string.Empty,
+                                FromPlant = GetNullableString(reader, "FromPlant") ?? string.Empty,
+                                ToPlant = GetNullableString(reader, "ToPlant") ?? string.Empty,
+                                IssueTotal = GetInt32(reader, "IssueTotal"),
+                                IssueRead = GetInt32(reader, "IssueRead"),
+                                IssueNoRead = GetInt32(reader, "IssueNoRead"),
+                                ReceiptTotal = GetInt32(reader, "ReceiptTotal"),
+                                ReceiptRead = GetInt32(reader, "ReceiptRead"),
+                                ReceiptNoRead = GetInt32(reader, "ReceiptNoRead"),
+                                Deviation = GetInt32(reader, "Deviation")
                             };
 
                             result.Add(record);
@@ -212,6 +216,41 @@ namespace Web.Infrastructure.Repositories
             }
 
             return result;
+        }
+
+        private static string? GetNullableString(SqlDataReader reader, string columnName)
+        {
+            var ordinal = GetOrdinal(reader, columnName);
+            if (ordinal < 0 || reader.IsDBNull(ordinal))
+            {
+                return null;
+            }
+
+            return Convert.ToString(reader.GetValue(ordinal));
+        }
+
+        private static int GetInt32(SqlDataReader reader, string columnName)
+        {
+            var ordinal = GetOrdinal(reader, columnName);
+            if (ordinal < 0 || reader.IsDBNull(ordinal))
+            {
+                return 0;
+            }
+
+            return Convert.ToInt32(reader.GetValue(ordinal));
+        }
+
+        private static int GetOrdinal(SqlDataReader reader, string columnName)
+        {
+            for (var i = 0; i < reader.FieldCount; i++)
+            {
+                if (string.Equals(reader.GetName(i), columnName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
         }
     }
 }

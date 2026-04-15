@@ -5,6 +5,8 @@ namespace Web.Core.DTOs
     public class OverallDailyTransferRecord
     {
         public string ReportDate { get; set; } = string.Empty;
+        public string FromPlant { get; set; } = string.Empty;
+        public string ToPlant { get; set; } = string.Empty;
         public int IssueTotal { get; set; }
         public int IssueRead { get; set; }
         public int IssueNoRead { get; set; }
