@@ -63,24 +63,37 @@
                             <th class="px-2 py-2 text-center text-xs font-medium text-gray-500">Total</th>
                             <th class="px-2 py-2 text-center text-xs font-medium text-green-600">Read</th>
                             <th class="px-2 py-2 text-center text-xs font-medium text-red-600 border-r">No Read</th>
-                            <th class="px-2 py-2 text-center text-xs font-medium text-gray-500">Total</th>
                             <th class="px-2 py-2 text-center text-xs font-medium text-green-600">Read</th>
                             <th class="px-2 py-2 text-center text-xs font-medium text-red-600">No Read</th>
+                            <th class="px-2 py-2 text-center text-xs font-medium text-gray-500 border-l">Total</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200">
+                        @{
+                            string FormatPlant(string plant)
+                            {
+                                return plant.ToUpper() switch
+                                {
+                                    "KASANA BELOW" => "Kasana Gnd Flr",
+                                    "KASANA TOP" => "Kasana 1st Flr",
+                                    "KOMAL BELOW" => "Komal S1",
+                                    "KOMAL TOP" => "Komal S2",
+                                    _ => plant
+                                };
+                            }
+                        }
                         @foreach (var item in Model)
                         {
                             <tr class="hover:bg-gray-50">
                                 <td class="px-4 py-3 text-sm font-medium text-gray-900">@item.ReportDate</td>
-                                <td class="px-4 py-3 text-sm font-bold text-blue-700">@item.FromPlant</td>
+                                <td class="px-4 py-3 text-sm font-bold text-blue-700">@FormatPlant(item.FromPlant)</td>
                                 <td class="px-2 py-3 text-center text-base font-bold text-blue-700">@item.IssueTotal.ToString("N0")</td>
                                 <td class="px-2 py-3 text-center text-base text-green-600">@item.IssueRead.ToString("N0")</td>
                                 <td class="px-2 py-3 text-center text-base text-red-600 border-r">@item.IssueNoRead.ToString("N0")</td>
-                                <td class="px-4 py-3 text-sm font-bold text-green-700">@item.ToPlant</td>
-                                <td class="px-2 py-3 text-center text-base font-bold text-green-700">@item.ReceiptTotal.ToString("N0")</td>
+                                <td class="px-4 py-3 text-sm font-bold text-green-700">@FormatPlant(item.ToPlant)</td>
                                 <td class="px-2 py-3 text-center text-base text-green-600">@item.ReceiptRead.ToString("N0")</td>
                                 <td class="px-2 py-3 text-center text-base text-red-600">@item.ReceiptNoRead.ToString("N0")</td>
+                                <td class="px-2 py-3 text-center text-base font-bold text-green-700 border-l">@item.ReceiptTotal.ToString("N0")</td>
                                 <td class="px-4 py-3 text-center text-base font-bold @(item.Deviation >= 0 ? "text-green-600" : "text-red-600")">
                                     @(item.Deviation >= 0 ? $"+{item.Deviation:N0}" : item.Deviation.ToString("N0"))
                                 </td>
