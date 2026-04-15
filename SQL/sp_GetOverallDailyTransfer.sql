@@ -1,6 +1,6 @@
 -- =============================================
 -- Stored Procedure: sp_GetOverallDailyTransfer
--- Shows transfer statistics grouped by date, FROM plant, and TO plant pairs
+-- Shows transfer statistics grouped by date and CurrentPlant
 -- Uses calendar date (00:00 to 23:59:59)
 -- =============================================
 
@@ -22,8 +22,7 @@ BEGIN
         SELECT
             ScanDate = CAST(s.ScanDateTime AS DATE),
             ScanType = UPPER(LTRIM(RTRIM(ISNULL(s.ScanType, '')))),
-            FromPlant = ISNULL(NULLIF(LTRIM(RTRIM(s.CurrentPlant)), ''), 'Unknown'),
-            ToPlant = ISNULL(NULLIF(LTRIM(RTRIM(s.FromPlant)), ''), 'Unknown'),
+            PlantName = ISNULL(NULLIF(LTRIM(RTRIM(s.CurrentPlant)), ''), 'Unknown'),
             IsReadable = CASE
                 WHEN s.IsRead = 1 AND UPPER(LTRIM(RTRIM(ISNULL(s.Barcode, '')))) <> 'NOREAD'
                     THEN 1
@@ -33,45 +32,45 @@ BEGIN
         WHERE s.ScanDateTime >= @StartDateTime
           AND s.ScanDateTime <= @EndDateTime
     ),
-    CombinedData AS (
+    IssueData AS (
         SELECT
             ScanDate,
-            IssueLine = FromPlant,
+            IssueLine = PlantName,
             IssueTotal = COUNT(*),
             IssueRead = SUM(IsReadable),
             IssueNoRead = COUNT(*) - SUM(IsReadable)
         FROM ScanData
         WHERE ScanType = 'FROM'
-        GROUP BY ScanDate, FromPlant
+        GROUP BY ScanDate, PlantName
     ),
-    ReceiptCombined AS (
+    ReceiptData AS (
         SELECT
             ScanDate,
-            ReceiptLine = ToPlant,
+            ReceiptLine = PlantName,
             ReceiptTotal = COUNT(*),
             ReceiptRead = SUM(IsReadable),
             ReceiptNoRead = COUNT(*) - SUM(IsReadable)
         FROM ScanData
         WHERE ScanType = 'TO'
-        GROUP BY ScanDate, ToPlant
+        GROUP BY ScanDate, PlantName
     )
     SELECT
-        ReportDate = CONVERT(VARCHAR(20), ISNULL(c.ScanDate, r.ScanDate), 106),
-        IssueLine = ISNULL(c.IssueLine, ''),
-        IssueTotal = ISNULL(c.IssueTotal, 0),
-        IssueRead = ISNULL(c.IssueRead, 0),
-        IssueNoRead = ISNULL(c.IssueNoRead, 0),
+        ReportDate = CONVERT(VARCHAR(20), ISNULL(i.ScanDate, r.ScanDate), 106),
+        IssueLine = ISNULL(i.IssueLine, ''),
+        IssueTotal = ISNULL(i.IssueTotal, 0),
+        IssueRead = ISNULL(i.IssueRead, 0),
+        IssueNoRead = ISNULL(i.IssueNoRead, 0),
         ReceiptLine = ISNULL(r.ReceiptLine, ''),
         ReceiptTotal = ISNULL(r.ReceiptTotal, 0),
         ReceiptRead = ISNULL(r.ReceiptRead, 0),
         ReceiptNoRead = ISNULL(r.ReceiptNoRead, 0),
-        Deviation = ISNULL(c.IssueTotal, 0) - ISNULL(r.ReceiptTotal, 0)
-    FROM CombinedData c
-    FULL OUTER JOIN ReceiptCombined r
-        ON c.ScanDate = r.ScanDate
+        Deviation = ISNULL(i.IssueTotal, 0) - ISNULL(r.ReceiptTotal, 0)
+    FROM IssueData i
+    FULL OUTER JOIN ReceiptData r
+        ON i.ScanDate = r.ScanDate
     ORDER BY 
-        ISNULL(c.ScanDate, r.ScanDate),
-        c.IssueLine,
+        ISNULL(i.ScanDate, r.ScanDate),
+        i.IssueLine,
         r.ReceiptLine;
 END
 GO
