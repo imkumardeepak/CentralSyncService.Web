@@ -198,8 +198,8 @@ namespace Web.Infrastructure.Repositories
                             var record = new OverallDailyTransferRecord
                             {
                                 ReportDate = GetNullableString(reader, "ReportDate") ?? string.Empty,
-                                FromPlant = GetNullableString(reader, "FromPlant") ?? string.Empty,
-                                ToPlant = GetNullableString(reader, "ToPlant") ?? string.Empty,
+                                FromPlant = GetNullableString(reader, "IssueLine") ?? string.Empty,
+                                ToPlant = GetNullableString(reader, "ReceiptLine") ?? string.Empty,
                                 IssueTotal = GetInt32(reader, "IssueTotal"),
                                 IssueRead = GetInt32(reader, "IssueRead"),
                                 IssueNoRead = GetInt32(reader, "IssueNoRead"),
