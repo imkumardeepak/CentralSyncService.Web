@@ -1,41 +1,33 @@
 @model List<Web.Core.DTOs.OverallDailyTransferRecord>
 @{
     ViewData["Title"] = "Daily Transfer Report";
-    var selectedFromDate = ViewBag.FromDate as DateTime? ?? DateTime.Today;
-    var selectedToDate = ViewBag.ToDate as DateTime? ?? DateTime.Today;
+    var fromDate = ViewBag.FromDate as DateTime? ?? DateTime.Today.AddDays(-7);
+    var toDate = ViewBag.ToDate as DateTime? ?? DateTime.Today;
+    var dateSummary = fromDate.Date == toDate.Date
+        ? $"Date: {fromDate:dd-MMM-yy} • grouped by plant"
+        : $"Date Range: {fromDate:dd-MMM-yy} to {toDate:dd-MMM-yy}";
 }
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <!-- Page Header -->
     <div class="mb-8">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
                 <h1 class="text-2xl font-bold text-gray-900">Daily Transfer Report</h1>
-                <p class="mt-1 text-sm text-gray-500">View daily FROM and TO scan totals from the central sync table</p>
+                <p class="mt-1 text-sm text-gray-500">Transfer statistics by plant (Shift: 07:00 - 06:59)</p>
             </div>
             <div class="flex items-center gap-3">
-                <button type="button" onclick="exportToCSV()" 
-                        class="inline-flex items-center px-3 py-2 text-sm font-medium text-neutral-600 bg-white border border-neutral-300 rounded-lg hover:bg-neutral-50 hover:border-neutral-400 transition-all duration-200">
-                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                    </svg>
-                    Export CSV
-                </button>
                 <form method="get" class="flex items-center gap-2">
-                    <div class="flex items-center gap-2">
-                        <label class="text-sm font-medium text-gray-700">From</label>
-                        <input type="date" name="fromDate" value="@selectedFromDate.ToString("yyyy-MM-dd")" 
-                               class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
+                    <div class="flex items-center gap-1">
+                        <label class="text-sm font-medium text-gray-700">From:</label>
+                        <input type="date" name="fromDate" value="@fromDate.ToString("yyyy-MM-dd")" 
+                               class="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
                     </div>
-                    <div class="flex items-center gap-2">
-                        <label class="text-sm font-medium text-gray-700">To</label>
-                        <input type="date" name="toDate" value="@selectedToDate.ToString("yyyy-MM-dd")" 
-                               class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
+                    <div class="flex items-center gap-1">
+                        <label class="text-sm font-medium text-gray-700">To:</label>
+                        <input type="date" name="toDate" value="@toDate.ToString("yyyy-MM-dd")" 
+                               class="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
                     </div>
-                    <button type="submit" class="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors">
-                        <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
+                    <button type="submit" class="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700">
                         Search
                     </button>
                 </form>
@@ -46,149 +38,77 @@
     @if (ViewBag.Error != null)
     {
         <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <div class="flex items-center">
-                <svg class="w-5 h-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span class="text-red-700 font-medium">@ViewBag.Error</span>
-            </div>
+            <span class="text-red-700 font-medium">@ViewBag.Error</span>
         </div>
     }
 
-    <!-- Data Table -->
-    <div class="bg-white rounded-xl shadow-card overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-900">Daily Transfer Summary</h2>
-            <p class="text-sm text-gray-500">Showing data from @selectedFromDate.ToString("dd-MM-yyyy") 07:00 to @selectedToDate.AddDays(1).ToString("dd-MM-yyyy") 06:59</p>
-        </div>
-
-        @if (Model.Any())
-        {
+    @if (Model.Any())
+    {
+        <div class="bg-white rounded-xl shadow overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">@dateSummary</h2>
+            </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th rowspan="2" class="px-4 py-3 text-center text-sm font-bold text-gray-700 uppercase tracking-wider bg-gray-100 border-b border-r border-gray-200">
-                                Date
-                            </th>
-                            <th colspan="3" class="px-4 py-3 text-center text-sm font-bold text-blue-700 uppercase tracking-wider bg-blue-50 border-b border-blue-200">
-                                Issue (FROM)
-                            </th>
-                            <th colspan="3" class="px-4 py-3 text-center text-sm font-bold text-green-700 uppercase tracking-wider bg-green-50 border-b border-green-200">
-                                Receipt (TO)
-                            </th>
-                            <th rowspan="2" class="px-4 py-3 text-center text-sm font-bold text-amber-700 uppercase tracking-wider bg-amber-50 border-b border-amber-200">
-                                Deviation
-                            </th>
+                            <th rowspan="2" class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Date</th>
+                            <th rowspan="2" class="px-4 py-3 text-left text-xs font-bold text-blue-700 uppercase">Issue Line</th>
+                            <th colspan="3" class="px-2 py-2 text-center text-xs font-bold text-blue-700 bg-blue-50">Issue (FROM)<br/><span class="text-gray-400 font-normal">07:00 - 06:59</span></th>
+                            <th rowspan="2" class="px-4 py-3 text-left text-xs font-bold text-green-700 uppercase">Receipt Line</th>
+                            <th colspan="3" class="px-2 py-2 text-center text-xs font-bold text-green-700 bg-green-50">Receipt (TO)<br/><span class="text-gray-400 font-normal">07:00 - 06:59</span></th>
+                            <th rowspan="2" class="px-4 py-3 text-center text-xs font-bold text-amber-700 uppercase bg-amber-50">Deviation</th>
                         </tr>
                         <tr>
-                            <!-- Issue Columns -->
-                            <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r">Total</th>
-                            <th class="px-4 py-2 text-center text-xs font-medium text-green-600 uppercase tracking-wider">Read</th>
-                            <th class="px-4 py-2 text-center text-xs font-medium text-red-600 uppercase tracking-wider border-r">No Read</th>
-                            
-                            <!-- Receipt Columns -->
-                            <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                            <th class="px-4 py-2 text-center text-xs font-medium text-green-600 uppercase tracking-wider">Read</th>
-                            <th class="px-4 py-2 text-center text-xs font-medium text-red-600 uppercase tracking-wider">No Read</th>
+                            <th class="px-2 py-2 text-center text-xs font-medium text-gray-500">Total</th>
+                            <th class="px-2 py-2 text-center text-xs font-medium text-green-600">Read</th>
+                            <th class="px-2 py-2 text-center text-xs font-medium text-red-600 border-r">No Read</th>
+                            <th class="px-2 py-2 text-center text-xs font-medium text-green-600">Read</th>
+                            <th class="px-2 py-2 text-center text-xs font-medium text-red-600">No Read</th>
+                            <th class="px-2 py-2 text-center text-xs font-medium text-gray-500 border-l">Total</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
+                    <tbody class="divide-y divide-gray-200">
+                        @{
+                            string FormatPlant(string plant)
+                            {
+                                return plant.ToUpper() switch
+                                {
+                                    "KASANA BELOW" => "Kasana Grnd Flr",
+                                    "KASANA TOP" => "Kasana 1st Flr",
+                                    "KOMAL BELOW" => "Komal S1",
+                                    "KOMAL TOP" => "Komal S2",
+                                    _ => plant
+                                };
+                            }
+                        }
                         @foreach (var item in Model)
                         {
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <!-- Date -->
-                                <td class="px-4 py-3 whitespace-nowrap text-sm font-bold text-gray-800 border-r">@item.ReportDate</td>
-                                
-                                <!-- Issue -->
-                                <td class="px-4 py-3 whitespace-nowrap text-base text-center font-semibold text-blue-700 border-r">@item.IssueTotal</td>
-                                <td class="px-4 py-3 whitespace-nowrap text-base text-center text-green-600">@item.IssueRead</td>
-                                <td class="px-4 py-3 whitespace-nowrap text-base text-center text-red-600 border-r">@item.IssueNoRead</td>
-                                
-                                <!-- Receipt -->
-                                <td class="px-4 py-3 whitespace-nowrap text-base text-center font-semibold text-green-700">@item.ReceiptTotal</td>
-                                <td class="px-4 py-3 whitespace-nowrap text-base text-center text-green-600">@item.ReceiptRead</td>
-                                <td class="px-4 py-3 whitespace-nowrap text-base text-center text-red-600">@item.ReceiptNoRead</td>
-                                
-                                <!-- Deviation -->
-                                <td class="px-4 py-3 whitespace-nowrap text-base text-center font-bold @(item.Deviation == 0 ? "text-gray-900" : item.Deviation > 0 ? "text-green-600" : "text-red-600")">
-                                    @(item.Deviation > 0 ? $"+{item.Deviation}" : item.Deviation.ToString())
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 text-sm font-medium text-gray-900">@item.ReportDate</td>
+                                <td class="px-4 py-3 text-sm font-bold text-blue-700">@FormatPlant(item.FromPlant)</td>
+                                <td class="px-2 py-3 text-center text-base font-bold text-blue-700">@item.IssueTotal.ToString("N0")</td>
+                                <td class="px-2 py-3 text-center text-base text-green-600">@item.IssueRead.ToString("N0")</td>
+                                <td class="px-2 py-3 text-center text-base text-red-600 border-r">@item.IssueNoRead.ToString("N0")</td>
+                                <td class="px-4 py-3 text-sm font-bold text-green-700">@FormatPlant(item.ToPlant)</td>
+                                <td class="px-2 py-3 text-center text-base text-green-600">@item.ReceiptRead.ToString("N0")</td>
+                                <td class="px-2 py-3 text-center text-base text-red-600">@item.ReceiptNoRead.ToString("N0")</td>
+                                <td class="px-2 py-3 text-center text-base font-bold text-green-700 border-l">@item.ReceiptTotal.ToString("N0")</td>
+                                <td class="px-4 py-3 text-center text-base font-bold text-red-600">
+                                    @(item.Deviation >= 0 ? $"+{item.Deviation:N0}" : item.Deviation.ToString("N0"))
                                 </td>
                             </tr>
                         }
                     </tbody>
-                    <tfoot class="bg-gray-100 font-semibold">
-                        <tr>
-                            <td class="px-4 py-3 text-sm font-bold text-gray-900 border-r">TOTAL</td>
-                            <td class="px-4 py-3 text-base text-center font-bold text-blue-700 border-r">@Model.Sum(x => x.IssueTotal).ToString("N0")</td>
-                            <td class="px-4 py-3 text-base text-center text-green-600 font-bold">@Model.Sum(x => x.IssueRead).ToString("N0")</td>
-                            <td class="px-4 py-3 text-base text-center text-red-600 font-bold border-r">@Model.Sum(x => x.IssueNoRead).ToString("N0")</td>
-                            <td class="px-4 py-3 text-base text-center font-bold text-green-700">@Model.Sum(x => x.ReceiptTotal).ToString("N0")</td>
-                            <td class="px-4 py-3 text-base text-center text-green-600 font-bold">@Model.Sum(x => x.ReceiptRead).ToString("N0")</td>
-                            <td class="px-4 py-3 text-base text-center text-red-600 font-bold">@Model.Sum(x => x.ReceiptNoRead).ToString("N0")</td>
-                            <td class="px-4 py-3 text-base text-center font-bold @(Model.Sum(x => x.Deviation) == 0 ? "text-gray-900" : Model.Sum(x => x.Deviation) > 0 ? "text-green-600" : "text-red-600")">
-                                @(Model.Sum(x => x.Deviation) > 0 ? $"+{Model.Sum(x => x.Deviation):N0}" : Model.Sum(x => x.Deviation).ToString("N0"))
-                            </td>
-                        </tr>
-                    </tfoot>
                 </table>
             </div>
-        }
-        else
-        {
-            <div class="p-8 text-center">
-                <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <h3 class="text-lg font-medium text-gray-900 mb-1">No Data Found</h3>
-                <p class="text-gray-500">No scan records found for the selected date.</p>
-            </div>
-        }
-    </div>
+        </div>
+    }
+    else
+    {
+        <div class="p-8 text-center bg-white rounded-xl shadow">
+            <h3 class="text-lg font-medium text-gray-900 mb-1">No Data Found</h3>
+            <p class="text-gray-500">No transfer records found for the selected date range.</p>
+        </div>
+    }
 </div>
-
-@section Scripts {
-    <script>
-        function exportToCSV() {
-            const table = document.querySelector('table');
-            if (!table) return;
-            
-            if (window.LoadingManager) {
-                window.LoadingManager.show('Exporting...', 'Preparing CSV file for download');
-            }
-            
-            let csv = [];
-            const rows = table.querySelectorAll('tr');
-            
-            for (let i = 0; i < rows.length; i++) {
-                let row = [], cols = rows[i].querySelectorAll('td, th');
-                for (let j = 0; j < cols.length; j++) {
-                    let text = cols[j].innerText.trim();
-                    text = text.replace(/"/g, '""');
-                    if (text.indexOf(',') !== -1 || text.indexOf('"') !== -1 || text.indexOf('\n') !== -1) {
-                        text = '"' + text + '"';
-                    }
-                    row.push(text);
-                }
-                csv.push(row.join(','));
-            }
-            
-            const BOM = '\uFEFF';
-            const csvContent = BOM + csv.join('\n');
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = 'daily_transfer_@(selectedFromDate.ToString("yyyy-MM-dd"))_to_@(selectedToDate.ToString("yyyy-MM-dd")).csv';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(link.href);
-            
-            setTimeout(function() {
-                if (window.LoadingManager) {
-                    window.LoadingManager.hide();
-                }
-            }, 1000);
-        }
-    </script>
-}
