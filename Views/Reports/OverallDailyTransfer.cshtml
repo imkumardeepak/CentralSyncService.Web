@@ -74,7 +74,7 @@
                             {
                                 return plant.ToUpper() switch
                                 {
-                                    "KASANA BELOW" => "Kasana Gnd Flr",
+                                    "KASANA BELOW" => "Kasana Grnd Flr",
                                     "KASANA TOP" => "Kasana 1st Flr",
                                     "KOMAL BELOW" => "Komal S1",
                                     "KOMAL TOP" => "Komal S2",
@@ -94,7 +94,7 @@
                                 <td class="px-2 py-3 text-center text-base text-green-600">@item.ReceiptRead.ToString("N0")</td>
                                 <td class="px-2 py-3 text-center text-base text-red-600">@item.ReceiptNoRead.ToString("N0")</td>
                                 <td class="px-2 py-3 text-center text-base font-bold text-green-700 border-l">@item.ReceiptTotal.ToString("N0")</td>
-                                <td class="px-4 py-3 text-center text-base font-bold @(item.Deviation >= 0 ? "text-green-600" : "text-red-600")">
+                                <td class="px-4 py-3 text-center text-base font-bold text-red-600">
                                     @(item.Deviation >= 0 ? $"+{item.Deviation:N0}" : item.Deviation.ToString("N0"))
                                 </td>
                             </tr>
