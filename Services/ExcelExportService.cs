@@ -17,8 +17,8 @@ namespace Web.Services
             ApplyHeaderStyle(worksheet, reportTitle, selectedDate);
 
             var headers = consolidated
-                ? new[] { "SAP Code", "Product Name", "Batch No", "Date", "Total Qty (Cs)", "Total Qty (MT)" }
-                : new[] { "SAP Code", "Product Name", "Batch No", "Date", "Shift", "Total Qty (Cs)", "Total Qty (MT)" };
+                ? new[] { "Material Code", "Batch", "Material", "Material Description", "Total Qty" }
+                : new[] { "Material Code", "Batch", "Material", "Material Description", "Shift", "Total Qty" };
             var headerRow = worksheet.Row(4);
             for (int i = 0; i < headers.Length; i++)
             {
@@ -30,41 +30,37 @@ namespace Web.Services
             int row = 5;
             foreach (var item in data)
             {
-                worksheet.Cell(row, 1).Value = item.SAPCode;
-                worksheet.Cell(row, 2).Value = item.ProductName;
-                worksheet.Cell(row, 3).Value = item.BatchNo;
-                worksheet.Cell(row, 4).Value = item.ReportDate.ToString("dd-MM-yyyy");
+                worksheet.Cell(row, 1).Value = item.MaterialCode;
+                worksheet.Cell(row, 2).Value = item.Batch;
+                worksheet.Cell(row, 3).Value = item.Material;
+                worksheet.Cell(row, 4).Value = item.MaterialDescription;
                 
                 if (consolidated)
                 {
-                    worksheet.Cell(row, 5).Value = item.TotalQtyInCs;
-                    worksheet.Cell(row, 6).Value = item.TotalQtyInMT;
-                    ApplyDataRowStyle(worksheet, row, 6);
+                    worksheet.Cell(row, 5).Value = item.TotalQty;
+                    ApplyDataRowStyle(worksheet, row, 5);
                 }
                 else
                 {
                     worksheet.Cell(row, 5).Value = item.Shift;
-                    worksheet.Cell(row, 6).Value = item.TotalQtyInCs;
-                    worksheet.Cell(row, 7).Value = item.TotalQtyInMT;
-                    ApplyDataRowStyle(worksheet, row, 7);
+                    worksheet.Cell(row, 6).Value = item.TotalQty;
+                    ApplyDataRowStyle(worksheet, row, 6);
                 }
                 row++;
             }
 
             worksheet.Column(1).Width = 15;
-            worksheet.Column(2).Width = 35;
-            worksheet.Column(3).Width = 15;
-            worksheet.Column(4).Width = 12;
+            worksheet.Column(2).Width = 15;
+            worksheet.Column(3).Width = 20;
+            worksheet.Column(4).Width = 35;
             if (consolidated)
             {
                 worksheet.Column(5).Width = 15;
-                worksheet.Column(6).Width = 15;
             }
             else
             {
                 worksheet.Column(5).Width = 10;
                 worksheet.Column(6).Width = 15;
-                worksheet.Column(7).Width = 15;
             }
 
             using var stream = new MemoryStream();

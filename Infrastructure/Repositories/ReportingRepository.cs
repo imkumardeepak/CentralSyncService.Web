@@ -41,12 +41,11 @@ namespace Web.Infrastructure.Repositories
                             var record = new ShiftReportRecord
                             {
                                 Shift = reader.IsDBNull(reader.GetOrdinal("Shift")) ? string.Empty : reader.GetString(reader.GetOrdinal("Shift")),
-                                SAPCode = reader.IsDBNull(reader.GetOrdinal("SAPCode")) ? string.Empty : reader.GetString(reader.GetOrdinal("SAPCode")),
-                                ProductName = reader.IsDBNull(reader.GetOrdinal("ProductName")) ? string.Empty : reader.GetString(reader.GetOrdinal("ProductName")),
-                                BatchNo = reader.IsDBNull(reader.GetOrdinal("BatchNo")) ? string.Empty : reader.GetString(reader.GetOrdinal("BatchNo")),
-                                ReportDate = reader.GetDateTime(reader.GetOrdinal("ReportDate")),
-                                TotalQtyInCs = reader.IsDBNull(reader.GetOrdinal("TotalQtyInCs")) ? 0 : reader.GetInt32(reader.GetOrdinal("TotalQtyInCs")),
-                                TotalQtyInMT = Convert.ToDecimal(reader.GetValue(reader.GetOrdinal("TotalQtyInMT")))
+                                MaterialCode = reader.IsDBNull(reader.GetOrdinal("MaterialCode")) ? string.Empty : reader.GetString(reader.GetOrdinal("MaterialCode")),
+                                Batch = reader.IsDBNull(reader.GetOrdinal("Batch")) ? string.Empty : reader.GetString(reader.GetOrdinal("Batch")),
+                                Material = reader.IsDBNull(reader.GetOrdinal("Material")) ? string.Empty : reader.GetString(reader.GetOrdinal("Material")),
+                                MaterialDescription = reader.IsDBNull(reader.GetOrdinal("MaterialDescription")) ? string.Empty : reader.GetString(reader.GetOrdinal("MaterialDescription")),
+                                TotalQty = reader.IsDBNull(reader.GetOrdinal("TotalQty")) ? 0 : reader.GetInt32(reader.GetOrdinal("TotalQty"))
                             };
 
                             result.Add(record);

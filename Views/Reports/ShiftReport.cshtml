@@ -112,44 +112,31 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SAP Code</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product Name</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Batch No</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                            @if (!isConsolidated)
-                            {
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Shift</th>
-                            }
-                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Transfer Qty (Cs)</th>
-                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Transfer Qty (MT)</th>
+                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">SAP Code</th>
+                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Batch</th>
+                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Material</th>
+                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Material Description</th>
+                            <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Shift</th>
+                            <th class="px-4 py-3 text-right text-xs font-bold text-gray-700 uppercase">Total Qty</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
+                    <tbody class="divide-y divide-gray-200">
                         @foreach (var item in Model)
                         {
-                            <tr class="hover:bg-gray-50 transition-colors" data-shift="@item.Shift">
-                                <td class="px-4 py-3 whitespace-nowrap text-sm font-mono text-gray-900">@item.SAPCode</td>
-                                <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">@item.ProductName</td>
-                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">@item.BatchNo</td>
-                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">@item.ReportDate.ToString("dd-MM-yyyy")</td>
-                                @if (!isConsolidated)
-                                {
-                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">@item.Shift</td>
-                                }
-                                <td class="px-4 py-3 whitespace-nowrap text-sm text-right text-green-700 font-semibold">@item.TotalQtyInCs.ToString("N0")</td>
-                                <td class="px-4 py-3 whitespace-nowrap text-sm text-right text-gray-900 font-semibold">@item.TotalQtyInMT.ToString("N3")</td>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 text-sm text-gray-900">@item.MaterialCode</td>
+                                <td class="px-4 py-3 text-sm text-gray-900">@item.Batch</td>
+                                <td class="px-4 py-3 text-sm text-gray-900">@item.Material</td>
+                                <td class="px-4 py-3 text-sm text-gray-700">@item.MaterialDescription</td>
+                                <td class="px-4 py-3 text-center text-sm font-bold text-blue-700">@item.Shift</td>
+                                <td class="px-4 py-3 text-right text-base font-bold text-blue-700">@item.TotalQty.ToString("N0")</td>
                             </tr>
                         }
                     </tbody>
-                    <tfoot class="bg-gray-100 font-semibold">
+                    <tfoot class="bg-gray-100 font-bold">
                         <tr>
-                            <td colspan="@(isConsolidated ? 4 : 4)" class="px-4 py-3 text-sm font-bold text-gray-900"></td>
-                            @if (!isConsolidated)
-                            {
-                                <td class="px-4 py-3 text-sm font-bold text-gray-900">TOTAL</td>
-                            }
-                            <td class="px-4 py-3 text-sm text-right text-green-800 font-bold">@Model.Sum(x => x.TotalQtyInCs).ToString("N0")</td>
-                            <td class="px-4 py-3 text-sm text-right text-gray-900 font-bold">@Model.Sum(x => x.TotalQtyInMT).ToString("N3")</td>
+                            <td colspan="5" class="px-4 py-3 text-sm">TOTAL</td>
+                            <td class="px-4 py-3 text-right text-blue-700">@Model.Sum(x => x.TotalQty).ToString("N0")</td>
                         </tr>
                     </tfoot>
                 </table>
