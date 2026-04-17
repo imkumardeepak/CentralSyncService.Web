@@ -15,61 +15,34 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    WITH ScanData AS (
-        SELECT
-            ScanDate = CAST(s.ScanDateTime AS DATE),
-            ScanType = UPPER(LTRIM(RTRIM(ISNULL(s.ScanType, '')))),
-            PlantName = UPPER(LTRIM(RTRIM(ISNULL(s.CurrentPlant, '')))),
-            IsReadable = CASE
-                WHEN s.IsRead = 1 AND UPPER(LTRIM(RTRIM(ISNULL(s.Barcode, '')))) <> 'NOREAD'
-                    THEN 1
-                ELSE 0
-            END
-        FROM dbo.SorterScans_Sync s WITH(NOLOCK)
-        WHERE s.ScanDateTime >= @StartDate AND s.ScanDateTime < @EndDate
-    ),
-    IssueData AS (
-        SELECT
-            ScanDate,
-            IssueLine = PlantName,
-            IssueTotal = COUNT(*),
-            IssueRead = SUM(IsReadable),
-            IssueNoRead = COUNT(*) - SUM(IsReadable)
-        FROM ScanData
-        WHERE ScanType = 'FROM'
-        GROUP BY ScanDate, PlantName
-    ),
-    ReceiptData AS (
-        SELECT
-            ScanDate,
-            ReceiptLine = PlantName,
-            ReceiptTotal = COUNT(*),
-            ReceiptRead = SUM(IsReadable),
-            ReceiptNoRead = COUNT(*) - SUM(IsReadable)
-        FROM ScanData
-        WHERE ScanType = 'TO'
-        GROUP BY ScanDate, PlantName
-    )
-    SELECT
-        ReportDate = CONVERT(VARCHAR(20), ISNULL(i.ScanDate, r.ScanDate), 106),
-        IssueLine = ISNULL(i.IssueLine, ''),
-        IssueTotal = ISNULL(i.IssueTotal, 0),
-        IssueRead = ISNULL(i.IssueRead, 0),
-        IssueNoRead = ISNULL(i.IssueNoRead, 0),
-        ReceiptLine = ISNULL(r.ReceiptLine, ''),
-        ReceiptTotal = ISNULL(r.ReceiptTotal, 0),
-        ReceiptRead = ISNULL(r.ReceiptRead, 0),
-        ReceiptNoRead = ISNULL(r.ReceiptNoRead, 0),
-        Deviation = ISNULL(i.IssueTotal, 0) - ISNULL(r.ReceiptTotal, 0)
-    FROM IssueData i
-    FULL OUTER JOIN ReceiptData r
-        ON i.ScanDate = r.ScanDate AND i.IssueLine = r.ReceiptLine
-    WHERE ISNULL(i.IssueLine, '') <> '' OR ISNULL(r.ReceiptLine, '') <> ''
-    ORDER BY 
-        ISNULL(i.ScanDate, r.ScanDate),
-        ISNULL(i.IssueLine, r.ReceiptLine);
+    SELECT 
+        ReportDate = CONVERT(VARCHAR(20), ScanDate, 106),
+        IssueLine = Plant,
+        IssueTotal = ISNULL(SUM(CASE WHEN ScanType = 'FROM' THEN 1 ELSE 0 END), 0),
+        IssueRead = ISNULL(SUM(CASE WHEN ScanType = 'FROM' AND IsRead = 1 AND Barcode <> 'NOREAD' THEN 1 ELSE 0 END), 0),
+        IssueNoRead = ISNULL(SUM(CASE WHEN ScanType = 'FROM' THEN 1 ELSE 0 END), 0) - ISNULL(SUM(CASE WHEN ScanType = 'FROM' AND IsRead = 1 AND Barcode <> 'NOREAD' THEN 1 ELSE 0 END), 0),
+        ReceiptLine = Plant,
+        ReceiptTotal = ISNULL(SUM(CASE WHEN ScanType = 'TO' THEN 1 ELSE 0 END), 0),
+        ReceiptRead = ISNULL(SUM(CASE WHEN ScanType = 'TO' AND IsRead = 1 AND Barcode <> 'NOREAD' THEN 1 ELSE 0 END), 0),
+        ReceiptNoRead = ISNULL(SUM(CASE WHEN ScanType = 'TO' THEN 1 ELSE 0 END), 0) - ISNULL(SUM(CASE WHEN ScanType = 'TO' AND IsRead = 1 AND Barcode <> 'NOREAD' THEN 1 ELSE 0 END), 0),
+        Deviation = ISNULL(SUM(CASE WHEN ScanType = 'FROM' THEN 1 ELSE 0 END), 0) - ISNULL(SUM(CASE WHEN ScanType = 'TO' THEN 1 ELSE 0 END), 0)
+    FROM (
+        SELECT 
+            ScanDate = CAST(ScanDateTime AS DATE),
+            Plant = UPPER(LTRIM(RTRIM(ISNULL(CurrentPlant, '')))),
+            ScanType = UPPER(LTRIM(RTRIM(ISNULL(ScanType, '')))),
+            IsRead,
+            Barcode = UPPER(LTRIM(RTRIM(ISNULL(Barcode, ''))))
+        FROM dbo.SorterScans_Sync WITH(NOLOCK)
+        WHERE ScanDateTime >= @StartDate AND ScanDateTime < @EndDate
+    ) AS src
+    WHERE Plant <> ''
+    GROUP BY ScanDate, Plant
+    HAVING ISNULL(SUM(CASE WHEN ScanType = 'FROM' THEN 1 ELSE 0 END), 0) > 0 
+        OR ISNULL(SUM(CASE WHEN ScanType = 'TO' THEN 1 ELSE 0 END), 0) > 0
+    ORDER BY ScanDate, Plant;
 END
 GO
 
-PRINT 'Procedure sp_GetDailyTransferReport updated - by plant';
+PRINT 'Procedure sp_GetDailyTransferReport updated';
 GO
