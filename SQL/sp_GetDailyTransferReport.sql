@@ -35,8 +35,8 @@ BEGIN
                     THEN 1
                 ELSE 0
             END
-        FROM dbo.SorterScans_Sync s WITH(NOLOCK)
-        WHERE s.ScanDateTime >= @StartDate AND s.ScanDateTime < @EndDate
+FROM dbo.SorterScans_Sync s WITH(NOLOCK)
+        WHERE s.scanDateTime >= @StartDate AND s.scanDateTime < DATEADD(DAY, 1, @EndDate)
     ),
     IssueData AS (
         SELECT

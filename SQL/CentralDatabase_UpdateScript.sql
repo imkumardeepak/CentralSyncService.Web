@@ -73,7 +73,7 @@ BEGIN
                 END
         FROM dbo.SorterScans_Sync WITH(NOLOCK)
         WHERE ScanDateTime >= @StartDate
-          AND ScanDateTime < @EndDate
+          AND ScanDateTime < DATEADD(DAY, 1, @EndDate)
     ),
     FromSummary AS (
         SELECT

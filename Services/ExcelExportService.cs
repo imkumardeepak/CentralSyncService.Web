@@ -371,8 +371,9 @@ namespace Web.Services
             int dataRow = 6;
             foreach (var item in data)
             {
-                // FROM Plant
-                worksheet.Cell(dataRow, 1).Value = string.IsNullOrWhiteSpace(item.FromPlant) ? "-" : item.FromPlant;
+                // FROM Plant - format like UI
+                var fromPlantFormatted = FormatPlantName(item.FromPlant);
+                worksheet.Cell(dataRow, 1).Value = string.IsNullOrWhiteSpace(fromPlantFormatted) ? "-" : fromPlantFormatted;
                 worksheet.Cell(dataRow, 1).Style.Font.Bold = true;
                 worksheet.Cell(dataRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
 
@@ -391,7 +392,7 @@ namespace Web.Services
                 worksheet.Cell(dataRow, 4).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
                 // TO Plant
-                worksheet.Cell(dataRow, 5).Value = string.IsNullOrWhiteSpace(item.ToPlant) ? "-" : item.ToPlant;
+                worksheet.Cell(dataRow, 5).Value = string.IsNullOrWhiteSpace(item.ToPlant) ? "-" : FormatPlantName(item.ToPlant);
                 worksheet.Cell(dataRow, 5).Style.Font.Bold = true;
                 worksheet.Cell(dataRow, 5).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
 
@@ -584,6 +585,19 @@ namespace Web.Services
             }
 
             worksheet.Row(row).Height = 18;
+        }
+
+        private string FormatPlantName(string plant)
+        {
+            if (string.IsNullOrWhiteSpace(plant)) return plant;
+            return plant.ToUpper() switch
+            {
+                "KASANA BELOW" => "Kasana Grnd Flr",
+                "KASANA TOP" => "Kasana 1st Flr",
+                "KOMAL BELOW" => "Komal S1",
+                "KOMAL TOP" => "Komal S2",
+                _ => plant
+            };
         }
     }
 }
