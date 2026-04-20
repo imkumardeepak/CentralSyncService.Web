@@ -127,7 +127,7 @@ namespace Web.Services
             int dataRow = 6;
             foreach (var item in data)
             {
-                worksheet.Cell(dataRow, 1).Value = item.ReportDate;
+                worksheet.Cell(dataRow, 1).Value = item.ReportDate.ToString("dd/MMM/yyyy");
                 worksheet.Cell(dataRow, 2).Value = FormatPlantName(item.FromPlant);
                 worksheet.Cell(dataRow, 3).Value = item.IssueTotal;
                 worksheet.Cell(dataRow, 4).Value = item.IssueRead;
@@ -244,11 +244,11 @@ namespace Web.Services
             reportTitle.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
             var dateCell = worksheet.Cell(3, 1);
-            dateCell.Value = $"Date Range: {fromDate:dd MMM yyyy} to {toDate:dd MMM yyyy}";
+            dateCell.Value = $"Date Range: {fromDate:dd/MMM/yyyy} to {toDate:dd/MMM/yyyy}";
             dateCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
             var generatedCell = worksheet.Cell(3, 8);
-            generatedCell.Value = $"Generated: {DateTime.Now:dd MMM yyyy HH:mm}";
+            generatedCell.Value = $"Generated: {DateTime.Now:dd/MMM/yyyy HH:mm}";
             generatedCell.Style.Font.FontSize = 9;
             generatedCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
 
@@ -308,7 +308,7 @@ namespace Web.Services
             int dataRow = 6;
             foreach (var item in data)
             {
-                worksheet.Cell(dataRow, 1).Value = item.ReportDate;
+                worksheet.Cell(dataRow, 1).Value = item.ReportDate.ToString("dd/MMM/yyyy");
                 worksheet.Cell(dataRow, 2).Value = FormatPlantName(item.FromPlant);
                 worksheet.Cell(dataRow, 3).Value = item.IssueTotal;
                 worksheet.Cell(dataRow, 4).Value = item.IssueRead;
@@ -397,13 +397,13 @@ namespace Web.Services
             reportTitle.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
             var dateCell = worksheet.Cell(3, 1);
-            dateCell.Value = $"Report Date: {date:dd MMMM yyyy}";
+            dateCell.Value = $"Report Date: {date:dd/MMM/yyyy}";
             dateCell.Style.Font.FontSize = 10;
             dateCell.Style.Font.FontColor = XLColor.FromHtml("#6B7280");
             dateCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
             var generatedCell = worksheet.Cell(3, 5);
-            generatedCell.Value = $"Generated: {DateTime.Now:dd MMM yyyy HH:mm}";
+            generatedCell.Value = $"Generated: {DateTime.Now:dd/MMM/yyyy HH:mm}";
             generatedCell.Style.Font.FontSize = 9;
             generatedCell.Style.Font.FontColor = XLColor.FromHtml("#9CA3AF");
             generatedCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
