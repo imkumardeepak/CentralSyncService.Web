@@ -6,6 +6,8 @@ obj/
 *.userosscache
 *.sln.docstates
 *.log
+*.dotnet
+.jetro
 
 # Visual Studio
 .vs/

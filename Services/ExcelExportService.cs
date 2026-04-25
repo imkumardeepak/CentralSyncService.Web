@@ -127,7 +127,7 @@ namespace Web.Services
             int dataRow = 6;
             foreach (var item in data)
             {
-                worksheet.Cell(dataRow, 1).Value = item.ReportDate.ToString("dd/MMM/yyyy");
+                worksheet.Cell(dataRow, 1).Value = FormatReportDate(item.ReportDate);
                 worksheet.Cell(dataRow, 2).Value = FormatPlantName(item.FromPlant);
                 worksheet.Cell(dataRow, 3).Value = item.IssueTotal;
                 worksheet.Cell(dataRow, 4).Value = item.IssueRead;
@@ -308,7 +308,7 @@ namespace Web.Services
             int dataRow = 6;
             foreach (var item in data)
             {
-                worksheet.Cell(dataRow, 1).Value = item.ReportDate.ToString("dd/MMM/yyyy");
+                worksheet.Cell(dataRow, 1).Value = FormatReportDate(item.ReportDate);
                 worksheet.Cell(dataRow, 2).Value = FormatPlantName(item.FromPlant);
                 worksheet.Cell(dataRow, 3).Value = item.IssueTotal;
                 worksheet.Cell(dataRow, 4).Value = item.IssueRead;
@@ -444,6 +444,16 @@ namespace Web.Services
             }
 
             worksheet.Row(row).Height = 18;
+        }
+
+        private string FormatReportDate(string reportDate)
+        {
+            if (DateTime.TryParse(reportDate, out var parsedDate))
+            {
+                return parsedDate.ToString("dd/MMM/yyyy");
+            }
+
+            return reportDate;
         }
 
         private string FormatPlantName(string plant)
