@@ -234,6 +234,7 @@ namespace Web.Infrastructure.Repositories
                 using (var command = new SqlCommand("sp_GetVarianceTransferReport", connection))
                 {
                     command.CommandType = CommandType.StoredProcedure;
+                    command.CommandTimeout = 120;
                     command.Parameters.Add("@Date", SqlDbType.Date).Value = selectedDate;
 
                     using (var reader = await command.ExecuteReaderAsync().ConfigureAwait(false))
