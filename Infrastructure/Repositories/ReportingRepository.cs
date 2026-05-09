@@ -217,6 +217,81 @@ namespace Web.Infrastructure.Repositories
             return result;
         }
 
+        public async Task<VarianceTransferReportResult> GetVarianceTransferReportAsync(DateTime? date)
+        {
+            var selectedDate = (date ?? DateTime.Today).Date;
+            var result = new VarianceTransferReportResult
+            {
+                SelectedDate = selectedDate,
+                ShiftStart = selectedDate.AddHours(7),
+                ShiftEnd = selectedDate.AddDays(1).AddHours(7)
+            };
+
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                await connection.OpenAsync().ConfigureAwait(false);
+
+                using (var command = new SqlCommand("sp_GetVarianceTransferReport", connection))
+                {
+                    command.CommandType = CommandType.StoredProcedure;
+                    command.Parameters.Add("@Date", SqlDbType.Date).Value = selectedDate;
+
+                    using (var reader = await command.ExecuteReaderAsync().ConfigureAwait(false))
+                    {
+                        if (await reader.ReadAsync().ConfigureAwait(false))
+                        {
+                            result.SelectedDate = GetDateTime(reader, "ReportDate") ?? selectedDate;
+                            result.ShiftStart = GetDateTime(reader, "ShiftStart") ?? result.ShiftStart;
+                            result.ShiftEnd = GetDateTime(reader, "ShiftEnd") ?? result.ShiftEnd;
+                            result.TotalProduction = GetInt32(reader, "TotalProduction");
+                            result.TotalTransfer = GetInt32(reader, "TotalTransfer");
+                            result.MatchedProduction = GetInt32(reader, "MatchedProduction");
+                            result.UnmatchedProduction = GetInt32(reader, "UnmatchedProduction");
+                            result.TransferWithoutProduction = GetInt32(reader, "TransferWithoutProduction");
+                            result.Variance = GetInt32(reader, "Variance");
+                        }
+
+                        if (await reader.NextResultAsync().ConfigureAwait(false))
+                        {
+                            while (await reader.ReadAsync().ConfigureAwait(false))
+                            {
+                                result.ProducedDetails.Add(new VarianceTransferProducedDetail
+                                {
+                                    SerialNo = GetInt32(reader, "SerialNo"),
+                                    Barcode = GetNullableString(reader, "Barcode") ?? string.Empty,
+                                    SapCode = GetNullableString(reader, "SapCode") ?? string.Empty,
+                                    BatchNo = GetNullableString(reader, "BatchNo") ?? string.Empty,
+                                    OrderNo = GetNullableString(reader, "OrderNo") ?? string.Empty,
+                                    PackDescription = GetNullableString(reader, "PackDescription") ?? string.Empty,
+                                    ProductionTime = GetDateTime(reader, "ProductionTime"),
+                                    TransferCount = GetInt32(reader, "TransferCount"),
+                                    FirstTransferTime = GetDateTime(reader, "FirstTransferTime"),
+                                    LastTransferTime = GetDateTime(reader, "LastTransferTime"),
+                                    IsMatched = GetInt32(reader, "IsMatched") == 1
+                                });
+                            }
+                        }
+
+                        if (await reader.NextResultAsync().ConfigureAwait(false))
+                        {
+                            while (await reader.ReadAsync().ConfigureAwait(false))
+                            {
+                                result.ExtraTransferDetails.Add(new VarianceTransferExtraTransferDetail
+                                {
+                                    Barcode = GetNullableString(reader, "Barcode") ?? string.Empty,
+                                    TransferCount = GetInt32(reader, "TransferCount"),
+                                    FirstTransferTime = GetDateTime(reader, "FirstTransferTime"),
+                                    LastTransferTime = GetDateTime(reader, "LastTransferTime")
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+
+            return result;
+        }
+
         private static string? GetNullableString(SqlDataReader reader, string columnName)
         {
             var ordinal = GetOrdinal(reader, columnName);
@@ -237,6 +312,17 @@ namespace Web.Infrastructure.Repositories
             }
 
             return Convert.ToInt32(reader.GetValue(ordinal));
+        }
+
+        private static DateTime? GetDateTime(SqlDataReader reader, string columnName)
+        {
+            var ordinal = GetOrdinal(reader, columnName);
+            if (ordinal < 0 || reader.IsDBNull(ordinal))
+            {
+                return null;
+            }
+
+            return Convert.ToDateTime(reader.GetValue(ordinal));
         }
 
         private static int GetOrdinal(SqlDataReader reader, string columnName)

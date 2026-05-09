@@ -8,6 +8,7 @@ obj/
 *.log
 *.dotnet
 .jetro
+.omx/
 
 # Visual Studio
 .vs/

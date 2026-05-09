@@ -1,0 +1,206 @@
+@model Web.Core.DTOs.VarianceTransferReportResult
+@{
+    ViewData["Title"] = "Variance Transfer Report";
+    var selectedDate = Model.SelectedDate == default ? DateTime.Today : Model.SelectedDate;
+    var shiftStart = Model.ShiftStart == default ? selectedDate.Date.AddHours(7) : Model.ShiftStart;
+    var shiftEnd = Model.ShiftEnd == default ? selectedDate.Date.AddDays(1).AddHours(7) : Model.ShiftEnd;
+    var shiftEndDisplay = shiftEnd.AddSeconds(-1);
+}
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Variance Transfer Report</h1>
+                <p class="mt-1 text-sm text-gray-500">Production vs TO transfer barcode matching (Shift: 07:00 - 06:59)</p>
+            </div>
+            <form method="get" class="flex items-center gap-2">
+                <input type="date" name="date" value="@selectedDate.ToString("yyyy-MM-dd")"
+                       class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
+                <button type="submit" class="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors">
+                    Search
+                </button>
+            </form>
+        </div>
+    </div>
+
+    @if (ViewBag.Error != null)
+    {
+        <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <span class="text-red-700 font-medium">@ViewBag.Error</span>
+        </div>
+    }
+
+    <div class="mb-6 bg-white rounded-xl shadow-card border border-neutral-200 p-6">
+        <h2 class="text-lg font-semibold text-gray-900">Shift Window</h2>
+        <p class="mt-1 text-sm text-gray-600">
+            @shiftStart.ToString("dd-MMM-yyyy hh:mm tt") to @shiftEndDisplay.ToString("dd-MMM-yyyy hh:mm tt")
+        </p>
+        <p class="mt-2 text-sm text-gray-500">
+            Production source: <span class="font-semibold text-gray-700">BarcodePrint</span> where <span class="font-mono">NewPlant = 'HF'</span>.
+            Transfer source: <span class="font-semibold text-gray-700">SorterScans_Sync</span> where <span class="font-mono">ScanType = 'TO'</span>.
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 mb-8">
+        <div class="bg-white rounded-xl shadow-card border border-blue-100 p-5">
+            <div class="text-xs font-bold uppercase tracking-wider text-blue-600">Total Production</div>
+            <div class="mt-2 text-3xl font-bold text-gray-900">@Model.TotalProduction.ToString("N0")</div>
+        </div>
+        <div class="bg-white rounded-xl shadow-card border border-green-100 p-5">
+            <div class="text-xs font-bold uppercase tracking-wider text-green-600">Total Transfer</div>
+            <div class="mt-2 text-3xl font-bold text-gray-900">@Model.TotalTransfer.ToString("N0")</div>
+        </div>
+        <div class="bg-white rounded-xl shadow-card border border-emerald-100 p-5">
+            <div class="text-xs font-bold uppercase tracking-wider text-emerald-600">Matched</div>
+            <div class="mt-2 text-3xl font-bold text-gray-900">@Model.MatchedProduction.ToString("N0")</div>
+        </div>
+        <div class="bg-white rounded-xl shadow-card border border-red-100 p-5">
+            <div class="text-xs font-bold uppercase tracking-wider text-red-600">Unmatched Production</div>
+            <div class="mt-2 text-3xl font-bold text-gray-900">@Model.UnmatchedProduction.ToString("N0")</div>
+        </div>
+        <div class="bg-white rounded-xl shadow-card border border-amber-100 p-5">
+            <div class="text-xs font-bold uppercase tracking-wider text-amber-600">Variance</div>
+            <div class="mt-2 text-3xl font-bold @(Model.Variance >= 0 ? "text-green-700" : "text-red-700")">
+                @(Model.Variance >= 0 ? $"+{Model.Variance:N0}" : Model.Variance.ToString("N0"))
+            </div>
+            <div class="mt-2 text-xs text-gray-500">Extra transfer without production: @Model.TransferWithoutProduction.ToString("N0")</div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-card overflow-hidden mb-8">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Produced Barcode Details</h2>
+            <p class="text-sm text-gray-500">Each produced barcode checked against TO transfer scans in same shift window.</p>
+        </div>
+
+        @if (Model.ProducedDetails.Any())
+        {
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">S/N</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Barcode</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SAP Code</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Batch</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order No</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Production Time</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Transfer Count</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">First Transfer</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        @foreach (var item in Model.ProducedDetails)
+                        {
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">@item.SerialNo</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm font-mono text-gray-900">@item.Barcode</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">@item.SapCode</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">@item.BatchNo</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">@item.OrderNo</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">@(item.ProductionTime?.ToString("dd-MMM-yyyy hh:mm:ss tt") ?? "-")</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-center font-semibold @(item.TransferCount > 0 ? "text-green-700" : "text-red-700")">@item.TransferCount</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">@(item.FirstTransferTime?.ToString("dd-MMM-yyyy hh:mm:ss tt") ?? "-")</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-center">
+                                    @if (item.IsMatched)
+                                    {
+                                        <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-green-100 text-green-700 text-xs font-semibold">
+                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            Correct
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-red-100 text-red-700 text-xs font-semibold">
+                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                            Unmatched
+                                        </span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot class="bg-gray-100 font-semibold">
+                        <tr>
+                            <td colspan="5" class="px-4 py-3 text-sm text-right text-gray-900">TOTAL</td>
+                            <td class="px-4 py-3 text-sm text-gray-900">@Model.TotalProduction.ToString("N0") produced</td>
+                            <td class="px-4 py-3 text-sm text-center text-gray-900">@Model.TotalTransfer.ToString("N0")</td>
+                            <td class="px-4 py-3 text-sm text-gray-900">@Model.MatchedProduction.ToString("N0") matched</td>
+                            <td class="px-4 py-3 text-sm text-center @(Model.UnmatchedProduction > 0 ? "text-red-700" : "text-green-700")">@Model.UnmatchedProduction.ToString("N0") open</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="p-8 text-center">
+                <h3 class="text-lg font-medium text-gray-900 mb-1">No Production Data</h3>
+                <p class="text-gray-500">No `HF` production barcodes found for selected shift window.</p>
+            </div>
+        }
+    </div>
+
+    <div class="bg-white rounded-xl shadow-card overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Transfer Without Production Match</h2>
+            <p class="text-sm text-gray-500">TO scans present in shift window but barcode not found in same-window HF production.</p>
+        </div>
+
+        @if (Model.ExtraTransferDetails.Any())
+        {
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Barcode</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Transfer Count</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">First Transfer</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Transfer</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        @foreach (var item in Model.ExtraTransferDetails)
+                        {
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-4 py-3 whitespace-nowrap text-sm font-mono text-gray-900">@item.Barcode</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-center font-semibold text-amber-700">@item.TransferCount</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">@(item.FirstTransferTime?.ToString("dd-MMM-yyyy hh:mm:ss tt") ?? "-")</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">@(item.LastTransferTime?.ToString("dd-MMM-yyyy hh:mm:ss tt") ?? "-")</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-center">
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-semibold">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                        Extra Transfer
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot class="bg-gray-100 font-semibold">
+                        <tr>
+                            <td class="px-4 py-3 text-sm text-right text-gray-900">TOTAL</td>
+                            <td class="px-4 py-3 text-sm text-center text-gray-900">@Model.TransferWithoutProduction.ToString("N0")</td>
+                            <td colspan="3" class="px-4 py-3 text-sm text-gray-600">Transfer rows without matching same-window production</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="p-8 text-center">
+                <h3 class="text-lg font-medium text-gray-900 mb-1">No Extra Transfer Rows</h3>
+                <p class="text-gray-500">Every TO scan barcode found a same-window production barcode.</p>
+            </div>
+        }
+    </div>
+</div>

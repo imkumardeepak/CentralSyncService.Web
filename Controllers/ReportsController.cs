@@ -145,6 +145,30 @@ namespace Web.Controllers
             }
         }
 
+        // Variance Transfer Report
+        public async Task<IActionResult> VarianceTransferReport(DateTime? date)
+        {
+            var searchDate = (date ?? DateTime.Today).Date;
+
+            try
+            {
+                var model = await _reportingRepository.GetVarianceTransferReportAsync(searchDate).ConfigureAwait(false);
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Error = $"Error: {ex.Message}";
+                ViewBag.StackTrace = ex.StackTrace;
+
+                return View(new VarianceTransferReportResult
+                {
+                    SelectedDate = searchDate,
+                    ShiftStart = searchDate.AddHours(7),
+                    ShiftEnd = searchDate.AddDays(1).AddHours(7)
+                });
+            }
+        }
+
         #region Excel Export Actions
 
         public async Task<IActionResult> ExportShiftReportExcel(DateTime? date, string? shift, bool? consolidated)
