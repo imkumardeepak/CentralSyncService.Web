@@ -404,7 +404,7 @@ namespace Web.Services
             summarySheet.Column(2).Width = 18;
 
             var producedSheet = workbook.Worksheets.Add("Produced Details");
-            var producedHeaders = new[] { "S/N", "Barcode", "SAP Code", "Batch", "Order No", "Pack Description", "Production Time", "Transfer Count", "First Transfer", "Last Transfer", "Status" };
+            var producedHeaders = new[] { "S/N", "Barcode", "SAP Code", "Batch", "Order No", "Pack Description", "Production Time", "Sorter Scan Time", "Last Transfer", "Status" };
             for (int i = 0; i < producedHeaders.Length; i++)
             {
                 var cell = producedSheet.Cell(1, i + 1);
@@ -422,18 +422,17 @@ namespace Web.Services
                 producedSheet.Cell(producedRow, 5).Value = item.OrderNo;
                 producedSheet.Cell(producedRow, 6).Value = item.PackDescription;
                 producedSheet.Cell(producedRow, 7).Value = item.ProductionTime?.ToString("dd/MMM/yyyy HH:mm:ss") ?? string.Empty;
-                producedSheet.Cell(producedRow, 8).Value = item.TransferCount;
-                producedSheet.Cell(producedRow, 9).Value = item.FirstTransferTime?.ToString("dd/MMM/yyyy HH:mm:ss") ?? string.Empty;
-                producedSheet.Cell(producedRow, 10).Value = item.LastTransferTime?.ToString("dd/MMM/yyyy HH:mm:ss") ?? string.Empty;
-                producedSheet.Cell(producedRow, 11).Value = item.IsMatched ? "Correct" : "Unmatched";
-                ApplyDataRowStyle(producedSheet, producedRow, 11);
+                producedSheet.Cell(producedRow, 8).Value = item.FirstTransferTime?.ToString("dd/MMM/yyyy HH:mm:ss") ?? string.Empty;
+                producedSheet.Cell(producedRow, 9).Value = item.LastTransferTime?.ToString("dd/MMM/yyyy HH:mm:ss") ?? string.Empty;
+                producedSheet.Cell(producedRow, 10).Value = item.IsMatched ? "Correct" : "Unmatched";
+                ApplyDataRowStyle(producedSheet, producedRow, 10);
                 producedRow++;
             }
 
-            producedSheet.Columns(1, 11).AdjustToContents();
+            producedSheet.Columns(1, 10).AdjustToContents();
 
             var extraSheet = workbook.Worksheets.Add("Extra Transfers");
-            var extraHeaders = new[] { "Barcode", "Transfer Count", "First Transfer", "Last Transfer", "Status" };
+            var extraHeaders = new[] { "Barcode", "Sorter Scan Time", "Last Transfer", "Status" };
             for (int i = 0; i < extraHeaders.Length; i++)
             {
                 var cell = extraSheet.Cell(1, i + 1);
@@ -445,15 +444,14 @@ namespace Web.Services
             foreach (var item in data.ExtraTransferDetails)
             {
                 extraSheet.Cell(extraRow, 1).Value = item.Barcode;
-                extraSheet.Cell(extraRow, 2).Value = item.TransferCount;
-                extraSheet.Cell(extraRow, 3).Value = item.FirstTransferTime?.ToString("dd/MMM/yyyy HH:mm:ss") ?? string.Empty;
-                extraSheet.Cell(extraRow, 4).Value = item.LastTransferTime?.ToString("dd/MMM/yyyy HH:mm:ss") ?? string.Empty;
-                extraSheet.Cell(extraRow, 5).Value = "Extra Transfer";
-                ApplyDataRowStyle(extraSheet, extraRow, 5);
+                extraSheet.Cell(extraRow, 2).Value = item.FirstTransferTime?.ToString("dd/MMM/yyyy HH:mm:ss") ?? string.Empty;
+                extraSheet.Cell(extraRow, 3).Value = item.LastTransferTime?.ToString("dd/MMM/yyyy HH:mm:ss") ?? string.Empty;
+                extraSheet.Cell(extraRow, 4).Value = "Extra Transfer";
+                ApplyDataRowStyle(extraSheet, extraRow, 4);
                 extraRow++;
             }
 
-            extraSheet.Columns(1, 5).AdjustToContents();
+            extraSheet.Columns(1, 4).AdjustToContents();
 
             using var stream = new MemoryStream();
             workbook.SaveAs(stream);

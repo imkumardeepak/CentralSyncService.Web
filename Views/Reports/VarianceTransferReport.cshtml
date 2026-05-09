@@ -127,8 +127,7 @@
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Batch</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order No</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Production Time</th>
-                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Transfer Count</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">First Transfer</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sorter Scan Time</th>
                             <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                         </tr>
                     </thead>
@@ -142,7 +141,6 @@
                                 <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">@item.BatchNo</td>
                                 <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">@item.OrderNo</td>
                                 <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">@(item.ProductionTime?.ToString("dd-MMM-yyyy hh:mm:ss tt") ?? "-")</td>
-                                <td class="px-4 py-3 whitespace-nowrap text-sm text-center font-semibold @(item.TransferCount > 0 ? "text-green-700" : "text-red-700")">@item.TransferCount</td>
                                 <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">@(item.FirstTransferTime?.ToString("dd-MMM-yyyy hh:mm:ss tt") ?? "-")</td>
                                 <td class="px-4 py-3 whitespace-nowrap text-center">
                                     @if (item.IsMatched)
@@ -171,7 +169,6 @@
                         <tr>
                             <td colspan="5" class="px-4 py-3 text-sm text-right text-gray-900">TOTAL</td>
                             <td class="px-4 py-3 text-sm text-gray-900">@Model.TotalProduction.ToString("N0") produced</td>
-                            <td class="px-4 py-3 text-sm text-center text-gray-900">@Model.TotalTransfer.ToString("N0")</td>
                             <td class="px-4 py-3 text-sm text-gray-900">@Model.MatchedProduction.ToString("N0") matched</td>
                             <td class="px-4 py-3 text-sm text-center @(Model.UnmatchedProduction > 0 ? "text-red-700" : "text-green-700")">@Model.UnmatchedProduction.ToString("N0") open</td>
                         </tr>
@@ -220,8 +217,7 @@
                     <thead class="bg-gray-50">
                         <tr>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Barcode</th>
-                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Transfer Count</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">First Transfer</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sorter Scan Time</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Transfer</th>
                             <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                         </tr>
@@ -231,7 +227,6 @@
                         {
                             <tr class="hover:bg-gray-50 transition-colors">
                                 <td class="px-4 py-3 whitespace-nowrap text-sm font-mono text-gray-900">@item.Barcode</td>
-                                <td class="px-4 py-3 whitespace-nowrap text-sm text-center font-semibold text-amber-700">@item.TransferCount</td>
                                 <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">@(item.FirstTransferTime?.ToString("dd-MMM-yyyy hh:mm:ss tt") ?? "-")</td>
                                 <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">@(item.LastTransferTime?.ToString("dd-MMM-yyyy hh:mm:ss tt") ?? "-")</td>
                                 <td class="px-4 py-3 whitespace-nowrap text-center">
@@ -248,7 +243,6 @@
                     <tfoot class="bg-gray-100 font-semibold">
                         <tr>
                             <td class="px-4 py-3 text-sm text-right text-gray-900">TOTAL</td>
-                            <td class="px-4 py-3 text-sm text-center text-gray-900">@Model.TransferWithoutProduction.ToString("N0")</td>
                             <td colspan="3" class="px-4 py-3 text-sm text-gray-600">Transfer rows without matching same-window production</td>
                         </tr>
                     </tfoot>
