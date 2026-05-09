@@ -372,6 +372,94 @@ namespace Web.Services
             return stream.ToArray();
         }
 
+        public byte[] ExportVarianceTransferReport(Core.DTOs.VarianceTransferReportResult data)
+        {
+            using var workbook = new XLWorkbook();
+
+            var summarySheet = workbook.Worksheets.Add("Variance Summary");
+            ApplyHeaderStyle(summarySheet, "Variance Transfer Report", data.SelectedDate);
+
+            summarySheet.Cell(5, 1).Value = "Total Production";
+            summarySheet.Cell(5, 2).Value = data.TotalProduction;
+            summarySheet.Cell(6, 1).Value = "Total Transfer";
+            summarySheet.Cell(6, 2).Value = data.TotalTransfer;
+            summarySheet.Cell(7, 1).Value = "Matched";
+            summarySheet.Cell(7, 2).Value = data.MatchedProduction;
+            summarySheet.Cell(8, 1).Value = "Unmatched Production";
+            summarySheet.Cell(8, 2).Value = data.UnmatchedProduction;
+            summarySheet.Cell(9, 1).Value = "Extra Transfer";
+            summarySheet.Cell(9, 2).Value = data.TransferWithoutProduction;
+            summarySheet.Cell(10, 1).Value = "Variance";
+            summarySheet.Cell(10, 2).Value = data.Variance;
+
+            for (var row = 5; row <= 10; row++)
+            {
+                ApplyHeaderCellStyle(summarySheet.Cell(row, 1));
+                ApplyDataRowStyle(summarySheet, row, 2);
+                summarySheet.Cell(row, 2).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                summarySheet.Cell(row, 2).Style.Font.Bold = true;
+            }
+
+            summarySheet.Column(1).Width = 24;
+            summarySheet.Column(2).Width = 18;
+
+            var producedSheet = workbook.Worksheets.Add("Produced Details");
+            var producedHeaders = new[] { "S/N", "Barcode", "SAP Code", "Batch", "Order No", "Pack Description", "Production Time", "Transfer Count", "First Transfer", "Last Transfer", "Status" };
+            for (int i = 0; i < producedHeaders.Length; i++)
+            {
+                var cell = producedSheet.Cell(1, i + 1);
+                cell.Value = producedHeaders[i];
+                ApplyHeaderCellStyle(cell);
+            }
+
+            var producedRow = 2;
+            foreach (var item in data.ProducedDetails)
+            {
+                producedSheet.Cell(producedRow, 1).Value = item.SerialNo;
+                producedSheet.Cell(producedRow, 2).Value = item.Barcode;
+                producedSheet.Cell(producedRow, 3).Value = item.SapCode;
+                producedSheet.Cell(producedRow, 4).Value = item.BatchNo;
+                producedSheet.Cell(producedRow, 5).Value = item.OrderNo;
+                producedSheet.Cell(producedRow, 6).Value = item.PackDescription;
+                producedSheet.Cell(producedRow, 7).Value = item.ProductionTime?.ToString("dd/MMM/yyyy HH:mm:ss") ?? string.Empty;
+                producedSheet.Cell(producedRow, 8).Value = item.TransferCount;
+                producedSheet.Cell(producedRow, 9).Value = item.FirstTransferTime?.ToString("dd/MMM/yyyy HH:mm:ss") ?? string.Empty;
+                producedSheet.Cell(producedRow, 10).Value = item.LastTransferTime?.ToString("dd/MMM/yyyy HH:mm:ss") ?? string.Empty;
+                producedSheet.Cell(producedRow, 11).Value = item.IsMatched ? "Correct" : "Unmatched";
+                ApplyDataRowStyle(producedSheet, producedRow, 11);
+                producedRow++;
+            }
+
+            producedSheet.Columns(1, 11).AdjustToContents();
+
+            var extraSheet = workbook.Worksheets.Add("Extra Transfers");
+            var extraHeaders = new[] { "Barcode", "Transfer Count", "First Transfer", "Last Transfer", "Status" };
+            for (int i = 0; i < extraHeaders.Length; i++)
+            {
+                var cell = extraSheet.Cell(1, i + 1);
+                cell.Value = extraHeaders[i];
+                ApplyHeaderCellStyle(cell);
+            }
+
+            var extraRow = 2;
+            foreach (var item in data.ExtraTransferDetails)
+            {
+                extraSheet.Cell(extraRow, 1).Value = item.Barcode;
+                extraSheet.Cell(extraRow, 2).Value = item.TransferCount;
+                extraSheet.Cell(extraRow, 3).Value = item.FirstTransferTime?.ToString("dd/MMM/yyyy HH:mm:ss") ?? string.Empty;
+                extraSheet.Cell(extraRow, 4).Value = item.LastTransferTime?.ToString("dd/MMM/yyyy HH:mm:ss") ?? string.Empty;
+                extraSheet.Cell(extraRow, 5).Value = "Extra Transfer";
+                ApplyDataRowStyle(extraSheet, extraRow, 5);
+                extraRow++;
+            }
+
+            extraSheet.Columns(1, 5).AdjustToContents();
+
+            using var stream = new MemoryStream();
+            workbook.SaveAs(stream);
+            return stream.ToArray();
+        }
+
 
         private void ApplyHeaderStyle(IXLWorksheet worksheet, string title, DateTime date)
         {

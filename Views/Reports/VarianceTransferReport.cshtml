@@ -2,9 +2,34 @@
 @{
     ViewData["Title"] = "Variance Transfer Report";
     var selectedDate = Model.SelectedDate == default ? DateTime.Today : Model.SelectedDate;
-    var shiftStart = Model.ShiftStart == default ? selectedDate.Date.AddHours(7) : Model.ShiftStart;
-    var shiftEnd = Model.ShiftEnd == default ? selectedDate.Date.AddDays(1).AddHours(7) : Model.ShiftEnd;
-    var shiftEndDisplay = shiftEnd.AddSeconds(-1);
+    var selectedStatus = (Context.Request.Query["status"].ToString() ?? "ALL").Trim().ToUpperInvariant();
+    if (string.IsNullOrWhiteSpace(selectedStatus))
+    {
+        selectedStatus = "ALL";
+    }
+    var filteredProduced = selectedStatus switch
+    {
+        "CORRECT" => Model.ProducedDetails.Where(x => x.IsMatched).ToList(),
+        "UNMATCHED" => Model.ProducedDetails.Where(x => !x.IsMatched).ToList(),
+        "EXTRA_TRANSFER" => new List<Web.Core.DTOs.VarianceTransferProducedDetail>(),
+        _ => Model.ProducedDetails
+    };
+    var filteredExtra = selectedStatus == "EXTRA_TRANSFER" || selectedStatus == "ALL"
+        ? Model.ExtraTransferDetails
+        : new List<Web.Core.DTOs.VarianceTransferExtraTransferDetail>();
+    var showProducedSection = selectedStatus != "EXTRA_TRANSFER";
+    var showExtraSection = selectedStatus == "ALL" || selectedStatus == "EXTRA_TRANSFER";
+    var producedPage = int.TryParse(Context.Request.Query["producedPage"], out var producedPageValue) && producedPageValue > 0 ? producedPageValue : 1;
+    var extraPage = int.TryParse(Context.Request.Query["extraPage"], out var extraPageValue) && extraPageValue > 0 ? extraPageValue : 1;
+    var pageSize = 50;
+    var producedTotal = filteredProduced.Count;
+    var extraTotal = filteredExtra.Count;
+    var producedPageCount = Math.Max(1, (int)Math.Ceiling(producedTotal / (double)pageSize));
+    var extraPageCount = Math.Max(1, (int)Math.Ceiling(extraTotal / (double)pageSize));
+    producedPage = Math.Min(producedPage, producedPageCount);
+    extraPage = Math.Min(extraPage, extraPageCount);
+    var producedItems = filteredProduced.Skip((producedPage - 1) * pageSize).Take(pageSize).ToList();
+    var extraItems = filteredExtra.Skip((extraPage - 1) * pageSize).Take(pageSize).ToList();
 }
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -14,13 +39,6 @@
                 <h1 class="text-2xl font-bold text-gray-900">Variance Transfer Report</h1>
                 <p class="mt-1 text-sm text-gray-500">Production vs TO transfer barcode matching (Shift: 07:00 - 06:59)</p>
             </div>
-            <form method="get" class="flex items-center gap-2">
-                <input type="date" name="date" value="@selectedDate.ToString("yyyy-MM-dd")"
-                       class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
-                <button type="submit" class="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors">
-                    Search
-                </button>
-            </form>
         </div>
     </div>
 
@@ -30,17 +48,6 @@
             <span class="text-red-700 font-medium">@ViewBag.Error</span>
         </div>
     }
-
-    <div class="mb-6 bg-white rounded-xl shadow-card border border-neutral-200 p-6">
-        <h2 class="text-lg font-semibold text-gray-900">Shift Window</h2>
-        <p class="mt-1 text-sm text-gray-600">
-            @shiftStart.ToString("dd-MMM-yyyy hh:mm tt") to @shiftEndDisplay.ToString("dd-MMM-yyyy hh:mm tt")
-        </p>
-        <p class="mt-2 text-sm text-gray-500">
-            Production source: <span class="font-semibold text-gray-700">BarcodePrint</span> where <span class="font-mono">NewPlant = 'HF'</span>.
-            Transfer source: <span class="font-semibold text-gray-700">SorterScans_Sync</span> where <span class="font-mono">ScanType = 'TO'</span>.
-        </p>
-    </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 mb-8">
         <div class="bg-white rounded-xl shadow-card border border-blue-100 p-5">
@@ -68,13 +75,47 @@
         </div>
     </div>
 
+    <div class="bg-white rounded-xl shadow-card border border-neutral-200 p-4 mb-6">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div>
+                <h2 class="text-lg font-semibold text-gray-900">Report Filter</h2>
+                <p class="text-sm text-gray-500">Change date and export full report from here.</p>
+            </div>
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                <form method="get" class="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                    <input type="date" name="date" value="@selectedDate.ToString("yyyy-MM-dd")"
+                           class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
+                    <select name="status"
+                            class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500">
+                        <option value="ALL" selected="@(selectedStatus == "ALL")">All Status</option>
+                        <option value="CORRECT" selected="@(selectedStatus == "CORRECT")">Correct</option>
+                        <option value="UNMATCHED" selected="@(selectedStatus == "UNMATCHED")">Unmatched</option>
+                        <option value="EXTRA_TRANSFER" selected="@(selectedStatus == "EXTRA_TRANSFER")">Extra Transfer</option>
+                    </select>
+                    <button type="submit" class="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors">
+                        Search
+                    </button>
+                </form>
+                <a href="@Url.Action("ExportVarianceTransferReportExcel", "Reports", new { date = selectedDate, status = selectedStatus })"
+                   class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-green-600 border border-green-700 rounded-lg hover:bg-green-700 transition-colors">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    Export Excel
+                </a>
+            </div>
+        </div>
+    </div>
+
+    @if (showProducedSection)
+    {
     <div class="bg-white rounded-xl shadow-card overflow-hidden mb-8">
         <div class="px-6 py-4 border-b border-gray-200">
             <h2 class="text-lg font-semibold text-gray-900">Produced Barcode Details</h2>
-            <p class="text-sm text-gray-500">Each produced barcode checked against TO transfer scans in same shift window.</p>
+            <p class="text-sm text-gray-500">Each produced barcode checked against TO transfer scans.</p>
         </div>
 
-        @if (Model.ProducedDetails.Any())
+        @if (filteredProduced.Any())
         {
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
@@ -92,7 +133,7 @@
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
-                        @foreach (var item in Model.ProducedDetails)
+                        @foreach (var item in producedItems)
                         {
                             <tr class="hover:bg-gray-50 transition-colors">
                                 <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">@item.SerialNo</td>
@@ -137,23 +178,42 @@
                     </tfoot>
                 </table>
             </div>
+            <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div class="text-sm text-gray-600">
+                    Showing @((producedPage - 1) * pageSize + 1) to @(Math.Min(producedPage * pageSize, producedTotal)) of @producedTotal produced rows
+                </div>
+                <div class="flex items-center gap-2">
+                    <a href="@Url.Action("VarianceTransferReport", "Reports", new { date = selectedDate, status = selectedStatus, producedPage = Math.Max(1, producedPage - 1), extraPage = extraPage })"
+                       class="px-3 py-2 text-sm font-medium rounded-lg border border-gray-300 @(producedPage == 1 ? "pointer-events-none opacity-50 bg-gray-100 text-gray-400" : "bg-white text-gray-700 hover:bg-gray-100")">
+                        Previous
+                    </a>
+                    <span class="text-sm text-gray-600">Page @producedPage of @producedPageCount</span>
+                    <a href="@Url.Action("VarianceTransferReport", "Reports", new { date = selectedDate, status = selectedStatus, producedPage = Math.Min(producedPageCount, producedPage + 1), extraPage = extraPage })"
+                       class="px-3 py-2 text-sm font-medium rounded-lg border border-gray-300 @(producedPage == producedPageCount ? "pointer-events-none opacity-50 bg-gray-100 text-gray-400" : "bg-white text-gray-700 hover:bg-gray-100")">
+                        Next
+                    </a>
+                </div>
+            </div>
         }
         else
         {
             <div class="p-8 text-center">
                 <h3 class="text-lg font-medium text-gray-900 mb-1">No Production Data</h3>
-                <p class="text-gray-500">No `HF` production barcodes found for selected shift window.</p>
+                <p class="text-gray-500">No produced rows found for selected status filter.</p>
             </div>
         }
     </div>
+    }
 
+    @if (showExtraSection)
+    {
     <div class="bg-white rounded-xl shadow-card overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-200">
             <h2 class="text-lg font-semibold text-gray-900">Transfer Without Production Match</h2>
-            <p class="text-sm text-gray-500">TO scans present in shift window but barcode not found in same-window HF production.</p>
+            <p class="text-sm text-gray-500">TO scans present but barcode not found in production.</p>
         </div>
 
-        @if (Model.ExtraTransferDetails.Any())
+        @if (filteredExtra.Any())
         {
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
@@ -167,7 +227,7 @@
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
-                        @foreach (var item in Model.ExtraTransferDetails)
+                        @foreach (var item in extraItems)
                         {
                             <tr class="hover:bg-gray-50 transition-colors">
                                 <td class="px-4 py-3 whitespace-nowrap text-sm font-mono text-gray-900">@item.Barcode</td>
@@ -194,13 +254,30 @@
                     </tfoot>
                 </table>
             </div>
+            <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div class="text-sm text-gray-600">
+                    Showing @((extraPage - 1) * pageSize + 1) to @(Math.Min(extraPage * pageSize, extraTotal)) of @extraTotal extra transfer rows
+                </div>
+                <div class="flex items-center gap-2">
+                    <a href="@Url.Action("VarianceTransferReport", "Reports", new { date = selectedDate, status = selectedStatus, producedPage = producedPage, extraPage = Math.Max(1, extraPage - 1) })"
+                       class="px-3 py-2 text-sm font-medium rounded-lg border border-gray-300 @(extraPage == 1 ? "pointer-events-none opacity-50 bg-gray-100 text-gray-400" : "bg-white text-gray-700 hover:bg-gray-100")">
+                        Previous
+                    </a>
+                    <span class="text-sm text-gray-600">Page @extraPage of @extraPageCount</span>
+                    <a href="@Url.Action("VarianceTransferReport", "Reports", new { date = selectedDate, status = selectedStatus, producedPage = producedPage, extraPage = Math.Min(extraPageCount, extraPage + 1) })"
+                       class="px-3 py-2 text-sm font-medium rounded-lg border border-gray-300 @(extraPage == extraPageCount ? "pointer-events-none opacity-50 bg-gray-100 text-gray-400" : "bg-white text-gray-700 hover:bg-gray-100")">
+                        Next
+                    </a>
+                </div>
+            </div>
         }
         else
         {
             <div class="p-8 text-center">
                 <h3 class="text-lg font-medium text-gray-900 mb-1">No Extra Transfer Rows</h3>
-                <p class="text-gray-500">Every TO scan barcode found a same-window production barcode.</p>
+                <p class="text-gray-500">No extra transfer rows found for selected status filter.</p>
             </div>
         }
     </div>
+    }
 </div>

@@ -169,6 +169,46 @@ namespace Web.Controllers
             }
         }
 
+        public async Task<IActionResult> ExportVarianceTransferReportExcel(DateTime? date, string? status)
+        {
+            try
+            {
+                var searchDate = (date ?? DateTime.Today).Date;
+                var model = await _reportingRepository.GetVarianceTransferReportAsync(searchDate).ConfigureAwait(false);
+                ApplyVarianceStatusFilter(model, status);
+                var fileBytes = _excelExportService.ExportVarianceTransferReport(model);
+                var fileName = $"Variance_Transfer_Report_{searchDate:yyyy-MM-dd}.xlsx";
+                return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Error = $"Error exporting: {ex.Message}";
+                return RedirectToAction("VarianceTransferReport", new { date });
+            }
+        }
+
+        private static void ApplyVarianceStatusFilter(VarianceTransferReportResult model, string? status)
+        {
+            var normalizedStatus = (status ?? "ALL").Trim().ToUpperInvariant();
+
+            switch (normalizedStatus)
+            {
+                case "CORRECT":
+                    model.ProducedDetails = model.ProducedDetails.Where(x => x.IsMatched).ToList();
+                    model.ExtraTransferDetails.Clear();
+                    break;
+
+                case "UNMATCHED":
+                    model.ProducedDetails = model.ProducedDetails.Where(x => !x.IsMatched).ToList();
+                    model.ExtraTransferDetails.Clear();
+                    break;
+
+                case "EXTRA_TRANSFER":
+                    model.ProducedDetails.Clear();
+                    break;
+            }
+        }
+
         #region Excel Export Actions
 
         public async Task<IActionResult> ExportShiftReportExcel(DateTime? date, string? shift, bool? consolidated)
