@@ -458,6 +458,60 @@ namespace Web.Services
             return stream.ToArray();
         }
 
+        public byte[] ExportNoReadKasanaReadKomalReport(Core.DTOs.NoReadKasanaReadKomalReportResult data)
+        {
+            using var workbook = new XLWorkbook();
+
+            var summarySheet = workbook.Worksheets.Add("Summary");
+            ApplyHeaderStyle(summarySheet, "No Read at Kasana and Read at Komal", data.SelectedDate);
+
+            summarySheet.Cell(5, 1).Value = "Total Kasana Read";
+            summarySheet.Cell(5, 2).Value = data.TotalKasanaRead;
+            summarySheet.Cell(6, 1).Value = "Total Komal Read";
+            summarySheet.Cell(6, 2).Value = data.TotalKomalRead;
+            summarySheet.Cell(7, 1).Value = "No Read at Kasana / Read at Komal";
+            summarySheet.Cell(7, 2).Value = data.TotalNoReadAtKasanaReadAtKomal;
+
+            for (var row = 5; row <= 7; row++)
+            {
+                ApplyHeaderCellStyle(summarySheet.Cell(row, 1));
+                ApplyDataRowStyle(summarySheet, row, 2);
+                summarySheet.Cell(row, 2).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                summarySheet.Cell(row, 2).Style.Font.Bold = true;
+            }
+
+            summarySheet.Column(1).Width = 34;
+            summarySheet.Column(2).Width = 18;
+
+            var detailSheet = workbook.Worksheets.Add("Details");
+            var headers = new[] { "S/N", "Barcode", "Kasana Side", "Komal Side", "Sorter Scan Time", "Last Sorter Scan Time" };
+            for (int i = 0; i < headers.Length; i++)
+            {
+                var cell = detailSheet.Cell(1, i + 1);
+                cell.Value = headers[i];
+                ApplyHeaderCellStyle(cell);
+            }
+
+            var rowIndex = 2;
+            foreach (var item in data.Details)
+            {
+                detailSheet.Cell(rowIndex, 1).Value = item.SerialNo;
+                detailSheet.Cell(rowIndex, 2).Value = item.Barcode;
+                detailSheet.Cell(rowIndex, 3).Value = item.KasanaStatus;
+                detailSheet.Cell(rowIndex, 4).Value = item.KomalStatus;
+                detailSheet.Cell(rowIndex, 5).Value = item.FirstKomalScanTime?.ToString("dd/MMM/yyyy HH:mm:ss") ?? string.Empty;
+                detailSheet.Cell(rowIndex, 6).Value = item.LastKomalScanTime?.ToString("dd/MMM/yyyy HH:mm:ss") ?? string.Empty;
+                ApplyDataRowStyle(detailSheet, rowIndex, 6);
+                rowIndex++;
+            }
+
+            detailSheet.Columns(1, 6).AdjustToContents();
+
+            using var stream = new MemoryStream();
+            workbook.SaveAs(stream);
+            return stream.ToArray();
+        }
+
 
         private void ApplyHeaderStyle(IXLWorksheet worksheet, string title, DateTime date)
         {

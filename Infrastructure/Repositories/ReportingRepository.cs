@@ -293,6 +293,60 @@ namespace Web.Infrastructure.Repositories
             return result;
         }
 
+        public async Task<NoReadKasanaReadKomalReportResult> GetNoReadKasanaReadKomalReportAsync(DateTime? date)
+        {
+            var selectedDate = (date ?? DateTime.Today).Date;
+            var result = new NoReadKasanaReadKomalReportResult
+            {
+                SelectedDate = selectedDate,
+                ShiftStart = selectedDate.AddHours(7),
+                ShiftEnd = selectedDate.AddDays(1).AddHours(7)
+            };
+
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                await connection.OpenAsync().ConfigureAwait(false);
+
+                using (var command = new SqlCommand("sp_GetNoReadKasanaReadKomalReport", connection))
+                {
+                    command.CommandType = CommandType.StoredProcedure;
+                    command.CommandTimeout = 120;
+                    command.Parameters.Add("@Date", SqlDbType.Date).Value = selectedDate;
+
+                    using (var reader = await command.ExecuteReaderAsync().ConfigureAwait(false))
+                    {
+                        if (await reader.ReadAsync().ConfigureAwait(false))
+                        {
+                            result.SelectedDate = GetDateTime(reader, "ReportDate") ?? selectedDate;
+                            result.ShiftStart = GetDateTime(reader, "ShiftStart") ?? result.ShiftStart;
+                            result.ShiftEnd = GetDateTime(reader, "ShiftEnd") ?? result.ShiftEnd;
+                            result.TotalKasanaRead = GetInt32(reader, "TotalKasanaRead");
+                            result.TotalKomalRead = GetInt32(reader, "TotalKomalRead");
+                            result.TotalNoReadAtKasanaReadAtKomal = GetInt32(reader, "TotalNoReadAtKasanaReadAtKomal");
+                        }
+
+                        if (await reader.NextResultAsync().ConfigureAwait(false))
+                        {
+                            while (await reader.ReadAsync().ConfigureAwait(false))
+                            {
+                                result.Details.Add(new NoReadKasanaReadKomalDetail
+                                {
+                                    SerialNo = GetInt32(reader, "SerialNo"),
+                                    Barcode = GetNullableString(reader, "Barcode") ?? string.Empty,
+                                    KasanaStatus = GetNullableString(reader, "KasanaStatus") ?? string.Empty,
+                                    KomalStatus = GetNullableString(reader, "KomalStatus") ?? string.Empty,
+                                    FirstKomalScanTime = GetDateTime(reader, "FirstKomalScanTime"),
+                                    LastKomalScanTime = GetDateTime(reader, "LastKomalScanTime")
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+
+            return result;
+        }
+
         private static string? GetNullableString(SqlDataReader reader, string columnName)
         {
             var ordinal = GetOrdinal(reader, columnName);

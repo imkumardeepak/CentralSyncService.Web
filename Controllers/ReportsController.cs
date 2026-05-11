@@ -187,6 +187,46 @@ namespace Web.Controllers
             }
         }
 
+        public async Task<IActionResult> NoReadKasanaReadKomal(DateTime? date)
+        {
+            var searchDate = (date ?? DateTime.Today).Date;
+
+            try
+            {
+                var model = await _reportingRepository.GetNoReadKasanaReadKomalReportAsync(searchDate).ConfigureAwait(false);
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Error = $"Error: {ex.Message}";
+                ViewBag.StackTrace = ex.StackTrace;
+
+                return View(new NoReadKasanaReadKomalReportResult
+                {
+                    SelectedDate = searchDate,
+                    ShiftStart = searchDate.AddHours(7),
+                    ShiftEnd = searchDate.AddDays(1).AddHours(7)
+                });
+            }
+        }
+
+        public async Task<IActionResult> ExportNoReadKasanaReadKomalExcel(DateTime? date)
+        {
+            try
+            {
+                var searchDate = (date ?? DateTime.Today).Date;
+                var model = await _reportingRepository.GetNoReadKasanaReadKomalReportAsync(searchDate).ConfigureAwait(false);
+                var fileBytes = _excelExportService.ExportNoReadKasanaReadKomalReport(model);
+                var fileName = $"No_Read_Kasana_Read_Komal_{searchDate:yyyy-MM-dd}.xlsx";
+                return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Error = $"Error exporting: {ex.Message}";
+                return RedirectToAction("NoReadKasanaReadKomal", new { date });
+            }
+        }
+
         private static void ApplyVarianceStatusFilter(VarianceTransferReportResult model, string? status)
         {
             var normalizedStatus = (status ?? "ALL").Trim().ToUpperInvariant();
