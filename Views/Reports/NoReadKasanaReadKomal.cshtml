@@ -3,6 +3,21 @@
     ViewData["Title"] = "No Read at Kasana Side and Read at Komal Side";
     var selectedDate = Model.SelectedDate == default ? DateTime.Today : Model.SelectedDate;
     var selectedKasanaLocation = (Model.KasanaLocation ?? "BOTH").ToUpperInvariant();
+    var kasanaPlantLabel = selectedKasanaLocation switch
+    {
+        "BELOW" => "Kasana Grnd Flr",
+        "TOP" => "Kasana 1st Flr",
+        _ => "Kasana"
+    };
+    var komalPlantLabel = selectedKasanaLocation switch
+    {
+        "BELOW" => "Komal S1",
+        "TOP" => "Komal S2",
+        _ => "Komal"
+    };
+    var reportPairLabel = selectedKasanaLocation == "BOTH"
+        ? "Kasana to Komal"
+        : $"{kasanaPlantLabel} to {komalPlantLabel}";
     var currentPage = int.TryParse(ViewContext.HttpContext.Request.Query["page"], out var pageValue) && pageValue > 0 ? pageValue : 1;
     var pageSize = 50;
     var totalRows = Model.Details.Count;
@@ -15,8 +30,8 @@
     <div class="mb-8">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-                <h1 class="text-2xl font-bold text-gray-900">No Read at Kasana Side and Read at Komal Side</h1>
-                <p class="mt-1 text-sm text-gray-500">Barcodes scanned at Komal side but not scanned at Kasana side in the same shift window.</p>
+                <h1 class="text-2xl font-bold text-gray-900">No Read at @kasanaPlantLabel and Read at @komalPlantLabel</h1>
+                <p class="mt-1 text-sm text-gray-500">Barcodes scanned at @komalPlantLabel but not scanned at @kasanaPlantLabel in the same shift window.</p>
             </div>
         </div>
     </div>
@@ -30,15 +45,15 @@
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div class="bg-white rounded-xl shadow-card border border-blue-100 p-5">
-            <div class="text-xs font-bold uppercase tracking-wider text-blue-600">Kasana Read Count</div>
+            <div class="text-xs font-bold uppercase tracking-wider text-blue-600">@kasanaPlantLabel Read Count</div>
             <div class="mt-2 text-3xl font-bold text-gray-900">@Model.TotalKasanaRead.ToString("N0")</div>
         </div>
         <div class="bg-white rounded-xl shadow-card border border-green-100 p-5">
-            <div class="text-xs font-bold uppercase tracking-wider text-green-600">Komal Read Count</div>
+            <div class="text-xs font-bold uppercase tracking-wider text-green-600">@komalPlantLabel Read Count</div>
             <div class="mt-2 text-3xl font-bold text-gray-900">@Model.TotalKomalRead.ToString("N0")</div>
         </div>
         <div class="bg-white rounded-xl shadow-card border border-rose-100 p-5">
-            <div class="text-xs font-bold uppercase tracking-wider text-rose-600">No Read Count</div>
+            <div class="text-xs font-bold uppercase tracking-wider text-rose-600">@kasanaPlantLabel No Read Count</div>
             <div class="mt-2 text-3xl font-bold text-gray-900">@Model.TotalNoReadAtKasanaReadAtKomal.ToString("N0")</div>
         </div>
     </div>
@@ -47,7 +62,7 @@
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
                 <h2 class="text-lg font-semibold text-gray-900">Report Filter</h2>
-                <p class="text-sm text-gray-500">Select date and export report from here.</p>
+                <p class="text-sm text-gray-500">Selected route: @reportPairLabel.</p>
             </div>
             <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                 <form method="get" class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
@@ -89,8 +104,8 @@
 
     <div class="bg-white rounded-xl shadow-card overflow-hidden mb-8">
         <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-900">Barcode Details</h2>
-            <p class="text-sm text-gray-500">Only those barcodes are shown that were read at Komal side and not read at Kasana side.</p>
+            <h2 class="text-lg font-semibold text-gray-900">@reportPairLabel Barcode Details</h2>
+            <p class="text-sm text-gray-500">Only those barcodes are shown that were read at @komalPlantLabel and not read at @kasanaPlantLabel.</p>
         </div>
 
         @if (items.Any())
@@ -101,8 +116,8 @@
                         <tr>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">S/N</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Barcode</th>
-                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Kasana Side</th>
-                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Komal Side</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">@kasanaPlantLabel</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">@komalPlantLabel</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sorter Scan Time</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Sorter Scan Time</th>
                         </tr>
@@ -169,7 +184,7 @@
         {
             <div class="p-8 text-center">
                 <h3 class="text-lg font-medium text-gray-900 mb-1">No Data Found</h3>
-                <p class="text-gray-500">No barcodes found where Kasana side was not read and Komal side was read for the selected shift window.</p>
+                <p class="text-gray-500">No barcodes found where @kasanaPlantLabel was not read and @komalPlantLabel was read for the selected shift window.</p>
             </div>
         }
     </div>
