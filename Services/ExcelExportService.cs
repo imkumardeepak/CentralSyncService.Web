@@ -465,14 +465,23 @@ namespace Web.Services
             var summarySheet = workbook.Worksheets.Add("Summary");
             ApplyHeaderStyle(summarySheet, "No Read at Kasana and Read at Komal", data.SelectedDate);
 
-            summarySheet.Cell(5, 1).Value = "Total Kasana Read";
-            summarySheet.Cell(5, 2).Value = data.TotalKasanaRead;
-            summarySheet.Cell(6, 1).Value = "Total Komal Read";
-            summarySheet.Cell(6, 2).Value = data.TotalKomalRead;
-            summarySheet.Cell(7, 1).Value = "No Read at Kasana / Read at Komal";
-            summarySheet.Cell(7, 2).Value = data.TotalNoReadAtKasanaReadAtKomal;
+            var locationLabel = data.KasanaLocation switch
+            {
+                "BELOW" => "Kasana Grnd",
+                "TOP" => "Kasana 1st Flr",
+                _ => "Both"
+            };
 
-            for (var row = 5; row <= 7; row++)
+            summarySheet.Cell(5, 1).Value = "Kasana Location";
+            summarySheet.Cell(5, 2).Value = locationLabel;
+            summarySheet.Cell(6, 1).Value = "Kasana Read Count";
+            summarySheet.Cell(6, 2).Value = data.TotalKasanaRead;
+            summarySheet.Cell(7, 1).Value = "Komal Read Count";
+            summarySheet.Cell(7, 2).Value = data.TotalKomalRead;
+            summarySheet.Cell(8, 1).Value = "No Read Count";
+            summarySheet.Cell(8, 2).Value = data.TotalNoReadAtKasanaReadAtKomal;
+
+            for (var row = 5; row <= 8; row++)
             {
                 ApplyHeaderCellStyle(summarySheet.Cell(row, 1));
                 ApplyDataRowStyle(summarySheet, row, 2);

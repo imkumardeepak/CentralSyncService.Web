@@ -8,6 +8,7 @@ namespace Web.Core.DTOs
         public DateTime SelectedDate { get; set; }
         public DateTime ShiftStart { get; set; }
         public DateTime ShiftEnd { get; set; }
+        public string KasanaLocation { get; set; } = "BOTH";
         public int TotalKasanaRead { get; set; }
         public int TotalKomalRead { get; set; }
         public int TotalNoReadAtKasanaReadAtKomal { get; set; }

@@ -293,14 +293,16 @@ namespace Web.Infrastructure.Repositories
             return result;
         }
 
-        public async Task<NoReadKasanaReadKomalReportResult> GetNoReadKasanaReadKomalReportAsync(DateTime? date)
+        public async Task<NoReadKasanaReadKomalReportResult> GetNoReadKasanaReadKomalReportAsync(DateTime? date, string kasanaLocation = "BOTH")
         {
             var selectedDate = (date ?? DateTime.Today).Date;
+            var selectedKasanaLocation = NormalizeKasanaLocation(kasanaLocation);
             var result = new NoReadKasanaReadKomalReportResult
             {
                 SelectedDate = selectedDate,
                 ShiftStart = selectedDate.AddHours(7),
-                ShiftEnd = selectedDate.AddDays(1).AddHours(7)
+                ShiftEnd = selectedDate.AddDays(1).AddHours(7),
+                KasanaLocation = selectedKasanaLocation
             };
 
             using (var connection = new SqlConnection(_connectionString))
@@ -312,6 +314,7 @@ namespace Web.Infrastructure.Repositories
                     command.CommandType = CommandType.StoredProcedure;
                     command.CommandTimeout = 120;
                     command.Parameters.Add("@Date", SqlDbType.Date).Value = selectedDate;
+                    command.Parameters.Add("@KasanaLocation", SqlDbType.NVarChar, 20).Value = selectedKasanaLocation;
 
                     using (var reader = await command.ExecuteReaderAsync().ConfigureAwait(false))
                     {
@@ -345,6 +348,12 @@ namespace Web.Infrastructure.Repositories
             }
 
             return result;
+        }
+
+        private static string NormalizeKasanaLocation(string? kasanaLocation)
+        {
+            var normalized = (kasanaLocation ?? "BOTH").Trim().ToUpperInvariant();
+            return normalized == "BELOW" || normalized == "TOP" ? normalized : "BOTH";
         }
 
         private static string? GetNullableString(SqlDataReader reader, string columnName)

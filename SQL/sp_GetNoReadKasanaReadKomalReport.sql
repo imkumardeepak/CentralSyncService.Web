@@ -9,12 +9,16 @@ IF OBJECT_ID('dbo.sp_GetNoReadKasanaReadKomalReport', 'P') IS NOT NULL
 GO
 
 CREATE PROCEDURE dbo.sp_GetNoReadKasanaReadKomalReport
-    @Date DATE = NULL
+    @Date DATE = NULL,
+    @KasanaLocation NVARCHAR(20) = 'BOTH'
 AS
 BEGIN
     SET NOCOUNT ON;
 
     SET @Date = ISNULL(@Date, CAST(GETDATE() AS DATE));
+    SET @KasanaLocation = UPPER(LTRIM(RTRIM(ISNULL(@KasanaLocation, 'BOTH'))));
+    IF @KasanaLocation NOT IN ('BOTH', 'BELOW', 'TOP')
+        SET @KasanaLocation = 'BOTH';
 
     DECLARE @ShiftStart DATETIME2 = DATEADD(HOUR, 7, CAST(@Date AS DATETIME2));
     DECLARE @ShiftEnd DATETIME2 = DATEADD(DAY, 1, @ShiftStart);
@@ -26,6 +30,7 @@ BEGIN
     CREATE TABLE #KasanaReads
     (
         Barcode NVARCHAR(100) NOT NULL,
+        LaneKey NVARCHAR(20) NOT NULL,
         FirstKasanaScanTime DATETIME NULL,
         LastKasanaScanTime DATETIME NULL
     );
@@ -33,13 +38,24 @@ BEGIN
     CREATE TABLE #KomalReads
     (
         Barcode NVARCHAR(100) NOT NULL,
+        LaneKey NVARCHAR(20) NOT NULL,
         FirstKomalScanTime DATETIME NULL,
         LastKomalScanTime DATETIME NULL
     );
 
-    INSERT INTO #KasanaReads (Barcode, FirstKasanaScanTime, LastKasanaScanTime)
+    INSERT INTO #KasanaReads (Barcode, LaneKey, FirstKasanaScanTime, LastKasanaScanTime)
     SELECT
         Barcode = LTRIM(RTRIM(ISNULL(ss.Barcode, ''))),
+        LaneKey = UPPER(
+            CASE
+                WHEN CHARINDEX(' ', LTRIM(RTRIM(ISNULL(ss.CurrentPlant, '')))) > 0
+                    THEN RIGHT(
+                        LTRIM(RTRIM(ss.CurrentPlant)),
+                        CHARINDEX(' ', REVERSE(LTRIM(RTRIM(ss.CurrentPlant)))) - 1
+                    )
+                ELSE 'UNKNOWN'
+            END
+        ),
         FirstKasanaScanTime = MIN(ss.ScanDateTime),
         LastKasanaScanTime = MAX(ss.ScanDateTime)
     FROM dbo.SorterScans_Sync ss WITH(NOLOCK)
@@ -47,11 +63,47 @@ BEGIN
       AND ss.ScanDateTime >= @ShiftStart
       AND ss.ScanDateTime < @ShiftEnd
       AND ISNULL(ss.Barcode, '') <> ''
-    GROUP BY LTRIM(RTRIM(ISNULL(ss.Barcode, '')));
+      AND UPPER(LTRIM(RTRIM(ISNULL(ss.Barcode, '')))) <> 'NOREAD'
+      AND ISNULL(ss.IsRead, 0) = 1
+      AND (
+            @KasanaLocation = 'BOTH'
+            OR UPPER(
+                CASE
+                    WHEN CHARINDEX(' ', LTRIM(RTRIM(ISNULL(ss.CurrentPlant, '')))) > 0
+                        THEN RIGHT(
+                            LTRIM(RTRIM(ss.CurrentPlant)),
+                            CHARINDEX(' ', REVERSE(LTRIM(RTRIM(ss.CurrentPlant)))) - 1
+                        )
+                    ELSE 'UNKNOWN'
+                END
+            ) = @KasanaLocation
+      )
+    GROUP BY
+        LTRIM(RTRIM(ISNULL(ss.Barcode, ''))),
+        UPPER(
+            CASE
+                WHEN CHARINDEX(' ', LTRIM(RTRIM(ISNULL(ss.CurrentPlant, '')))) > 0
+                    THEN RIGHT(
+                        LTRIM(RTRIM(ss.CurrentPlant)),
+                        CHARINDEX(' ', REVERSE(LTRIM(RTRIM(ss.CurrentPlant)))) - 1
+                    )
+                ELSE 'UNKNOWN'
+            END
+        );
 
-    INSERT INTO #KomalReads (Barcode, FirstKomalScanTime, LastKomalScanTime)
+    INSERT INTO #KomalReads (Barcode, LaneKey, FirstKomalScanTime, LastKomalScanTime)
     SELECT
         Barcode = LTRIM(RTRIM(ISNULL(ss.Barcode, ''))),
+        LaneKey = UPPER(
+            CASE
+                WHEN CHARINDEX(' ', LTRIM(RTRIM(ISNULL(ss.CurrentPlant, '')))) > 0
+                    THEN RIGHT(
+                        LTRIM(RTRIM(ss.CurrentPlant)),
+                        CHARINDEX(' ', REVERSE(LTRIM(RTRIM(ss.CurrentPlant)))) - 1
+                    )
+                ELSE 'UNKNOWN'
+            END
+        ),
         FirstKomalScanTime = MIN(ss.ScanDateTime),
         LastKomalScanTime = MAX(ss.ScanDateTime)
     FROM dbo.SorterScans_Sync ss WITH(NOLOCK)
@@ -59,10 +111,36 @@ BEGIN
       AND ss.ScanDateTime >= @ShiftStart
       AND ss.ScanDateTime < @ShiftEnd
       AND ISNULL(ss.Barcode, '') <> ''
-    GROUP BY LTRIM(RTRIM(ISNULL(ss.Barcode, '')));
+      AND UPPER(LTRIM(RTRIM(ISNULL(ss.Barcode, '')))) <> 'NOREAD'
+      AND ISNULL(ss.IsRead, 0) = 1
+      AND (
+            @KasanaLocation = 'BOTH'
+            OR UPPER(
+                CASE
+                    WHEN CHARINDEX(' ', LTRIM(RTRIM(ISNULL(ss.CurrentPlant, '')))) > 0
+                        THEN RIGHT(
+                            LTRIM(RTRIM(ss.CurrentPlant)),
+                            CHARINDEX(' ', REVERSE(LTRIM(RTRIM(ss.CurrentPlant)))) - 1
+                        )
+                    ELSE 'UNKNOWN'
+                END
+            ) = @KasanaLocation
+      )
+    GROUP BY
+        LTRIM(RTRIM(ISNULL(ss.Barcode, ''))),
+        UPPER(
+            CASE
+                WHEN CHARINDEX(' ', LTRIM(RTRIM(ISNULL(ss.CurrentPlant, '')))) > 0
+                    THEN RIGHT(
+                        LTRIM(RTRIM(ss.CurrentPlant)),
+                        CHARINDEX(' ', REVERSE(LTRIM(RTRIM(ss.CurrentPlant)))) - 1
+                    )
+                ELSE 'UNKNOWN'
+            END
+        );
 
-    CREATE CLUSTERED INDEX IX_KasanaReads_Barcode ON #KasanaReads (Barcode);
-    CREATE CLUSTERED INDEX IX_KomalReads_Barcode ON #KomalReads (Barcode);
+    CREATE CLUSTERED INDEX IX_KasanaReads_Barcode ON #KasanaReads (LaneKey, Barcode);
+    CREATE CLUSTERED INDEX IX_KomalReads_Barcode ON #KomalReads (LaneKey, Barcode);
 
     SELECT
         SerialNo = ROW_NUMBER() OVER (ORDER BY kr.FirstKomalScanTime, kr.Barcode),
@@ -78,6 +156,7 @@ BEGIN
         SELECT 1
         FROM #KasanaReads ks
         WHERE ks.Barcode = kr.Barcode
+          AND ks.LaneKey = kr.LaneKey
     );
 
     SELECT

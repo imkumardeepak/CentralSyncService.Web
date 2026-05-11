@@ -23,6 +23,7 @@
     var producedPageCount = Math.Max(1, (int)Math.Ceiling(producedTotal / (double)pageSize));
     producedPage = Math.Min(producedPage, producedPageCount);
     var producedItems = filteredProduced.Skip((producedPage - 1) * pageSize).Take(pageSize).ToList();
+    var displayVariance = Model.TotalTransfer - Model.TotalProduction;
 }
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -53,8 +54,8 @@
         </div>
         <div class="bg-white rounded-xl shadow-card border border-amber-100 p-5">
             <div class="text-xs font-bold uppercase tracking-wider text-amber-600">Variance</div>
-            <div class="mt-2 text-3xl font-bold @(Model.Variance >= 0 ? "text-green-700" : "text-red-700")">
-                @(Model.Variance >= 0 ? $"+{Model.Variance:N0}" : Model.Variance.ToString("N0"))
+            <div class="mt-2 text-3xl font-bold @(displayVariance < 0 ? "text-red-700" : "text-green-700")">
+                @(displayVariance >= 0 ? $"+{displayVariance:N0}" : displayVariance.ToString("N0"))
             </div>
         </div>
     </div>
