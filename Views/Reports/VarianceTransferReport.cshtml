@@ -115,10 +115,12 @@
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
-                        @foreach (var item in producedItems)
+                        @for (var i = 0; i < producedItems.Count; i++)
                         {
+                            var item = producedItems[i];
+                            var serialNo = ((producedPage - 1) * pageSize) + i + 1;
                             <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">@item.SerialNo</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">@serialNo</td>
                                 <td class="px-4 py-3 whitespace-nowrap text-sm font-mono text-gray-900">@item.Barcode</td>
                                 <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">@item.SapCode</td>
                                 <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">@item.BatchNo</td>
