@@ -143,7 +143,8 @@ namespace Web.Infrastructure.Repositories
                                 {
                                     DOM_Count = GetInt32(reader, "DOM_Count"),
                                     EXP_Count = GetInt32(reader, "EXP_Count"),
-                                    CSD_Count = GetInt32(reader, "CSD_Count")
+                                    CSD_Count = GetInt32(reader, "CSD_Count"),
+                                    Total_FROM_Scans = GetInt32(reader, "Total_FROM_Scans")
                                 };
                             }
                         }

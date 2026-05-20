@@ -13,7 +13,7 @@ GO
 
 IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.SorterScans_Sync') AND name = 'OrderNumber')
 BEGIN
-    ALTER TABLE dbo.SorterScans_Sync ADD OrderNumber NVARCHAR(20) NULL;
+    ALTER TABLE dbo.SorterScans_Sync ADD OrderNumber INT NULL;
     PRINT 'Column OrderNumber added.';
 END
 GO
@@ -32,7 +32,7 @@ GO
 
 -- Step 3: Backfill OrderNumber for existing valid reads
 UPDATE ss
-SET ss.OrderNumber = CAST(bp.OrderNo AS NVARCHAR(20))
+SET ss.OrderNumber = bp.OrderNo
 FROM dbo.SorterScans_Sync ss
 INNER JOIN dbo.BarcodePrint bp ON bp.NewBarcode = ss.Barcode
 WHERE ss.OrderNumber IS NULL

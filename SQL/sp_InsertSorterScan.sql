@@ -38,12 +38,12 @@ BEGIN
     END;
     
     -- Lookup OrderNumber from BarcodePrint (only for valid reads)
-    DECLARE @OrderNumber NVARCHAR(20) = NULL;
+    DECLARE @OrderNumber INT = NULL;
     
     IF @IsRead = 1 AND UPPER(LTRIM(RTRIM(ISNULL(@Barcode, '')))) <> 'NOREAD'
         AND UPPER(LTRIM(RTRIM(ISNULL(@Barcode, '')))) <> 'NO READ'
     BEGIN
-        SELECT TOP 1 @OrderNumber = CAST(OrderNo AS NVARCHAR(20))
+        SELECT TOP 1 @OrderNumber = OrderNo
         FROM dbo.BarcodePrint
         WHERE NewBarcode = @Barcode;
     END

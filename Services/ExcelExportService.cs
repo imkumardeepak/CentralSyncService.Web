@@ -204,7 +204,7 @@ namespace Web.Services
 
             ApplyHeaderStyle(worksheet, "Overall Transfer By Production Order", selectedDate);
 
-            var headers = new[] { "Order No", "SAP Code", "Product Name", "Batch", "Order Qty", "Prod. Qty", "Issue Count", "Receipt Count", "Deviation" };
+            var headers = new[] { "Order No", "SAP Code", "Product Name", "Batch", "Order Qty", "Prod. Qty", "Issue Count", "Receipt Count", "Prod. vs Komal" };
             var headerRow = worksheet.Row(4);
             for (int i = 0; i < headers.Length; i++)
             {

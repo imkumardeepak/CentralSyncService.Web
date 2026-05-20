@@ -76,7 +76,7 @@ CREATE TABLE dbo.SorterScans_Sync (
     ScanDateTime DATETIME2(3) NOT NULL,
     IsRead BIT NOT NULL DEFAULT 1,
     Shift CHAR(1) NULL,                      -- 'A' (07-14:59), 'B' (15-21:59), 'C' (22-06:59)
-    OrderNumber NVARCHAR(20) NULL,           -- From BarcodePrint.OrderNo (valid reads only)
+    OrderNumber INT NULL,                    -- From BarcodePrint.OrderNo (valid reads only)
     SyncedAt DATETIME2 NOT NULL DEFAULT GETDATE()
 );
 GO
@@ -178,12 +178,12 @@ BEGIN
     END;
     
     -- Lookup OrderNumber from BarcodePrint (only for valid reads)
-    DECLARE @OrderNumber NVARCHAR(20) = NULL;
+    DECLARE @OrderNumber INT = NULL;
     
     IF @IsRead = 1 AND UPPER(LTRIM(RTRIM(ISNULL(@Barcode, '')))) <> 'NOREAD'
         AND UPPER(LTRIM(RTRIM(ISNULL(@Barcode, '')))) <> 'NO READ'
     BEGIN
-        SELECT TOP 1 @OrderNumber = CAST(OrderNo AS NVARCHAR(20))
+        SELECT TOP 1 @OrderNumber = OrderNo
         FROM dbo.BarcodePrint
         WHERE NewBarcode = @Barcode;
     END
@@ -359,7 +359,7 @@ PRINT '  - SorterScans_Sync (Main data table + Shift + OrderNumber)';
 PRINT '';
 PRINT 'Columns Added:';
 PRINT '  - Shift CHAR(1): A (07-14:59), B (15-21:59), C (22-06:59)';
-PRINT '  - OrderNumber NVARCHAR(20): From BarcodePrint lookup';
+PRINT '  - OrderNumber INT: From BarcodePrint lookup';
 PRINT '';
 PRINT 'Columns Removed:';
 PRINT '  - PCName (unused in reports)';

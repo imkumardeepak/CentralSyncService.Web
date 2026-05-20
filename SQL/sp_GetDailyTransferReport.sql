@@ -96,16 +96,17 @@ FROM dbo.SorterScans_Sync s WITH(NOLOCK)
     SELECT
         DOM_Count = ISNULL(SUM(CASE WHEN mc.MaterialType = 'DOM' THEN 1 ELSE 0 END), 0),
         EXP_Count = ISNULL(SUM(CASE WHEN mc.MaterialType = 'EXP' THEN 1 ELSE 0 END), 0),
-        CSD_Count = ISNULL(SUM(CASE WHEN mc.MaterialType = 'CSD' THEN 1 ELSE 0 END), 0)
+        CSD_Count = ISNULL(SUM(CASE WHEN mc.MaterialType = 'CSD' THEN 1 ELSE 0 END), 0),
+        Total_FROM_Scans = COUNT(*)
     FROM dbo.SorterScans_Sync ss WITH(NOLOCK)
     LEFT JOIN dbo.ProductionOrder po WITH(NOLOCK)
-        ON ss.OrderNumber = CAST(po.OrderNo AS NVARCHAR(20))
+        ON ss.OrderNumber = po.OrderNo
         AND ss.Batch = po.Batch
         AND po.PlantCode = 'HM06'
     LEFT JOIN dbo.MaterialConversion mc WITH(NOLOCK)
         ON po.Material = mc.Material
         AND mc.PlantCode = 'HM06'
-    WHERE ss.ScanType = 'FROM'
+    WHERE ss.ScanType = 'FROM' and IsRead=1
         AND ss.ScanDateTime >= @StartDate
         AND ss.ScanDateTime < @EndDate;
 END

@@ -19,7 +19,7 @@ namespace Web.Core.Entities
         public DateTime ScanDateTime { get; set; }
         public bool IsRead { get; set; }
         public string? Shift { get; set; }
-        public string? OrderNumber { get; set; }
+        public int? OrderNumber { get; set; }     // was: string? OrderNumber
         public DateTime SyncedAt { get; set; }
     }
 }

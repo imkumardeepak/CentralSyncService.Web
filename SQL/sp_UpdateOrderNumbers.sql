@@ -21,7 +21,7 @@ BEGIN
     
     -- Update OrderNumber for valid reads (not NO READ/NOREAD)
     UPDATE s
-    SET s.OrderNumber = CAST(bp.OrderNo AS NVARCHAR(20))
+    SET s.OrderNumber = bp.OrderNo
     FROM dbo.SorterScans_Sync s
     INNER JOIN dbo.BarcodePrint bp ON s.Barcode = bp.NewBarcode
     WHERE s.SyncedAt >= @CutoffTime

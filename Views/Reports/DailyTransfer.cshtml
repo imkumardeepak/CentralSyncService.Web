@@ -16,25 +16,27 @@
                 <p class="mt-1 text-sm text-gray-500">Transfer statistics by plant (Shift: 07:00 - 06:59)</p>
             </div>
             <div class="flex items-center gap-3">
-                <a href="@Url.Action("ExportDailyTransferExcel", "Reports", new { fromDate = fromDate, toDate = toDate })" 
-                   class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-green-600 border border-green-700 rounded-lg hover:bg-green-700">
+                <a href="@Url.Action("ExportDailyTransferExcel", "Reports", new { fromDate = fromDate, toDate = toDate })"
+                       class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-green-600 border border-green-700 rounded-lg hover:bg-green-700">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                     Export Excel
                 </a>
                 <form method="get" class="flex items-center gap-2">
                     <div class="flex items-center gap-1">
                         <label class="text-sm font-medium text-gray-700">From:</label>
-                        <input type="date" name="fromDate" value="@fromDate.ToString("yyyy-MM-dd")" 
+                        <input type="date" name="fromDate" value="@fromDate.ToString("yyyy-MM-dd")"
                                class="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
                     </div>
                     <div class="flex items-center gap-1">
                         <label class="text-sm font-medium text-gray-700">To:</label>
-                        <input type="date" name="toDate" value="@toDate.ToString("yyyy-MM-dd")" 
+                        <input type="date" name="toDate" value="@toDate.ToString("yyyy-MM-dd")"
                                class="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
                     </div>
-                    <button type="submit" class="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700">
+                    <button type="submit"
+                            class="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700">
                         Search
                     </button>
                 </form>
@@ -54,7 +56,7 @@
         @if (ViewBag.MaterialBreakdown != null)
         {
             var breakdown = (Web.Core.DTOs.DailyTransferMaterialTypeBreakdown)ViewBag.MaterialBreakdown;
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
                 <div class="bg-blue-50 rounded-xl p-5 border border-blue-200 shadow-sm">
                     <div class="text-sm font-medium text-blue-600 uppercase tracking-wide">DOM Count</div>
                     <div class="mt-2 text-3xl font-bold text-blue-800">@breakdown.DOM_Count.ToString("N0")</div>
@@ -70,6 +72,11 @@
                     <div class="mt-2 text-3xl font-bold text-amber-800">@breakdown.CSD_Count.ToString("N0")</div>
                     <div class="mt-1 text-xs text-amber-500">FROM scans</div>
                 </div>
+                <div class="bg-gray-50 rounded-xl p-5 border border-gray-200 shadow-sm">
+                    <div class="text-sm font-medium text-gray-600 uppercase tracking-wide">Total FROM</div>
+                    <div class="mt-2 text-3xl font-bold text-gray-800">@breakdown.Total_FROM_Scans.ToString("N0")</div>
+                    <div class="mt-1 text-xs text-gray-500">All scans</div>
+                </div>
             </div>
         }
 
@@ -82,77 +89,94 @@
                     <thead class="bg-gray-50">
                         <tr>
                             <th rowspan="2" class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Date</th>
-                            <th rowspan="2" class="px-4 py-3 text-left text-xs font-bold text-blue-700 uppercase">Issue Line</th>
-                            <th colspan="3" class="px-2 py-2 text-center text-xs font-bold text-blue-700 bg-blue-50">Issue (FROM)<br/><span class="text-gray-400 font-normal">07:00 - 06:59</span></th>
-                            <th rowspan="2" class="px-4 py-3 text-left text-xs font-bold text-green-700 uppercase">Receipt Line</th>
-                            <th colspan="3" class="px-2 py-2 text-center text-xs font-bold text-green-700 bg-green-50">Receipt (TO)<br/><span class="text-gray-400 font-normal">07:00 - 06:59</span></th>
-                            <th rowspan="2" class="px-4 py-3 text-center text-xs font-bold text-amber-700 uppercase bg-amber-50">Deviation</th>
-                        </tr>
-                        <tr>
-                            <th class="px-2 py-2 text-center text-xs font-medium text-gray-500">Total</th>
-                            <th class="px-2 py-2 text-center text-xs font-medium text-green-600">Read</th>
-                            <th class="px-2 py-2 text-center text-xs font-medium text-red-600 border-r">No Read</th>
-                            <th class="px-2 py-2 text-center text-xs font-medium text-green-600">Read</th>
-                            <th class="px-2 py-2 text-center text-xs font-medium text-red-600">No Read</th>
-                            <th class="px-2 py-2 text-center text-xs font-medium text-gray-500 border-l">Total</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200">
-                        @{
-                            string FormatPlant(string plant)
-                            {
-                                return plant.ToUpper() switch
-                                {
-                                    "KASANA BELOW" => "Kasana Grnd Flr",
-                                    "KASANA TOP" => "Kasana 1st Flr",
-                                    "KOMAL BELOW" => "Komal S1",
-                                    "KOMAL TOP" => "Komal S2",
-                                    _ => plant
-                                };
-                            }
-                        }
-                        @foreach (var item in Model)
-                        {
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-3 text-sm font-medium text-gray-900">@item.ReportDate</td>
-                                <td class="px-4 py-3 text-sm font-bold text-blue-700">@FormatPlant(item.FromPlant)</td>
-                                <td class="px-2 py-3 text-center text-base font-bold text-blue-700">@item.IssueTotal.ToString("N0")</td>
-                                <td class="px-2 py-3 text-center text-base text-green-600">@item.IssueRead.ToString("N0")</td>
-                                <td class="px-2 py-3 text-center text-base text-red-600 border-r">@item.IssueNoRead.ToString("N0")</td>
-                                <td class="px-4 py-3 text-sm font-bold text-green-700">@FormatPlant(item.ToPlant)</td>
-                                <td class="px-2 py-3 text-center text-base text-green-600">@item.ReceiptRead.ToString("N0")</td>
-                                <td class="px-2 py-3 text-center text-base text-red-600">@item.ReceiptNoRead.ToString("N0")</td>
-                                <td class="px-2 py-3 text-center text-base font-bold text-green-700 border-l">@item.ReceiptTotal.ToString("N0")</td>
-                                <td class="px-4 py-3 text-center text-base font-bold text-red-600">
-                                    @(item.Deviation >= 0 ? $"+{item.Deviation:N0}" : item.Deviation.ToString("N0"))
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                    <tfoot class="bg-gray-100 font-bold">
-                        <tr>
-                            <td colspan="2" class="px-4 py-3 text-sm">TOTAL</td>
-                            <td class="px-2 py-3 text-center text-blue-700">@Model.Sum(x => x.IssueTotal).ToString("N0")</td>
-                            <td class="px-2 py-3 text-center text-green-600">@Model.Sum(x => x.IssueRead).ToString("N0")</td>
-                            <td class="px-2 py-3 text-center text-red-600 border-r">@Model.Sum(x => x.IssueNoRead).ToString("N0")</td>
-                            <td class="px-4 py-3"></td>
-                            <td class="px-2 py-3 text-center text-green-600">@Model.Sum(x => x.ReceiptRead).ToString("N0")</td>
-                            <td class="px-2 py-3 text-center text-red-600">@Model.Sum(x => x.ReceiptNoRead).ToString("N0")</td>
-                            <td class="px-2 py-3 text-center text-green-700">@Model.Sum(x => x.ReceiptTotal).ToString("N0")</td>
-                            <td class="px-4 py-3 text-center @(Model.Sum(x => x.Deviation) >= 0 ? "text-green-700" : "text-red-700")">
-                                @(Model.Sum(x => x.Deviation) >= 0 ? $"+{Model.Sum(x => x.Deviation):N0}" : Model.Sum(x => x.Deviation).ToString("N0"))
-                            </td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-        </div>
-    }
+                            <th rowspan="2" class="px-4 py-3 text-left text-xs font-bold text-blue-700 uppercase">Issue Line
+                            </th>
+                            <th colspan="3" class="px-2 py-2 text-center text-xs font-bold text-blue-700 bg-blue-50">Issue
+                                (FROM)<br /><span class="text-gray-400 font-normal">07:00 - 06:59</span></th>
+                                <th rowspan="2" class="px-4 py-3 text-left text-xs font-bold text-green-700 uppercase">Receipt
+                                    Line</th>
+                                    <th colspan="3" class="px-2 py-2 text-center text-xs font-bold text-green-700 bg-green-50">
+                                        Receipt (TO)<br /><span class="text-gray-400 font-normal">07:00 - 06:59</span></th>
+                                        <th rowspan="2"
+                                            class="px-4 py-3 text-center text-xs font-bold text-amber-700 uppercase bg-amber-50">
+                                            Deviation</th>
+                                        </tr>
+                                        <tr>
+                                            <th class="px-2 py-2 text-center text-xs font-medium text-gray-500">Total</th>
+                                            <th class="px-2 py-2 text-center text-xs font-medium text-green-600">Read</th>
+                                            <th class="px-2 py-2 text-center text-xs font-medium text-red-600 border-r">No Read</th>
+                                            <th class="px-2 py-2 text-center text-xs font-medium text-green-600">Read</th>
+                                            <th class="px-2 py-2 text-center text-xs font-medium text-red-600">No Read</th>
+                                            <th class="px-2 py-2 text-center text-xs font-medium text-gray-500 border-l">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-200">
+                                        @{
+                                            string FormatPlant(string plant)
+                                            {
+                                                return plant.ToUpper() switch
+                                                {
+                                                    "KASANA BELOW" => "Kasana Grnd Flr",
+                                                    "KASANA TOP" => "Kasana 1st Flr",
+                                                    "KOMAL BELOW" => "Komal S1",
+                                                    "KOMAL TOP" => "Komal S2",
+                                                    _ => plant
+                                                };
+                                            }
+                                        }
+                                        @foreach (var item in Model)
+                                        {
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-4 py-3 text-sm font-medium text-gray-900">@item.ReportDate</td>
+                                                <td class="px-4 py-3 text-sm font-bold text-blue-700">@FormatPlant(item.FromPlant)</td>
+                                                <td class="px-2 py-3 text-center text-base font-bold text-blue-700">
+                                                    @item.IssueTotal.ToString("N0")</td>
+                                                    <td class="px-2 py-3 text-center text-base text-green-600">@item.IssueRead.ToString("N0")</td>
+                                                    <td class="px-2 py-3 text-center text-base text-red-600 border-r">
+                                                        @item.IssueNoRead.ToString("N0")</td>
+                                                        <td class="px-4 py-3 text-sm font-bold text-green-700">@FormatPlant(item.ToPlant)</td>
+                                                        <td class="px-2 py-3 text-center text-base text-green-600">@item.ReceiptRead.ToString("N0")</td>
+                                                        <td class="px-2 py-3 text-center text-base text-red-600">@item.ReceiptNoRead.ToString("N0")</td>
+                                                        <td class="px-2 py-3 text-center text-base font-bold text-green-700 border-l">
+                                                            @item.ReceiptTotal.ToString("N0")</td>
+                                                            <td class="px-4 py-3 text-center text-base font-bold text-red-600">
+                                                                @(item.Deviation >= 0 ? $"+{item.Deviation:N0}" : item.Deviation.ToString("N0"))
+                                                            </td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                                <tfoot class="bg-gray-100 font-bold">
+                                                    <tr>
+                                                        <td colspan="2" class="px-4 py-3 text-sm">TOTAL</td>
+                                                        <td class="px-2 py-3 text-center text-blue-700">@Model.Sum(x => x.IssueTotal).ToString("N0")
+                                                        </td>
+                                                        <td class="px-2 py-3 text-center text-green-600">@Model.Sum(x => x.IssueRead).ToString("N0")
+                                                        </td>
+                                                        <td class="px-2 py-3 text-center text-red-600 border-r">@Model.Sum(x =>
+                                                                                        x.IssueNoRead).ToString("N0")</td>
+                                                            <td class="px-4 py-3"></td>
+                                                            <td class="px-2 py-3 text-center text-green-600">@Model.Sum(x => x.ReceiptRead).ToString("N0")
+                                                            </td>
+                                                            <td class="px-2 py-3 text-center text-red-600">@Model.Sum(x => x.ReceiptNoRead).ToString("N0")
+                                                            </td>
+                                                            <td class="px-2 py-3 text-center text-green-700">@Model.Sum(x => x.ReceiptTotal).ToString("N0")
+                                                            </td>
+                                                            <td
+                                                                class="px-4 py-3 text-center @(Model.Sum(x => x.Deviation) >= 0 ? "text-green-700" : "text-red-700")">
+                                                                @(Model.Sum(x => x.Deviation) >= 0 ? $"+{Model.Sum(x => x.Deviation):N0}" : Model.Sum(x =>
+                                                            x.Deviation).ToString("N0"))
+                                                            </td>
+                                                        </tr>
+                                                    </tfoot>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    }
     else
-    {
-        <div class="p-8 text-center bg-white rounded-xl shadow">
-            <h3 class="text-lg font-medium text-gray-900 mb-1">No Data Found</h3>
-            <p class="text-gray-500">No transfer records found for the selected date range.</p>
-        </div>
-    }
-</div>
+                                    {
+                                        <div class="p-8 text-center bg-white rounded-xl shadow">
+                                            <h3 class="text-lg font-medium text-gray-900 mb-1">No Data Found</h3>
+                                            <p class="text-gray-500">No transfer records found for the selected date range.</p>
+                                        </div>
+                                    }
+                                </div>
