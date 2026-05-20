@@ -17,7 +17,7 @@ BEGIN
 
     WITH ScanData AS (
         SELECT
-            ScanDate = CAST(s.ScanDateTime AS DATE),
+            ScanDate = CAST(DATEADD(HOUR, -7, s.ScanDateTime) AS DATE),
             ScanType = UPPER(LTRIM(RTRIM(ISNULL(s.ScanType, '')))),
             PlantName = UPPER(LTRIM(RTRIM(ISNULL(s.CurrentPlant, '')))),
             LaneKey = UPPER(
@@ -36,7 +36,7 @@ BEGIN
                 ELSE 0
             END
 FROM dbo.SorterScans_Sync s WITH(NOLOCK)
-        WHERE s.scanDateTime >= @StartDate AND s.scanDateTime < DATEADD(DAY, 1, @EndDate)
+        WHERE s.scanDateTime >= @StartDate AND s.scanDateTime < @EndDate
     ),
     IssueData AS (
         SELECT
