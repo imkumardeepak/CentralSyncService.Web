@@ -51,6 +51,28 @@
 
     @if (Model.Any())
     {
+        @if (ViewBag.MaterialBreakdown != null)
+        {
+            var breakdown = (Web.Core.DTOs.DailyTransferMaterialTypeBreakdown)ViewBag.MaterialBreakdown;
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                <div class="bg-blue-50 rounded-xl p-5 border border-blue-200 shadow-sm">
+                    <div class="text-sm font-medium text-blue-600 uppercase tracking-wide">DOM Count</div>
+                    <div class="mt-2 text-3xl font-bold text-blue-800">@breakdown.DOM_Count.ToString("N0")</div>
+                    <div class="mt-1 text-xs text-blue-500">FROM scans</div>
+                </div>
+                <div class="bg-green-50 rounded-xl p-5 border border-green-200 shadow-sm">
+                    <div class="text-sm font-medium text-green-600 uppercase tracking-wide">EXP Count</div>
+                    <div class="mt-2 text-3xl font-bold text-green-800">@breakdown.EXP_Count.ToString("N0")</div>
+                    <div class="mt-1 text-xs text-green-500">FROM scans</div>
+                </div>
+                <div class="bg-amber-50 rounded-xl p-5 border border-amber-200 shadow-sm">
+                    <div class="text-sm font-medium text-amber-600 uppercase tracking-wide">CSD Count</div>
+                    <div class="mt-2 text-3xl font-bold text-amber-800">@breakdown.CSD_Count.ToString("N0")</div>
+                    <div class="mt-1 text-xs text-amber-500">FROM scans</div>
+                </div>
+            </div>
+        }
+
         <div class="bg-white rounded-xl shadow overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-200">
                 <h2 class="text-lg font-semibold text-gray-900">@dateSummary</h2>

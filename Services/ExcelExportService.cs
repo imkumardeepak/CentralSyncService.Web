@@ -34,7 +34,7 @@ namespace Web.Services
                 worksheet.Cell(row, 2).Value = item.Batch;
                 worksheet.Cell(row, 3).Value = item.Material;
                 worksheet.Cell(row, 4).Value = item.MaterialDescription;
-                
+
                 if (consolidated)
                 {
                     worksheet.Cell(row, 5).Value = item.TotalQty;
@@ -68,7 +68,7 @@ namespace Web.Services
             return stream.ToArray();
         }
 
-        public byte[] ExportDailyTransfer(List<Core.DTOs.OverallDailyTransferRecord> data, DateTime fromDate, DateTime toDate)
+        public byte[] ExportDailyTransfer(List<Core.DTOs.OverallDailyTransferRecord> data, DateTime fromDate, DateTime toDate, Core.DTOs.DailyTransferMaterialTypeBreakdown? breakdown = null)
         {
             using var workbook = new XLWorkbook();
             var worksheet = workbook.Worksheets.Add("Daily Transfer");
@@ -76,18 +76,46 @@ namespace Web.Services
             var title = $"Daily Transfer Summary ({fromDate:yyyy-MM-dd} to {toDate:yyyy-MM-dd})";
             ApplyHeaderStyle(worksheet, title, fromDate);
 
-            // Row 4: Main Headers
-            worksheet.Cell(4, 1).Value = "Date";
-            worksheet.Cell(4, 2).Value = "Issue Line";
-            worksheet.Cell(4, 3).Value = "Issue (FROM)";
-            worksheet.Cell(4, 6).Value = "Receipt Line";
-            worksheet.Cell(4, 7).Value = "Receipt (TO)";
-            worksheet.Cell(4, 10).Value = "Deviation";
+            // Material Type Breakdown summary (if provided)
+            if (breakdown != null)
+            {
+                worksheet.Cell(4, 1).Value = "Material Type Breakdown (FROM)";
+                worksheet.Cell(4, 1).Style.Font.Bold = true;
+                worksheet.Cell(4, 1).Style.Font.FontSize = 11;
+                worksheet.Range(4, 1, 4, 10).Merge();
 
-            // Style Row 4
+                worksheet.Cell(5, 1).Value = "DOM Count";
+                worksheet.Cell(5, 2).Value = breakdown.DOM_Count;
+                worksheet.Cell(5, 3).Value = "EXP Count";
+                worksheet.Cell(5, 4).Value = breakdown.EXP_Count;
+                worksheet.Cell(5, 5).Value = "CSD Count";
+                worksheet.Cell(5, 6).Value = breakdown.CSD_Count;
+
+                for (int i = 1; i <= 6; i++)
+                {
+                    var cell = worksheet.Cell(5, i);
+                    cell.Style.Font.Bold = true;
+                    cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#E0F2FE");
+                    cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                }
+            }
+
+            int headerRow = breakdown != null ? 7 : 4;
+            int subHeaderRow = breakdown != null ? 8 : 5;
+            int dataStartRow = breakdown != null ? 9 : 6;
+
+            // Row headerRow: Main Headers
+            worksheet.Cell(headerRow, 1).Value = "Date";
+            worksheet.Cell(headerRow, 2).Value = "Issue Line";
+            worksheet.Cell(headerRow, 3).Value = "Issue (FROM)";
+            worksheet.Cell(headerRow, 6).Value = "Receipt Line";
+            worksheet.Cell(headerRow, 7).Value = "Receipt (TO)";
+            worksheet.Cell(headerRow, 10).Value = "Deviation";
+
+            // Style headerRow
             for (int i = 1; i <= 10; i++)
             {
-                var cell = worksheet.Cell(4, i);
+                var cell = worksheet.Cell(headerRow, i);
                 cell.Style.Font.Bold = true;
                 cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                 cell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
@@ -100,31 +128,31 @@ namespace Web.Services
                 else if (i == 10) cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#F59E0B");
             }
 
-            // Merges for Row 4
-            worksheet.Range(4, 1, 5, 1).Merge(); // Date
-            worksheet.Range(4, 2, 5, 2).Merge(); // Issue Line
-            worksheet.Range(4, 3, 4, 5).Merge(); // Issue (FROM)
-            worksheet.Range(4, 6, 5, 6).Merge(); // Receipt Line
-            worksheet.Range(4, 7, 4, 9).Merge(); // Receipt (TO)
-            worksheet.Range(4, 10, 5, 10).Merge(); // Deviation
+            // Merges for headerRow
+            worksheet.Range(headerRow, 1, subHeaderRow, 1).Merge(); // Date
+            worksheet.Range(headerRow, 2, subHeaderRow, 2).Merge(); // Issue Line
+            worksheet.Range(headerRow, 3, headerRow, 5).Merge(); // Issue (FROM)
+            worksheet.Range(headerRow, 6, subHeaderRow, 6).Merge(); // Receipt Line
+            worksheet.Range(headerRow, 7, headerRow, 9).Merge(); // Receipt (TO)
+            worksheet.Range(headerRow, 10, subHeaderRow, 10).Merge(); // Deviation
 
-            // Row 5: Sub Headers
-            worksheet.Cell(5, 3).Value = "Total";
-            worksheet.Cell(5, 4).Value = "Read";
-            worksheet.Cell(5, 5).Value = "No Read";
-            worksheet.Cell(5, 7).Value = "Read";
-            worksheet.Cell(5, 8).Value = "No Read";
-            worksheet.Cell(5, 9).Value = "Total";
+            // Sub Headers
+            worksheet.Cell(subHeaderRow, 3).Value = "Total";
+            worksheet.Cell(subHeaderRow, 4).Value = "Read";
+            worksheet.Cell(subHeaderRow, 5).Value = "No Read";
+            worksheet.Cell(subHeaderRow, 7).Value = "Read";
+            worksheet.Cell(subHeaderRow, 8).Value = "No Read";
+            worksheet.Cell(subHeaderRow, 9).Value = "Total";
 
-            // Style Row 5
+            // Style subHeaderRow
             for (int i = 1; i <= 10; i++)
             {
                 if (i == 1 || i == 2 || i == 6 || i == 10) continue;
-                var cell = worksheet.Cell(5, i);
+                var cell = worksheet.Cell(subHeaderRow, i);
                 ApplyHeaderCellStyle(cell);
             }
 
-            int dataRow = 6;
+            int dataRow = dataStartRow;
             foreach (var item in data)
             {
                 worksheet.Cell(dataRow, 1).Value = FormatReportDate(item.ReportDate);
@@ -136,7 +164,7 @@ namespace Web.Services
                 worksheet.Cell(dataRow, 7).Value = item.ReceiptRead;
                 worksheet.Cell(dataRow, 8).Value = item.ReceiptNoRead;
                 worksheet.Cell(dataRow, 9).Value = item.ReceiptTotal;
-                
+
                 var deviationText = item.Deviation >= 0 ? $"+{item.Deviation}" : item.Deviation.ToString();
                 worksheet.Cell(dataRow, 10).Value = deviationText;
 
@@ -317,7 +345,7 @@ namespace Web.Services
                 worksheet.Cell(dataRow, 7).Value = item.ReceiptRead;
                 worksheet.Cell(dataRow, 8).Value = item.ReceiptNoRead;
                 worksheet.Cell(dataRow, 9).Value = item.ReceiptTotal;
-                
+
                 var deviationText = item.Deviation >= 0 ? $"+{item.Deviation}" : item.Deviation.ToString();
                 worksheet.Cell(dataRow, 10).Value = deviationText;
 
@@ -342,7 +370,7 @@ namespace Web.Services
                 worksheet.Cell(dataRow, 7).Value = data.Sum(x => x.ReceiptRead);
                 worksheet.Cell(dataRow, 8).Value = data.Sum(x => x.ReceiptNoRead);
                 worksheet.Cell(dataRow, 9).Value = data.Sum(x => x.ReceiptTotal);
-                
+
                 var totalDev = data.Sum(x => x.Deviation);
                 worksheet.Cell(dataRow, 10).Value = totalDev >= 0 ? $"+{totalDev}" : totalDev.ToString();
 

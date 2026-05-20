@@ -91,8 +91,25 @@ FROM dbo.SorterScans_Sync s WITH(NOLOCK)
     ORDER BY 
         ISNULL(i.ScanDate, r.ScanDate),
         ISNULL(i.LaneKey, r.LaneKey);
+
+    -- Material Type Breakdown for FROM scans
+    SELECT
+        DOM_Count = ISNULL(SUM(CASE WHEN mc.MaterialType = 'DOM' THEN 1 ELSE 0 END), 0),
+        EXP_Count = ISNULL(SUM(CASE WHEN mc.MaterialType = 'EXP' THEN 1 ELSE 0 END), 0),
+        CSD_Count = ISNULL(SUM(CASE WHEN mc.MaterialType = 'CSD' THEN 1 ELSE 0 END), 0)
+    FROM dbo.SorterScans_Sync ss WITH(NOLOCK)
+    LEFT JOIN dbo.ProductionOrder po WITH(NOLOCK)
+        ON ss.OrderNumber = CAST(po.OrderNo AS NVARCHAR(20))
+        AND ss.Batch = po.Batch
+        AND po.PlantCode = 'HM06'
+    LEFT JOIN dbo.MaterialConversion mc WITH(NOLOCK)
+        ON po.Material = mc.Material
+        AND mc.PlantCode = 'HM06'
+    WHERE ss.ScanType = 'FROM'
+        AND ss.ScanDateTime >= @StartDate
+        AND ss.ScanDateTime < @EndDate;
 END
 GO
 
-PRINT 'Procedure sp_GetDailyTransferReport updated - paired by lane';
+PRINT 'Procedure sp_GetDailyTransferReport updated - paired by lane with material breakdown';
 GO

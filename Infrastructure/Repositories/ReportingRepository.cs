@@ -96,9 +96,9 @@ namespace Web.Infrastructure.Repositories
             return result;
         }
 
-        public async Task<List<OverallDailyTransferRecord>> GetDailyTransferReportAsync(DateTime? fromDate, DateTime? toDate)
+        public async Task<DailyTransferReportResult> GetDailyTransferReportAsync(DateTime? fromDate, DateTime? toDate)
         {
-            var result = new List<OverallDailyTransferRecord>();
+            var result = new DailyTransferReportResult();
 
             using (var connection = new SqlConnection(_connectionString))
             {
@@ -109,7 +109,7 @@ namespace Web.Infrastructure.Repositories
                     command.CommandType = CommandType.StoredProcedure;
                     var startDate = (fromDate ?? DateTime.Today).Date;
                     var endDate = (toDate ?? DateTime.Today).Date;
-                    
+
                     // Production day: 07:00 on fromDate to 07:00 next day of toDate
                     command.Parameters.Add("@StartDate", SqlDbType.DateTime2).Value = startDate.AddHours(7);
                     command.Parameters.Add("@EndDate", SqlDbType.DateTime2).Value = endDate.AddDays(1).AddHours(7);
@@ -132,7 +132,20 @@ namespace Web.Infrastructure.Repositories
                                 Deviation = GetInt32(reader, "Deviation")
                             };
 
-                            result.Add(record);
+                            result.Records.Add(record);
+                        }
+
+                        if (await reader.NextResultAsync().ConfigureAwait(false))
+                        {
+                            if (await reader.ReadAsync().ConfigureAwait(false))
+                            {
+                                result.MaterialBreakdown = new DailyTransferMaterialTypeBreakdown
+                                {
+                                    DOM_Count = GetInt32(reader, "DOM_Count"),
+                                    EXP_Count = GetInt32(reader, "EXP_Count"),
+                                    CSD_Count = GetInt32(reader, "CSD_Count")
+                                };
+                            }
                         }
                     }
                 }

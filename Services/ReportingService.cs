@@ -25,7 +25,7 @@ namespace Web.Services
             return await _repository.GetTodayDashboardStatsAsync().ConfigureAwait(false);
         }
 
-        public async Task<List<OverallDailyTransferRecord>> GetDailyTransferReportAsync(DateTime? fromDate, DateTime? toDate)
+        public async Task<DailyTransferReportResult> GetDailyTransferReportAsync(DateTime? fromDate, DateTime? toDate)
         {
             return await _repository.GetDailyTransferReportAsync(fromDate, toDate).ConfigureAwait(false);
         }

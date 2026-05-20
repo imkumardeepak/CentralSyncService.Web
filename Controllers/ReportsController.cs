@@ -64,11 +64,12 @@ namespace Web.Controllers
             {
                 var searchFromDate = fromDate ?? DateTime.Today;
                 var searchToDate = toDate ?? DateTime.Today;
-                var records = await _reportingRepository.GetDailyTransferReportAsync(searchFromDate, searchToDate).ConfigureAwait(false);
-                
+                var result = await _reportingRepository.GetDailyTransferReportAsync(searchFromDate, searchToDate).ConfigureAwait(false);
+
                 ViewBag.FromDate = searchFromDate;
                 ViewBag.ToDate = searchToDate;
-                return View(records);
+                ViewBag.MaterialBreakdown = result.MaterialBreakdown;
+                return View(result.Records);
             }
             catch (Exception ex)
             {
@@ -86,12 +87,12 @@ namespace Web.Controllers
                 var searchDate = date ?? DateTime.Today;
                 var isConsolidated = consolidated ?? false;
                 var records = await _reportingRepository.GetShiftReportAsync(searchDate, isConsolidated).ConfigureAwait(false);
-                
+
                 if (!isConsolidated && !string.IsNullOrEmpty(shift) && shift != "ALL")
                 {
                     records = records.Where(r => r.Shift == shift).ToList();
                 }
-                
+
                 ViewBag.Date = searchDate;
                 ViewBag.Shift = shift ?? "ALL";
                 ViewBag.Consolidated = isConsolidated;
@@ -112,7 +113,7 @@ namespace Web.Controllers
             {
                 var searchDate = date ?? DateTime.Today;
                 var records = await _reportingRepository.GetOverallTransferByProductionOrderAsync(searchDate).ConfigureAwait(false);
-                
+
                 ViewBag.Date = searchDate;
                 return View(records);
             }
@@ -132,7 +133,7 @@ namespace Web.Controllers
                 var from = fromDate ?? DateTime.Today.AddDays(-7);
                 var to = toDate ?? DateTime.Today;
                 var records = await _reportingRepository.GetOverallDailyTransferAsync(from, to).ConfigureAwait(false);
-                
+
                 ViewBag.FromDate = from;
                 ViewBag.ToDate = to;
                 return View(records);
@@ -268,18 +269,18 @@ namespace Web.Controllers
                 var searchDate = date ?? DateTime.Today;
                 var isConsolidated = consolidated ?? false;
                 var records = await _reportingRepository.GetShiftReportAsync(searchDate, isConsolidated).ConfigureAwait(false);
-                
+
                 if (!isConsolidated && !string.IsNullOrEmpty(shift) && shift != "ALL")
                 {
                     records = records.Where(r => r.Shift == shift).ToList();
                 }
-                
+
                 var fileName = isConsolidated
                     ? $"Shift_Report_Consolidated_{searchDate:yyyy-MM-dd}.xlsx"
                     : (string.IsNullOrEmpty(shift) || shift == "ALL"
                         ? $"Shift_Report_{searchDate:yyyy-MM-dd}.xlsx"
                         : $"Shift_Report_{searchDate:yyyy-MM-dd}_{shift}.xlsx");
-                    
+
                 var fileBytes = _excelExportService.ExportShiftReport(records, searchDate, isConsolidated);
                 return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
             }
@@ -296,8 +297,8 @@ namespace Web.Controllers
             {
                 var searchFromDate = fromDate ?? DateTime.Today;
                 var searchToDate = toDate ?? DateTime.Today;
-                var records = await _reportingRepository.GetDailyTransferReportAsync(searchFromDate, searchToDate).ConfigureAwait(false);
-                var fileBytes = _excelExportService.ExportDailyTransfer(records, searchFromDate, searchToDate);
+                var result = await _reportingRepository.GetDailyTransferReportAsync(searchFromDate, searchToDate).ConfigureAwait(false);
+                var fileBytes = _excelExportService.ExportDailyTransfer(result.Records, searchFromDate, searchToDate, result.MaterialBreakdown);
                 var fileName = $"Daily_Transfer_{searchFromDate:yyyy-MM-dd}_to_{searchToDate:yyyy-MM-dd}.xlsx";
                 return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
             }
