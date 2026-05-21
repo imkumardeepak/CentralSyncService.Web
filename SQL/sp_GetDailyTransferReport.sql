@@ -97,6 +97,7 @@ FROM dbo.SorterScans_Sync s WITH(NOLOCK)
         DOM_Count = ISNULL(SUM(CASE WHEN mc.MaterialType = 'DOM' THEN 1 ELSE 0 END), 0),
         EXP_Count = ISNULL(SUM(CASE WHEN mc.MaterialType = 'EXP' THEN 1 ELSE 0 END), 0),
         CSD_Count = ISNULL(SUM(CASE WHEN mc.MaterialType = 'CSD' THEN 1 ELSE 0 END), 0),
+        IRC_Count = ISNULL(SUM(CASE WHEN mc.MaterialType = 'IRC' THEN 1 ELSE 0 END), 0),
         Total_FROM_Scans = COUNT(*)
     FROM dbo.SorterScans_Sync ss WITH(NOLOCK)
     LEFT JOIN dbo.ProductionOrder po WITH(NOLOCK)

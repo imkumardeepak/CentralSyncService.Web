@@ -21,6 +21,7 @@ BEGIN
         po.OrderNo,
         po.Material AS MaterialNumber,
         po.MaterialDescription AS MaterialDescription,
+        ISNULL(mc.MaterialType, '') AS MaterialType,
         po.Batch,
         po.OrderQty,
         ISNULL(bc.PrintCount, 0) AS CurQTY,
@@ -31,6 +32,11 @@ BEGIN
         ISNULL(bc.PrintCount, 0) AS Deviation
 
     FROM dbo.ProductionOrder po WITH(NOLOCK)
+
+    -- Material Type lookup
+    LEFT JOIN dbo.MaterialConversion mc WITH(NOLOCK)
+        ON po.Material = mc.Material
+        AND mc.PlantCode = 'HM06'
 
     -- Count actual prints for the order's CurQTY
     OUTER APPLY (
@@ -55,6 +61,7 @@ BEGIN
         po.OrderNo,
         po.Material,
         po.MaterialDescription,
+        mc.MaterialType,
         po.Batch,
         po.OrderQty,
         bc.PrintCount

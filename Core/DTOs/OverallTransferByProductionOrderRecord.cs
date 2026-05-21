@@ -5,6 +5,7 @@ namespace Web.Core.DTOs
         public string OrderNo { get; set; }
         public string MaterialNumber { get; set; }
         public string MaterialDescription { get; set; }
+        public string MaterialType { get; set; }
         public string Batch { get; set; }
         public decimal OrderQty { get; set; }
         public decimal CurQTY { get; set; }

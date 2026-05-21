@@ -90,8 +90,10 @@ namespace Web.Services
                 worksheet.Cell(5, 4).Value = breakdown.EXP_Count;
                 worksheet.Cell(5, 5).Value = "CSD Count";
                 worksheet.Cell(5, 6).Value = breakdown.CSD_Count;
+                worksheet.Cell(5, 7).Value = "IRC Count";
+                worksheet.Cell(5, 8).Value = breakdown.IRC_Count;
 
-                for (int i = 1; i <= 6; i++)
+                for (int i = 1; i <= 8; i++)
                 {
                     var cell = worksheet.Cell(5, i);
                     cell.Style.Font.Bold = true;
@@ -204,7 +206,7 @@ namespace Web.Services
 
             ApplyHeaderStyle(worksheet, "Overall Transfer By Production Order", selectedDate);
 
-            var headers = new[] { "Order No", "SAP Code", "Product Name", "Batch", "Order Qty", "Prod. Qty", "Issue Count", "Receipt Count", "Prod. vs Komal" };
+            var headers = new[] { "Order No", "SAP Code", "Product Name", "Material Type", "Batch", "Order Qty", "Prod. Qty", "Issue Count", "Receipt Count", "Prod. vs Komal" };
             var headerRow = worksheet.Row(4);
             for (int i = 0; i < headers.Length; i++)
             {
@@ -219,19 +221,20 @@ namespace Web.Services
                 worksheet.Cell(row, 1).Value = item.OrderNo;
                 worksheet.Cell(row, 2).Value = item.MaterialNumber;
                 worksheet.Cell(row, 3).Value = item.MaterialDescription;
-                worksheet.Cell(row, 4).Value = item.Batch;
-                worksheet.Cell(row, 5).Value = item.OrderQty;
-                worksheet.Cell(row, 6).Value = item.CurQTY;
-                worksheet.Cell(row, 7).Value = item.IssueCount;
-                worksheet.Cell(row, 8).Value = item.ReceiptCount;
-                worksheet.Cell(row, 9).Value = item.Deviation;
+                worksheet.Cell(row, 4).Value = item.MaterialType;
+                worksheet.Cell(row, 5).Value = item.Batch;
+                worksheet.Cell(row, 6).Value = item.OrderQty;
+                worksheet.Cell(row, 7).Value = item.CurQTY;
+                worksheet.Cell(row, 8).Value = item.IssueCount;
+                worksheet.Cell(row, 9).Value = item.ReceiptCount;
+                worksheet.Cell(row, 10).Value = item.Deviation;
 
-                ApplyDataRowStyle(worksheet, row, 9);
+                ApplyDataRowStyle(worksheet, row, 10);
 
                 if (item.Deviation > 0)
-                    worksheet.Cell(row, 9).Style.Font.FontColor = XLColor.FromHtml("#059669");
+                    worksheet.Cell(row, 10).Style.Font.FontColor = XLColor.FromHtml("#059669");
                 else if (item.Deviation < 0)
-                    worksheet.Cell(row, 9).Style.Font.FontColor = XLColor.FromHtml("#DC2626");
+                    worksheet.Cell(row, 10).Style.Font.FontColor = XLColor.FromHtml("#DC2626");
 
                 row++;
             }
@@ -239,12 +242,13 @@ namespace Web.Services
             worksheet.Column(1).Width = 15;
             worksheet.Column(2).Width = 15;
             worksheet.Column(3).Width = 35;
-            worksheet.Column(4).Width = 15;
-            worksheet.Column(5).Width = 12;
+            worksheet.Column(4).Width = 12;
+            worksheet.Column(5).Width = 15;
             worksheet.Column(6).Width = 12;
             worksheet.Column(7).Width = 12;
             worksheet.Column(8).Width = 12;
             worksheet.Column(9).Width = 12;
+            worksheet.Column(10).Width = 12;
 
             using var stream = new MemoryStream();
             workbook.SaveAs(stream);

@@ -56,7 +56,7 @@
         @if (ViewBag.MaterialBreakdown != null)
         {
             var breakdown = (Web.Core.DTOs.DailyTransferMaterialTypeBreakdown)ViewBag.MaterialBreakdown;
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
                 <div class="bg-blue-50 rounded-xl p-5 border border-blue-200 shadow-sm">
                     <div class="text-sm font-medium text-blue-600 uppercase tracking-wide">DOM Count</div>
                     <div class="mt-2 text-3xl font-bold text-blue-800">@breakdown.DOM_Count.ToString("N0")</div>
@@ -71,6 +71,11 @@
                     <div class="text-sm font-medium text-amber-600 uppercase tracking-wide">CSD Count</div>
                     <div class="mt-2 text-3xl font-bold text-amber-800">@breakdown.CSD_Count.ToString("N0")</div>
                     <div class="mt-1 text-xs text-amber-500">FROM scans</div>
+                </div>
+                <div class="bg-purple-50 rounded-xl p-5 border border-purple-200 shadow-sm">
+                    <div class="text-sm font-medium text-purple-600 uppercase tracking-wide">IRC Count</div>
+                    <div class="mt-2 text-3xl font-bold text-purple-800">@breakdown.IRC_Count.ToString("N0")</div>
+                    <div class="mt-1 text-xs text-purple-500">FROM scans</div>
                 </div>
                 <div class="bg-gray-50 rounded-xl p-5 border border-gray-200 shadow-sm">
                     <div class="text-sm font-medium text-gray-600 uppercase tracking-wide">Total FROM</div>

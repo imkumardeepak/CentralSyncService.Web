@@ -144,6 +144,7 @@ namespace Web.Infrastructure.Repositories
                                     DOM_Count = GetInt32(reader, "DOM_Count"),
                                     EXP_Count = GetInt32(reader, "EXP_Count"),
                                     CSD_Count = GetInt32(reader, "CSD_Count"),
+                                    IRC_Count = GetInt32(reader, "IRC_Count"),
                                     Total_FROM_Scans = GetInt32(reader, "Total_FROM_Scans")
                                 };
                             }
@@ -175,6 +176,7 @@ namespace Web.Infrastructure.Repositories
                                 OrderNo = reader.IsDBNull(reader.GetOrdinal("OrderNo")) ? string.Empty : Convert.ToString(reader.GetValue(reader.GetOrdinal("OrderNo"))) ?? string.Empty,
                                 MaterialNumber = reader.IsDBNull(reader.GetOrdinal("MaterialNumber")) ? string.Empty : Convert.ToString(reader.GetValue(reader.GetOrdinal("MaterialNumber"))) ?? string.Empty,
                                 MaterialDescription = reader.IsDBNull(reader.GetOrdinal("MaterialDescription")) ? string.Empty : Convert.ToString(reader.GetValue(reader.GetOrdinal("MaterialDescription"))) ?? string.Empty,
+                                MaterialType = reader.IsDBNull(reader.GetOrdinal("MaterialType")) ? string.Empty : Convert.ToString(reader.GetValue(reader.GetOrdinal("MaterialType"))) ?? string.Empty,
                                 Batch = reader.IsDBNull(reader.GetOrdinal("Batch")) ? string.Empty : Convert.ToString(reader.GetValue(reader.GetOrdinal("Batch"))) ?? string.Empty,
                                 OrderQty = reader.IsDBNull(reader.GetOrdinal("OrderQty")) ? 0m : Convert.ToDecimal(reader.GetValue(reader.GetOrdinal("OrderQty"))),
                                 CurQTY = reader.IsDBNull(reader.GetOrdinal("CurQTY")) ? 0m : Convert.ToDecimal(reader.GetValue(reader.GetOrdinal("CurQTY"))),
