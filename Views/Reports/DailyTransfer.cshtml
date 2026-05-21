@@ -60,27 +60,27 @@
                 <div class="bg-blue-50 rounded-xl p-5 border border-blue-200 shadow-sm">
                     <div class="text-sm font-medium text-blue-600 uppercase tracking-wide">DOM Count</div>
                     <div class="mt-2 text-3xl font-bold text-blue-800">@breakdown.DOM_Count.ToString("N0")</div>
-                    <div class="mt-1 text-xs text-blue-500">FROM scans</div>
+                    <div class="mt-1 text-xs text-blue-500">FROM scans (READ)</div>
                 </div>
                 <div class="bg-green-50 rounded-xl p-5 border border-green-200 shadow-sm">
                     <div class="text-sm font-medium text-green-600 uppercase tracking-wide">EXP Count</div>
                     <div class="mt-2 text-3xl font-bold text-green-800">@breakdown.EXP_Count.ToString("N0")</div>
-                    <div class="mt-1 text-xs text-green-500">FROM scans</div>
+                    <div class="mt-1 text-xs text-green-500">FROM scans (READ)</div>
                 </div>
                 <div class="bg-amber-50 rounded-xl p-5 border border-amber-200 shadow-sm">
                     <div class="text-sm font-medium text-amber-600 uppercase tracking-wide">CSD Count</div>
                     <div class="mt-2 text-3xl font-bold text-amber-800">@breakdown.CSD_Count.ToString("N0")</div>
-                    <div class="mt-1 text-xs text-amber-500">FROM scans</div>
+                    <div class="mt-1 text-xs text-amber-500">FROM scans (READ)</div>
                 </div>
                 <div class="bg-purple-50 rounded-xl p-5 border border-purple-200 shadow-sm">
                     <div class="text-sm font-medium text-purple-600 uppercase tracking-wide">IRC Count</div>
                     <div class="mt-2 text-3xl font-bold text-purple-800">@breakdown.IRC_Count.ToString("N0")</div>
-                    <div class="mt-1 text-xs text-purple-500">FROM scans</div>
+                    <div class="mt-1 text-xs text-purple-500">FROM scans (READ)</div>
                 </div>
                 <div class="bg-gray-50 rounded-xl p-5 border border-gray-200 shadow-sm">
                     <div class="text-sm font-medium text-gray-600 uppercase tracking-wide">Total FROM</div>
                     <div class="mt-2 text-3xl font-bold text-gray-800">@breakdown.Total_FROM_Scans.ToString("N0")</div>
-                    <div class="mt-1 text-xs text-gray-500">All scans</div>
+                    <div class="mt-1 text-xs text-gray-500">All scans (READ)</div>
                 </div>
             </div>
         }
@@ -107,12 +107,12 @@
                                             Deviation</th>
                                         </tr>
                                         <tr>
-                                            <th class="px-2 py-2 text-center text-xs font-medium text-gray-500">Total</th>
+                                            <th class="px-2 py-2 text-center text-xs font-medium text-gray-500">Total Count</th>
                                             <th class="px-2 py-2 text-center text-xs font-medium text-green-600">Read</th>
                                             <th class="px-2 py-2 text-center text-xs font-medium text-red-600 border-r">No Read</th>
                                             <th class="px-2 py-2 text-center text-xs font-medium text-green-600">Read</th>
                                             <th class="px-2 py-2 text-center text-xs font-medium text-red-600">No Read</th>
-                                            <th class="px-2 py-2 text-center text-xs font-medium text-gray-500 border-l">Total</th>
+                                            <th class="px-2 py-2 text-center text-xs font-medium text-gray-500 border-l">Total Count</th>
                                         </tr>
                                     </thead>
                                     <tbody class="divide-y divide-gray-200">
@@ -158,7 +158,7 @@
                                                         <td class="px-2 py-3 text-center text-green-600">@Model.Sum(x => x.IssueRead).ToString("N0")
                                                         </td>
                                                         <td class="px-2 py-3 text-center text-red-600 border-r">@Model.Sum(x =>
-                                                                                        x.IssueNoRead).ToString("N0")</td>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            x.IssueNoRead).ToString("N0")</td>
                                                             <td class="px-4 py-3"></td>
                                                             <td class="px-2 py-3 text-center text-green-600">@Model.Sum(x => x.ReceiptRead).ToString("N0")
                                                             </td>
