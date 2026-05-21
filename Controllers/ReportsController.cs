@@ -232,6 +232,44 @@ namespace Web.Controllers
             }
         }
 
+        // No Read Statistics Report
+        public async Task<IActionResult> NoReadStatistics(DateTime? date, bool? showKasanaTop, bool? showKasanaBelow)
+        {
+            try
+            {
+                var searchDate = date ?? DateTime.Today;
+                var records = await _reportingRepository.GetNoReadStatisticsReportAsync(searchDate).ConfigureAwait(false);
+
+                ViewBag.Date = searchDate;
+                ViewBag.ShowKasanaTop = showKasanaTop ?? true;
+                ViewBag.ShowKasanaBelow = showKasanaBelow ?? true;
+                return View(records);
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Error = $"Error: {ex.Message}";
+                ViewBag.StackTrace = ex.StackTrace;
+                return View(new List<NoReadStatisticsRecord>());
+            }
+        }
+
+        public async Task<IActionResult> ExportNoReadStatisticsExcel(DateTime? date)
+        {
+            try
+            {
+                var searchDate = date ?? DateTime.Today;
+                var records = await _reportingRepository.GetNoReadStatisticsReportAsync(searchDate).ConfigureAwait(false);
+                var fileBytes = _excelExportService.ExportNoReadStatisticsReport(records, searchDate);
+                var fileName = $"No_Read_Statistics_{searchDate:yyyy-MM-dd}.xlsx";
+                return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Error = $"Error exporting: {ex.Message}";
+                return RedirectToAction("NoReadStatistics", new { date });
+            }
+        }
+
         private static string NormalizeKasanaLocation(string? kasanaLocation)
         {
             var normalized = (kasanaLocation ?? "BOTH").Trim().ToUpperInvariant();

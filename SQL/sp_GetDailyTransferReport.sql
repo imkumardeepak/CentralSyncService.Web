@@ -84,7 +84,7 @@ FROM dbo.SorterScans_Sync s WITH(NOLOCK)
         ReceiptTotal = ISNULL(r.ReceiptTotal, 0),
         ReceiptRead = ISNULL(r.ReceiptRead, 0),
         ReceiptNoRead = ISNULL(r.ReceiptNoRead, 0),
-        Deviation = ISNULL(i.IssueTotal, 0) - ISNULL(r.ReceiptTotal, 0)
+        Deviation = ISNULL(r.ReceiptTotal, 0) - ISNULL(i.IssueTotal, 0)
     FROM IssueData i
     FULL OUTER JOIN ReceiptData r
         ON i.ScanDate = r.ScanDate AND i.LaneKey = r.LaneKey

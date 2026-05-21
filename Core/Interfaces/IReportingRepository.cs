@@ -15,5 +15,6 @@ namespace Web.Core.Interfaces
         Task<List<OverallDailyTransferRecord>> GetOverallDailyTransferAsync(DateTime fromDate, DateTime toDate);
         Task<VarianceTransferReportResult> GetVarianceTransferReportAsync(DateTime? date);
         Task<NoReadKasanaReadKomalReportResult> GetNoReadKasanaReadKomalReportAsync(DateTime? date, string kasanaLocation = "BOTH");
+        Task<List<NoReadStatisticsRecord>> GetNoReadStatisticsReportAsync(DateTime? date);
     }
 }

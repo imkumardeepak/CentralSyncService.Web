@@ -366,6 +366,43 @@ namespace Web.Infrastructure.Repositories
             return result;
         }
 
+        public async Task<List<NoReadStatisticsRecord>> GetNoReadStatisticsReportAsync(DateTime? date)
+        {
+            var result = new List<NoReadStatisticsRecord>();
+            var selectedDate = (date ?? DateTime.Today).Date;
+
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                await connection.OpenAsync().ConfigureAwait(false);
+
+                using (var command = new SqlCommand("sp_GetNoReadStatisticsReport", connection))
+                {
+                    command.CommandType = CommandType.StoredProcedure;
+                    command.Parameters.Add("@Date", SqlDbType.Date).Value = selectedDate;
+
+                    using (var reader = await command.ExecuteReaderAsync().ConfigureAwait(false))
+                    {
+                        while (await reader.ReadAsync().ConfigureAwait(false))
+                        {
+                            result.Add(new NoReadStatisticsRecord
+                            {
+                                HourNum = GetInt32(reader, "HourNum"),
+                                HourLabel = GetNullableString(reader, "HourLabel") ?? string.Empty,
+                                KasanaTopTotal = GetInt32(reader, "KasanaTopTotal"),
+                                KasanaTopNoRead = GetInt32(reader, "KasanaTopNoRead"),
+                                KasanaTopPct = reader.IsDBNull(reader.GetOrdinal("KasanaTopPct")) ? 0m : Convert.ToDecimal(reader.GetValue(reader.GetOrdinal("KasanaTopPct"))),
+                                KasanaBelowTotal = GetInt32(reader, "KasanaBelowTotal"),
+                                KasanaBelowNoRead = GetInt32(reader, "KasanaBelowNoRead"),
+                                KasanaBelowPct = reader.IsDBNull(reader.GetOrdinal("KasanaBelowPct")) ? 0m : Convert.ToDecimal(reader.GetValue(reader.GetOrdinal("KasanaBelowPct")))
+                            });
+                        }
+                    }
+                }
+            }
+
+            return result;
+        }
+
         private static string NormalizeKasanaLocation(string? kasanaLocation)
         {
             var normalized = (kasanaLocation ?? "BOTH").Trim().ToUpperInvariant();

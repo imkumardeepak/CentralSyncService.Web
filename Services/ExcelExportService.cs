@@ -649,5 +649,89 @@ namespace Web.Services
                 _ => plant
             };
         }
+
+        public byte[] ExportNoReadStatisticsReport(List<Core.DTOs.NoReadStatisticsRecord> data, DateTime date)
+        {
+            using var workbook = new XLWorkbook();
+            var worksheet = workbook.Worksheets.Add("No Read Statistics");
+
+            var title = $"No Read Statistics Report — {date:yyyy-MM-dd} (Shift: 07:00 - 06:59)";
+            ApplyHeaderStyle(worksheet, title, date);
+
+            var headers = new[] { "Hour", "Kasana 1st Flr Total", "Kasana 1st Flr No Read", "Kasana 1st Flr %", "Kasana Grnd Flr Total", "Kasana Grnd Flr No Read", "Kasana Grnd Flr %" };
+            var headerRow = worksheet.Row(4);
+            for (int i = 0; i < headers.Length; i++)
+            {
+                var cell = headerRow.Cell(i + 1);
+                cell.Value = headers[i];
+                ApplyHeaderCellStyle(cell);
+            }
+
+            int row = 5;
+            foreach (var item in data)
+            {
+                worksheet.Cell(row, 1).Value = item.HourLabel;
+                worksheet.Cell(row, 2).Value = item.KasanaTopTotal;
+                worksheet.Cell(row, 3).Value = item.KasanaTopNoRead;
+                worksheet.Cell(row, 4).Value = item.KasanaTopPct / 100m;
+                worksheet.Cell(row, 4).Style.NumberFormat.Format = "0.00%";
+                worksheet.Cell(row, 5).Value = item.KasanaBelowTotal;
+                worksheet.Cell(row, 6).Value = item.KasanaBelowNoRead;
+                worksheet.Cell(row, 7).Value = item.KasanaBelowPct / 100m;
+                worksheet.Cell(row, 7).Style.NumberFormat.Format = "0.00%";
+
+                // Color coding for high no-read percentages
+                if (item.KasanaTopPct > 20)
+                    worksheet.Cell(row, 4).Style.Font.FontColor = XLColor.FromHtml("#DC2626");
+                else if (item.KasanaTopPct > 10)
+                    worksheet.Cell(row, 4).Style.Font.FontColor = XLColor.FromHtml("#D97706");
+
+                if (item.KasanaBelowPct > 20)
+                    worksheet.Cell(row, 7).Style.Font.FontColor = XLColor.FromHtml("#DC2626");
+                else if (item.KasanaBelowPct > 10)
+                    worksheet.Cell(row, 7).Style.Font.FontColor = XLColor.FromHtml("#D97706");
+
+                ApplyDataRowStyle(worksheet, row, 7);
+                row++;
+            }
+
+            // Totals row
+            if (data.Count > 0)
+            {
+                var totalTop = data.Sum(x => x.KasanaTopTotal);
+                var totalTopNoRead = data.Sum(x => x.KasanaTopNoRead);
+                var totalBelow = data.Sum(x => x.KasanaBelowTotal);
+                var totalBelowNoRead = data.Sum(x => x.KasanaBelowNoRead);
+
+                worksheet.Cell(row, 1).Value = "TOTAL";
+                worksheet.Cell(row, 2).Value = totalTop;
+                worksheet.Cell(row, 3).Value = totalTopNoRead;
+                worksheet.Cell(row, 4).Value = totalTop > 0 ? (decimal)totalTopNoRead / totalTop : 0;
+                worksheet.Cell(row, 4).Style.NumberFormat.Format = "0.00%";
+                worksheet.Cell(row, 5).Value = totalBelow;
+                worksheet.Cell(row, 6).Value = totalBelowNoRead;
+                worksheet.Cell(row, 7).Value = totalBelow > 0 ? (decimal)totalBelowNoRead / totalBelow : 0;
+                worksheet.Cell(row, 7).Style.NumberFormat.Format = "0.00%";
+
+                for (int i = 1; i <= 7; i++)
+                {
+                    var cell = worksheet.Cell(row, i);
+                    cell.Style.Font.Bold = true;
+                    cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#F3F4F6");
+                }
+            }
+
+            worksheet.Column(1).Width = 18;
+            worksheet.Column(2).Width = 18;
+            worksheet.Column(3).Width = 20;
+            worksheet.Column(4).Width = 15;
+            worksheet.Column(5).Width = 20;
+            worksheet.Column(6).Width = 22;
+            worksheet.Column(7).Width = 18;
+
+            using var stream = new MemoryStream();
+            workbook.SaveAs(stream);
+            return stream.ToArray();
+        }
     }
 }

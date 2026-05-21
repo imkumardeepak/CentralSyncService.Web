@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -9,72 +10,72 @@
     <!-- Tailwind CSS via CDN with Extended Configuration -->
     <script src="~/js/tailwind.js"></script>
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        // Brand Colors (Blue scale)
-                        'brand': {
-                            50: '#eff6ff',
-                            100: '#dbeafe',
-                            200: '#bfdbfe',
-                            300: '#93c5fd',
-                            400: '#60a5fa',
-                            500: '#3b82f6',
-                            600: '#2563eb',
-                            700: '#1d4ed8',
-                            800: '#1e40af',
-                            900: '#1e3a8a',
+            tailwind.config = {
+                theme: {
+                    extend: {
+                        colors: {
+                            // Brand Colors (Blue scale)
+                            'brand': {
+                                50: '#eff6ff',
+                                100: '#dbeafe',
+                                200: '#bfdbfe',
+                                300: '#93c5fd',
+                                400: '#60a5fa',
+                                500: '#3b82f6',
+                                600: '#2563eb',
+                                700: '#1d4ed8',
+                                800: '#1e40af',
+                                900: '#1e3a8a',
+                            },
+                            // Neutral scale for text and backgrounds
+                            'neutral': {
+                                50: '#fafafa',
+                                100: '#f4f4f5',
+                                200: '#e4e4e7',
+                                300: '#d4d4d8',
+                                400: '#a1a1aa',
+                                500: '#71717a',
+                                600: '#52525b',
+                                700: '#3f3f46',
+                                800: '#27272a',
+                                900: '#18181b',
+                            },
+                            // Legacy support
+                            'brand-primary': '#2563eb',
+                            'brand-secondary': '#1e40af',
+                            'brand-accent': '#3b82f6',
                         },
-                        // Neutral scale for text and backgrounds
-                        'neutral': {
-                            50: '#fafafa',
-                            100: '#f4f4f5',
-                            200: '#e4e4e7',
-                            300: '#d4d4d8',
-                            400: '#a1a1aa',
-                            500: '#71717a',
-                            600: '#52525b',
-                            700: '#3f3f46',
-                            800: '#27272a',
-                            900: '#18181b',
+                        fontFamily: {
+                            sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'sans-serif'],
                         },
-                        // Legacy support
-                        'brand-primary': '#2563eb',
-                        'brand-secondary': '#1e40af',
-                        'brand-accent': '#3b82f6',
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'sans-serif'],
-                    },
-                    boxShadow: {
-                        'card': '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
-                        'card-hover': '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
-                        'dropdown': '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
-                    },
-                    animation: {
-                        'fade-in': 'fadeIn 0.2s ease-out',
-                        'slide-down': 'slideDown 0.2s ease-out',
-                        'slide-up': 'slideUp 0.2s ease-out',
-                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                    },
-                    keyframes: {
-                        fadeIn: {
-                            '0%': { opacity: '0' },
-                            '100%': { opacity: '1' },
+                        boxShadow: {
+                            'card': '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+                            'card-hover': '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+                            'dropdown': '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
                         },
-                        slideDown: {
-                            '0%': { opacity: '0', transform: 'translateY(-10px)' },
-                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        animation: {
+                            'fade-in': 'fadeIn 0.2s ease-out',
+                            'slide-down': 'slideDown 0.2s ease-out',
+                            'slide-up': 'slideUp 0.2s ease-out',
+                            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                         },
-                        slideUp: {
-                            '0%': { opacity: '0', transform: 'translateY(10px)' },
-                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        keyframes: {
+                            fadeIn: {
+                                '0%': { opacity: '0' },
+                                '100%': { opacity: '1' },
+                            },
+                            slideDown: {
+                                '0%': { opacity: '0', transform: 'translateY(-10px)' },
+                                '100%': { opacity: '1', transform: 'translateY(0)' },
+                            },
+                            slideUp: {
+                                '0%': { opacity: '0', transform: 'translateY(10px)' },
+                                '100%': { opacity: '1', transform: 'translateY(0)' },
+                            },
                         },
-                    },
+                    }
                 }
             }
-        }
     </script>
     
     <!-- Google Fonts - Inter -->
@@ -86,39 +87,42 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     
     <style>
-        /* Navigation active state */
-        .nav-link-active {
-            background-color: #dbeafe;
-            color: #1e40af;
-            font-weight: 600;
-        }
-        .nav-link:hover {
-            background-color: #eff6ff;
-        }
+            /* Navigation active state */
+            .nav-link-active {
+                background-color: #dbeafe;
+                color: #1e40af;
+                font-weight: 600;
+            }
+
+            .nav-link:hover {
+                background-color: #eff6ff;
+            }
         
-        /* Smooth transitions for interactive elements */
-        .nav-link, button, a {
-            transition: all 0.15s ease-out;
-        }
+            /* Smooth transitions for interactive elements */
+            .nav-link,
+            button,
+            a {
+                transition: all 0.15s ease-out;
+            }
         
-        /* Focus visible for accessibility */
-        *:focus-visible {
-            outline: 2px solid #3b82f6;
-            outline-offset: 2px;
-        }
+            /* Focus visible for accessibility */
+            *:focus-visible {
+                outline: 2px solid #3b82f6;
+                outline-offset: 2px;
+            }
         
-        /* Dropdown animation */
-        .dropdown-menu-animated {
-            transform-origin: top;
-            transition: opacity 0.15s ease-out, transform 0.15s ease-out;
-        }
+            /* Dropdown animation */
+            .dropdown-menu-animated {
+                transform-origin: top;
+                transition: opacity 0.15s ease-out, transform 0.15s ease-out;
+            }
     </style>
 </head>
+
 <body class="bg-neutral-50 min-h-screen flex flex-col font-sans antialiased">
     <!-- Skip to main content - Accessibility -->
-    <a href="#main-content" 
-       class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100] 
-              focus:px-4 focus:py-2 focus:bg-brand-600 focus:text-white focus:rounded-lg focus:shadow-lg">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100] 
+        focus:px-4 focus:py-2 focus:bg-brand-600 focus:text-white focus:rounded-lg focus:shadow-lg">
         Skip to main content
     </a>
     
@@ -141,68 +145,105 @@
 
                 <!-- Desktop Navigation -->
                 <nav class="hidden lg:flex items-center space-x-1">
-                    <a href="@Url.Action("Index", "Home")" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700 transition-colors">
+                    <a href="@Url.Action("Index", "Home")"
+                           class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700 transition-colors">
                         <svg class="inline-block w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                         </svg>
                         Dashboard
                     </a>
-                    <a href="@Url.Action("Index", "PlantConfiguration")" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700 transition-colors">
+                    <a href="@Url.Action("Index", "PlantConfiguration")"
+                           class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700 transition-colors">
                         <svg class="inline-block w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
                         Plants
                     </a>
 
                     <!-- Reports Dropdown -->
                     <div class="relative group">
-                        <button class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700 transition-colors flex items-center">
-                            <svg class="inline-block w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        <button
+                            class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-700 transition-colors flex items-center">
+                            <svg class="inline-block w-4 h-4 mr-1" fill="none" stroke="currentColor"
+                                 viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
                             Reports
                             <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M19 9l-7 7-7-7" />
                             </svg>
                         </button>
-                        <div class="absolute left-0 mt-2 w-56 rounded-xl shadow-card bg-white ring-1 ring-black ring-opacity-5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 overflow-hidden">
+                        <div
+                            class="absolute left-0 mt-2 w-56 rounded-xl shadow-card bg-white ring-1 ring-black ring-opacity-5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 overflow-hidden">
                             <div class="p-2 space-y-1">
-                                <a href="@Url.Action("DailyTransfer", "Reports")" class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-brand-50 hover:text-brand-700 rounded-md transition-colors font-medium">
-                                    <svg class="w-5 h-5 mr-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                                <a href="@Url.Action("DailyTransfer", "Reports")"
+                                       class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-brand-50 hover:text-brand-700 rounded-md transition-colors font-medium">
+                                    <svg class="w-5 h-5 mr-3 text-blue-500" fill="none" stroke="currentColor"
+                                         viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                                     </svg>
                                     Daily Transfer
                                 </a>
-                                <a href="@Url.Action("ShiftReport", "Reports")" class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-brand-50 hover:text-brand-700 rounded-md transition-colors font-medium">
-                                    <svg class="w-5 h-5 mr-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                <a href="@Url.Action("ShiftReport", "Reports")"
+                                       class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-brand-50 hover:text-brand-700 rounded-md transition-colors font-medium">
+                                    <svg class="w-5 h-5 mr-3 text-green-500" fill="none" stroke="currentColor"
+                                         viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                     Shift Report
                                 </a>
-                                <a href="@Url.Action("OverallTransferByProductionOrder", "Reports")" class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-brand-50 hover:text-brand-700 rounded-md transition-colors font-medium">
-                                    <svg class="w-5 h-5 mr-3 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                                <a href="@Url.Action("OverallTransferByProductionOrder", "Reports")"
+                                       class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-brand-50 hover:text-brand-700 rounded-md transition-colors font-medium">
+                                    <svg class="w-5 h-5 mr-3 text-purple-500" fill="none" stroke="currentColor"
+                                         viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                                     </svg>
                                     Overall Transfer
                                 </a>
-                                <a href="@Url.Action("OverallDailyTransfer", "Reports")" class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-brand-50 hover:text-brand-700 rounded-md transition-colors font-medium">
-                                    <svg class="w-5 h-5 mr-3 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                <a href="@Url.Action("OverallDailyTransfer", "Reports")"
+                                       class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-brand-50 hover:text-brand-700 rounded-md transition-colors font-medium">
+                                    <svg class="w-5 h-5 mr-3 text-amber-500" fill="none" stroke="currentColor"
+                                         viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                     </svg>
                                     Carton Transfer Summary
                                 </a>
-                                <a href="@Url.Action("VarianceTransferReport", "Reports")" class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-brand-50 hover:text-brand-700 rounded-md transition-colors font-medium">
-                                    <svg class="w-5 h-5 mr-3 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-3.314 0-6 2.239-6 5s2.686 5 6 5 6-2.239 6-5-2.686-5-6-5zm0 0V4m0 14v2m-6-7H4m16 0h-2" />
+                                <a href="@Url.Action("VarianceTransferReport", "Reports")"
+                                       class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-brand-50 hover:text-brand-700 rounded-md transition-colors font-medium">
+                                    <svg class="w-5 h-5 mr-3 text-rose-500" fill="none" stroke="currentColor"
+                                         viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M12 8c-3.314 0-6 2.239-6 5s2.686 5 6 5 6-2.239 6-5-2.686-5-6-5zm0 0V4m0 14v2m-6-7H4m16 0h-2" />
                                     </svg>
                                     Variance Transfer
                                 </a>
-                                <a href="@Url.Action("NoReadKasanaReadKomal", "Reports")" class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-brand-50 hover:text-brand-700 rounded-md transition-colors font-medium">
-                                    <svg class="w-5 h-5 mr-3 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-1.414-1.414L12 9.172 7.05 4.222 5.636 5.636 10.586 10.586 5.636 15.536l1.414 1.414L12 12l4.95 4.95 1.414-1.414-4.95-4.95 4.95-4.95z" />
+                                <a href="@Url.Action("NoReadKasanaReadKomal", "Reports")"
+                                       class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-brand-50 hover:text-brand-700 rounded-md transition-colors font-medium">
+                                    <svg class="w-5 h-5 mr-3 text-red-500" fill="none" stroke="currentColor"
+                                         viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M18.364 5.636l-1.414-1.414L12 9.172 7.05 4.222 5.636 5.636 10.586 10.586 5.636 15.536l1.414 1.414L12 12l4.95 4.95 1.414-1.414-4.95-4.95 4.95-4.95z" />
                                     </svg>
                                     Kasana No Read / Komal Read
+                                </a>
+                                <a href="@Url.Action("NoReadStatistics", "Reports")"
+                                       class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-brand-50 hover:text-brand-700 rounded-md transition-colors font-medium">
+                                    <svg class="w-5 h-5 mr-3 text-orange-500" fill="none" stroke="currentColor"
+                                         viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                    </svg>
+                                    No Read Statistics
                                 </a>
                             </div>
                         </div>
@@ -216,7 +257,8 @@
                 <!-- Mobile menu button -->
                 <button id="mobileMenuButton" class="lg:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
                 </button>
             </div>
@@ -225,55 +267,83 @@
         <!-- Mobile Navigation -->
         <div id="mobileMenu" class="lg:hidden hidden border-t border-gray-200">
             <div class="px-2 pt-2 pb-3 space-y-1">
-                <a href="@Url.Action("Index", "Home")" class="flex items-center px-3 py-2.5 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-100 transition-colors">
-                    <svg class="w-5 h-5 mr-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                <a href="@Url.Action("Index", "Home")"
+                       class="flex items-center px-3 py-2.5 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-100 transition-colors">
+                    <svg class="w-5 h-5 mr-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                    </svg>
                     Dashboard
                 </a>
-                <a href="@Url.Action("Index", "PlantConfiguration")" class="flex items-center px-3 py-2.5 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-100 transition-colors">
-                    <svg class="w-5 h-5 mr-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                <a href="@Url.Action("Index", "PlantConfiguration")"
+                       class="flex items-center px-3 py-2.5 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-100 transition-colors">
+                    <svg class="w-5 h-5 mr-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
                     Plants
                 </a>
                 
                 <!-- Reports Section Mobile -->
                 <div class="px-3 pt-4 pb-2 text-xs font-bold text-gray-400 uppercase tracking-widest">Reports</div>
-                <a href="@Url.Action("DailyTransfer", "Reports")" class="flex items-center pl-6 pr-3 py-2.5 rounded-lg text-base font-medium text-gray-700 hover:bg-brand-50 hover:text-brand-700 transition-colors">
+                <a href="@Url.Action("DailyTransfer", "Reports")"
+                       class="flex items-center pl-6 pr-3 py-2.5 rounded-lg text-base font-medium text-gray-700 hover:bg-brand-50 hover:text-brand-700 transition-colors">
                     <svg class="w-5 h-5 mr-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                     </svg>
                     Daily Transfer
                 </a>
-                <a href="@Url.Action("ShiftReport", "Reports")" class="flex items-center pl-6 pr-3 py-2.5 rounded-lg text-base font-medium text-gray-700 hover:bg-brand-50 hover:text-brand-700 transition-colors">
+                <a href="@Url.Action("ShiftReport", "Reports")"
+                       class="flex items-center pl-6 pr-3 py-2.5 rounded-lg text-base font-medium text-gray-700 hover:bg-brand-50 hover:text-brand-700 transition-colors">
                     <svg class="w-5 h-5 mr-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     Shift Report
                 </a>
-                <a href="@Url.Action("OverallTransferByProductionOrder", "Reports")" class="flex items-center pl-6 pr-3 py-2.5 rounded-lg text-base font-medium text-gray-700 hover:bg-brand-50 hover:text-brand-700 transition-colors">
+                <a href="@Url.Action("OverallTransferByProductionOrder", "Reports")"
+                       class="flex items-center pl-6 pr-3 py-2.5 rounded-lg text-base font-medium text-gray-700 hover:bg-brand-50 hover:text-brand-700 transition-colors">
                     <svg class="w-5 h-5 mr-3 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                     </svg>
                     Overall Transfer
                 </a>
-                <a href="@Url.Action("OverallDailyTransfer", "Reports")" class="flex items-center pl-6 pr-3 py-2.5 rounded-lg text-base font-medium text-gray-700 hover:bg-brand-50 hover:text-brand-700 transition-colors">
+                <a href="@Url.Action("OverallDailyTransfer", "Reports")"
+                       class="flex items-center pl-6 pr-3 py-2.5 rounded-lg text-base font-medium text-gray-700 hover:bg-brand-50 hover:text-brand-700 transition-colors">
                     <svg class="w-5 h-5 mr-3 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                     Carton Transfer Summary
                 </a>
-                <a href="@Url.Action("VarianceTransferReport", "Reports")" class="flex items-center pl-6 pr-3 py-2.5 rounded-lg text-base font-medium text-gray-700 hover:bg-brand-50 hover:text-brand-700 transition-colors">
+                <a href="@Url.Action("VarianceTransferReport", "Reports")"
+                       class="flex items-center pl-6 pr-3 py-2.5 rounded-lg text-base font-medium text-gray-700 hover:bg-brand-50 hover:text-brand-700 transition-colors">
                     <svg class="w-5 h-5 mr-3 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-3.314 0-6 2.239-6 5s2.686 5 6 5 6-2.239 6-5-2.686-5-6-5zm0 0V4m0 14v2m-6-7H4m16 0h-2" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M12 8c-3.314 0-6 2.239-6 5s2.686 5 6 5 6-2.239 6-5-2.686-5-6-5zm0 0V4m0 14v2m-6-7H4m16 0h-2" />
                     </svg>
                     Variance Transfer
                 </a>
-                <a href="@Url.Action("NoReadKasanaReadKomal", "Reports")" class="flex items-center pl-6 pr-3 py-2.5 rounded-lg text-base font-medium text-gray-700 hover:bg-brand-50 hover:text-brand-700 transition-colors">
+                <a href="@Url.Action("NoReadKasanaReadKomal", "Reports")"
+                       class="flex items-center pl-6 pr-3 py-2.5 rounded-lg text-base font-medium text-gray-700 hover:bg-brand-50 hover:text-brand-700 transition-colors">
                     <svg class="w-5 h-5 mr-3 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-1.414-1.414L12 9.172 7.05 4.222 5.636 5.636 10.586 10.586 5.636 15.536l1.414 1.414L12 12l4.95 4.95 1.414-1.414-4.95-4.95 4.95-4.95z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M18.364 5.636l-1.414-1.414L12 9.172 7.05 4.222 5.636 5.636 10.586 10.586 5.636 15.536l1.414 1.414L12 12l4.95 4.95 1.414-1.414-4.95-4.95 4.95-4.95z" />
                     </svg>
                     Kasana No Read / Komal Read
                 </a>
-
-                
+                <a href="@Url.Action("NoReadStatistics", "Reports")"
+                       class="flex items-center pl-6 pr-3 py-2.5 rounded-lg text-base font-medium text-gray-700 hover:bg-brand-50 hover:text-brand-700 transition-colors">
+                    <svg class="w-5 h-5 mr-3 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    No Read Statistics
+                </a>
 
             </div>
         </div>
@@ -297,25 +367,25 @@
 
     <!-- JavaScript for mobile menu and sync status -->
     <script>
-        // Mobile menu toggle
-        const mobileMenuButton = document.getElementById('mobileMenuButton');
-        const mobileMenu = document.getElementById('mobileMenu');
+            // Mobile menu toggle
+            const mobileMenuButton = document.getElementById('mobileMenuButton');
+            const mobileMenu = document.getElementById('mobileMenu');
         
-        if (mobileMenuButton && mobileMenu) {
-            mobileMenuButton.addEventListener('click', () => {
-                mobileMenu.classList.toggle('hidden');
-            });
-        }
-
-
-
-        // Highlight active navigation link
-        const currentPath = window.location.pathname;
-        document.querySelectorAll('.nav-link, #mobileMenu a').forEach(link => {
-            if (link.getAttribute('href') === currentPath) {
-                link.classList.add('nav-link-active');
+            if (mobileMenuButton && mobileMenu) {
+                mobileMenuButton.addEventListener('click', () => {
+                    mobileMenu.classList.toggle('hidden');
+                });
             }
-        });
+
+
+
+            // Highlight active navigation link
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.nav-link, #mobileMenu a').forEach(link => {
+                if (link.getAttribute('href') === currentPath) {
+                    link.classList.add('nav-link-active');
+                }
+            });
     </script>
 
     <!-- Loading Overlay -->
@@ -329,4 +399,5 @@
     
     @await RenderSectionAsync("Scripts", required: false)
 </body>
+
 </html>
