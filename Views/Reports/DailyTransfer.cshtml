@@ -158,7 +158,7 @@
                                                         <td class="px-2 py-3 text-center text-green-600">@Model.Sum(x => x.IssueRead).ToString("N0")
                                                         </td>
                                                         <td class="px-2 py-3 text-center text-red-600 border-r">@Model.Sum(x =>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    x.IssueNoRead).ToString("N0")</td>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                x.IssueNoRead).ToString("N0")</td>
                                                             <td class="px-4 py-3"></td>
                                                             <td class="px-2 py-3 text-center text-green-600">@Model.Sum(x => x.ReceiptRead).ToString("N0")
                                                             </td>
@@ -166,8 +166,7 @@
                                                             </td>
                                                             <td class="px-2 py-3 text-center text-green-700">@Model.Sum(x => x.ReceiptTotal).ToString("N0")
                                                             </td>
-                                                            <td
-                                                                class="px-4 py-3 text-center text-red-700">
+                                                            <td class="px-4 py-3 text-center text-red-700">
                                                                 @(Model.Sum(x => x.Deviation) > 0 ? $"+{Model.Sum(x => x.Deviation):N0}" : Model.Sum(x =>
                                                             x.Deviation).ToString("N0"))
                                                             </td>
